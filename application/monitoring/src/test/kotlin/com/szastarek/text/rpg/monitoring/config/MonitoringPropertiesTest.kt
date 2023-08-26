@@ -1,7 +1,6 @@
-package com.szastarek.text.rpg.documentation.config
+package com.szastarek.text.rpg.monitoring.config
 
 import com.szastarek.text.rpg.monitoring.plugin.monitoringModule
-import io.kotest.core.extensions.Extension
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.koin.KoinExtension
 import io.kotest.matchers.shouldBe
@@ -12,11 +11,9 @@ class MonitoringPropertiesTest : KoinTest, DescribeSpec() {
 
     private val monitoringProperties by inject<MonitoringProperties>()
 
-    override fun extensions(): List<Extension> {
-        return listOf(KoinExtension(monitoringModule))
-    }
-
     init {
+
+        extensions(KoinExtension(monitoringModule))
 
         describe("MonitoringPropertiesTest") {
 

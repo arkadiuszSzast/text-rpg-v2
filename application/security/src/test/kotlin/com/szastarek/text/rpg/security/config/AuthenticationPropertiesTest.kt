@@ -1,7 +1,6 @@
 package com.szastarek.text.rpg.security.config
 
 import com.szastarek.text.rpg.security.plugin.securityModule
-import io.kotest.core.extensions.Extension
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.koin.KoinExtension
 import io.kotest.matchers.shouldBe
@@ -12,11 +11,9 @@ class AuthenticationPropertiesTest : KoinTest, DescribeSpec() {
 
     private val authenticationProperties by inject<AuthenticationProperties>()
 
-    override fun extensions(): List<Extension> {
-        return listOf(KoinExtension(securityModule))
-    }
-
     init {
+
+        extensions(KoinExtension(securityModule))
 
         describe("AuthenticationPropertiesTest") {
 

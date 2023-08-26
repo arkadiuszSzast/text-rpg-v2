@@ -1,4 +1,4 @@
-package com.szastarek.text.rpg.documentation.config
+package com.szastarek.text.rpg.monitoring.config
 
 data class MonitoringProperties(
     val enabled: Boolean,

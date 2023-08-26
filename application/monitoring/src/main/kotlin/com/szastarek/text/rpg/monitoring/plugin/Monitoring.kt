@@ -1,6 +1,6 @@
 package com.szastarek.text.rpg.monitoring.plugin
 
-import com.szastarek.text.rpg.documentation.config.MonitoringProperties
+import com.szastarek.text.rpg.monitoring.config.MonitoringProperties
 import com.szastarek.text.rpg.shared.plugin.installIfNotRegistered
 import io.ktor.server.application.Application
 import io.ktor.server.metrics.micrometer.MicrometerMetrics

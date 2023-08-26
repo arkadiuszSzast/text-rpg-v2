@@ -11,4 +11,6 @@ dependencies {
     implementation("io.ktor:ktor-server-metrics-micrometer:$ktor_version")
     implementation("io.micrometer:micrometer-registry-otlp:$micrometer_otlp_registry_version")
     implementation("io.ktor:ktor-server-call-logging-jvm:$ktor_version")
+
+    testImplementation("io.opentelemetry:opentelemetry-sdk-testing:$opentelemetry_version")
 }

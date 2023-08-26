@@ -1,4 +1,4 @@
-package com.szastarek.text.rpg.security.plugin
+package com.szastarek.text.rpg.documentation.plugin
 
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.koin.KoinExtension
@@ -9,11 +9,11 @@ class KoinModulesTest : KoinTest, DescribeSpec() {
 
     init {
 
-        extensions(KoinExtension(securityModule))
+        extensions(KoinExtension(documentationModule))
 
-        describe("Security Koin module test") {
+        describe("Documentation Koin module test") {
 
-            it("verify security module") {
+            it("verify documentation module") {
                 //arrange & act & assert
                 getKoin().checkModules()
             }

@@ -1,7 +1,6 @@
 package com.szastarek.text.rpg.shared.config
 
 import com.szastarek.text.rpg.shared.plugin.sharedKoinModule
-import io.kotest.core.extensions.Extension
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.koin.KoinExtension
 import io.kotest.matchers.shouldBe
@@ -12,11 +11,9 @@ class ApplicationPropertiesTest : KoinTest, DescribeSpec() {
 
     private val applicationProperties by inject<ApplicationProperties>()
 
-    override fun extensions(): List<Extension> {
-        return listOf(KoinExtension(sharedKoinModule))
-    }
-
     init {
+
+        extensions(KoinExtension(sharedKoinModule))
 
         describe("ApplicationPropertiesTest") {
 

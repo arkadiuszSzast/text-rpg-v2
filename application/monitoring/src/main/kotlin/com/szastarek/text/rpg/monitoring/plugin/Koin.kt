@@ -1,6 +1,6 @@
 package com.szastarek.text.rpg.monitoring.plugin
 
-import com.szastarek.text.rpg.documentation.config.MonitoringProperties
+import com.szastarek.text.rpg.monitoring.config.MonitoringProperties
 import com.szastarek.text.rpg.shared.config.ConfigKey
 import com.szastarek.text.rpg.shared.config.getBooleanProperty
 import com.szastarek.text.rpg.shared.config.getStringProperty

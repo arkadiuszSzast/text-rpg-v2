@@ -12,7 +12,7 @@ jobs:
       - name: Set up JDK
         uses: actions/setup-java@v1
         with:
-          java-version: 19
+          java-version: 17
       - name: Build and test with Gradle
         env:
           GITHUB_TOKEN: ${{ secrets.GH_PAT }}

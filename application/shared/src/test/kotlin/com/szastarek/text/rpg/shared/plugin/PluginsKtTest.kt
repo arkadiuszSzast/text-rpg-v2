@@ -44,7 +44,5 @@ class PluginsKtTest : DescribeSpec({
             //assert
             installCounter.get() shouldBe 1
         }
-
     }
-
 })

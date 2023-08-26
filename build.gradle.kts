@@ -17,6 +17,18 @@ plugins {
 group = "com.szastarek"
 version = "0.0.1"
 
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(17))
+    }
+}
+
+kotlin {
+    jvmToolchain {
+        languageVersion.set(JavaLanguageVersion.of(17))
+    }
+}
+
 application {
     mainClass.set("io.ktor.server.netty.EngineMain")
 
