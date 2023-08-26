@@ -1,4 +1,4 @@
-name: Build test
+name: Build and test
 
 on: push
 
@@ -22,17 +22,3 @@ jobs:
         if: always()
         with:
           files: '**/test-results/**/*.xml'
-
-  qodana:
-    permissions:
-      checks: write
-      pull-requests: write
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-      - name: 'Qodana Scan'
-        uses: JetBrains/qodana-action@v2023.1.0
-        env:
-          QODANA_TOKEN: ${{ secrets.QODANA_TOKEN }}
