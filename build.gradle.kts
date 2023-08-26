@@ -12,6 +12,7 @@ plugins {
     kotlin("jvm") version "1.9.10"
     id("io.ktor.plugin") version "2.3.3"
     id("org.jetbrains.kotlin.plugin.serialization") version "1.9.10"
+    id("org.sonarqube") version "4.2.1.3168"
 }
 
 group = "com.szastarek"
@@ -26,6 +27,14 @@ java {
 kotlin {
     jvmToolchain {
         languageVersion.set(JavaLanguageVersion.of(17))
+    }
+}
+
+sonar {
+    properties {
+        property("sonar.projectKey", "arkadiuszSzast_text-rpg-v2")
+        property("sonar.organization", "arkadiuszszast")
+        property("sonar.host.url", "https://sonarcloud.io")
     }
 }
 
