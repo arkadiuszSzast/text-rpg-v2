@@ -12,7 +12,7 @@ class TracingPipelineBehavior(private val tracerProvider: TracerProvider) : Pipe
         request: TRequest,
         next: suspend (TRequest) -> TResponse
     ): TResponse {
-        val tracer = tracerProvider.get("mediator")
+        val tracer = tracerProvider["mediator"]
         val requestType = KediatrRequestTypeExtractor.extract(request).code
         val requestSimpleName = request?.let { it::class.simpleName } ?: "not-known-request"
         val requestId = newId<TRequest>()
