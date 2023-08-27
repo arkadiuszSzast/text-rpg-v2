@@ -13,6 +13,7 @@ plugins {
     id("io.ktor.plugin") version "2.3.3"
     id("org.jetbrains.kotlin.plugin.serialization") version "1.9.10"
     id("org.sonarqube") version "4.2.1.3168"
+    id("jacoco")
 }
 
 group = "com.szastarek"
@@ -54,6 +55,7 @@ allprojects {
     }
 
     apply(plugin = "kotlin")
+    apply(plugin = "jacoco")
 }
 
 subprojects {
@@ -87,5 +89,32 @@ subprojects {
 
     tasks.withType<Test>().configureEach {
         useJUnitPlatform()
+    }
+
+    tasks.jacocoTestReport {
+        reports {
+            xml.required.set(true)
+            csv.required.set(true)
+            html.required.set(true)
+        }
+    }
+}
+
+task<JacocoReport>("jacocoRootReport") {
+    dependsOn(subprojects.map { it.tasks.withType<Test>() })
+    dependsOn(subprojects.map { it.tasks.withType<JacocoReport>() })
+    additionalSourceDirs.setFrom(subprojects.map { it.the<SourceSetContainer>()["main"].allSource.srcDirs })
+    sourceDirectories.setFrom(subprojects.map { it.the<SourceSetContainer>()["main"].allSource.srcDirs })
+    classDirectories.setFrom(subprojects.map { it.the<SourceSetContainer>()["main"].output })
+    executionData.setFrom(
+        project.fileTree(".") {
+            include("**/build/jacoco/test.exec")
+        }
+    )
+    reports {
+        xml.required.set(true)
+        csv.required.set(true)
+        html.required.set(true)
+        html.outputLocation.set(file("$buildDir/reports/jacoco/html"))
     }
 }
