@@ -106,6 +106,13 @@ task<JacocoReport>("jacocoRootReport") {
     additionalSourceDirs.setFrom(subprojects.map { it.the<SourceSetContainer>()["main"].allSource.srcDirs })
     sourceDirectories.setFrom(subprojects.map { it.the<SourceSetContainer>()["main"].allSource.srcDirs })
     classDirectories.setFrom(subprojects.map { it.the<SourceSetContainer>()["main"].output })
+    classDirectories.setFrom(
+        files(subprojects.flatMap { it.the<SourceSetContainer>()["main"].output }.map {
+            fileTree(it) {
+                exclude("**/Application.kt")
+            }
+        })
+    )
     executionData.setFrom(
         project.fileTree(".") {
             include("**/build/jacoco/test.exec")
