@@ -18,24 +18,15 @@ plugins {
 
 group = "com.szastarek"
 version = "0.0.1"
+java.sourceCompatibility = JavaVersion.VERSION_17
 
-java {
-    toolchain {
-        languageVersion.set(JavaLanguageVersion.of(17))
-    }
-}
-
-kotlin {
-    jvmToolchain {
-        languageVersion.set(JavaLanguageVersion.of(17))
-    }
-}
 
 sonar {
     properties {
         property("sonar.projectKey", "arkadiuszSzast_text-rpg-v2")
         property("sonar.organization", "arkadiuszszast")
         property("sonar.host.url", "https://sonarcloud.io")
+        property("sonar.coverage.exclusions", "**/Application.kt")
     }
 }
 
@@ -47,9 +38,6 @@ application {
 }
 
 allprojects {
-    group = "com.szastarek"
-    version = "0.0.1"
-
     repositories {
         mavenCentral()
     }
@@ -80,6 +68,7 @@ subprojects {
 
         testImplementation("io.insert-koin:koin-test:$koin_version")
         testImplementation("io.kotest.extensions:kotest-extensions-koin:${kotest_koin_version}")
+        testImplementation("io.ktor:ktor-client-content-negotiation:$ktor_version")
 
         testImplementation("io.ktor:ktor-server-tests-jvm:$ktor_version")
         testImplementation("org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version")
@@ -89,6 +78,7 @@ subprojects {
 
     tasks.withType<Test>().configureEach {
         useJUnitPlatform()
+        jvmArgs("--add-opens=java.base/java.util=ALL-UNNAMED")
     }
 
     tasks.jacocoTestReport {
