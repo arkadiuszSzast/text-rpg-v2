@@ -36,8 +36,8 @@ sonar {
         property("sonar.projectKey", "arkadiuszSzast_text-rpg-v2")
         property("sonar.organization", "arkadiuszszast")
         property("sonar.host.url", "https://sonarcloud.io")
-        property("sonar.coverage.jacoco.xmlReportPaths", "**/Application.kt")
-        property("sonar.coverage.exclusions", "${project.buildDir}/reports/kover/report.xml")
+        property("sonar.coverage.jacoco.xmlReportPaths", "${project.buildDir}/reports/kover/report.xml")
+        property("sonar.coverage.exclusions", "**/Application.kt,**/plugin/**")
     }
 }
 
