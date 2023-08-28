@@ -13,20 +13,31 @@ plugins {
     id("io.ktor.plugin") version "2.3.3"
     id("org.jetbrains.kotlin.plugin.serialization") version "1.9.10"
     id("org.sonarqube") version "4.2.1.3168"
-    id("jacoco")
+    id("org.jetbrains.kotlinx.kover") version "0.7.3"
 }
 
 group = "com.szastarek"
 version = "0.0.1"
 java.sourceCompatibility = JavaVersion.VERSION_17
 
+dependencies {
+    kover(project(":application:main"))
+    kover(project(":application:shared"))
+    kover(project(":application:monitoring"))
+    kover(project(":application:security"))
+    kover(project(":application:documentation"))
+    kover(project(":application:mediator"))
+    kover(project(":application:account"))
+    kover(project(":application:world"))
+}
 
 sonar {
     properties {
         property("sonar.projectKey", "arkadiuszSzast_text-rpg-v2")
         property("sonar.organization", "arkadiuszszast")
         property("sonar.host.url", "https://sonarcloud.io")
-        property("sonar.coverage.exclusions", "**/Application.kt")
+        property("sonar.coverage.jacoco.xmlReportPaths", "**/Application.kt")
+        property("sonar.coverage.exclusions", "${project.buildDir}/reports/kover/report.xml")
     }
 }
 
@@ -43,7 +54,7 @@ allprojects {
     }
 
     apply(plugin = "kotlin")
-    apply(plugin = "jacoco")
+    apply(plugin = "org.jetbrains.kotlinx.kover")
 }
 
 subprojects {
@@ -79,34 +90,5 @@ subprojects {
     tasks.withType<Test>().configureEach {
         useJUnitPlatform()
         jvmArgs("--add-opens=java.base/java.util=ALL-UNNAMED")
-    }
-
-    tasks.jacocoTestReport {
-        reports {
-            xml.required.set(true)
-            csv.required.set(true)
-            html.required.set(true)
-        }
-    }
-}
-
-task<JacocoReport>("jacocoRootReport") {
-    dependsOn(subprojects.map { it.tasks.withType<Test>() })
-    dependsOn(subprojects.map { it.tasks.withType<JacocoReport>() })
-    additionalSourceDirs.setFrom(subprojects.map { it.the<SourceSetContainer>()["main"].allSource.srcDirs })
-    sourceDirectories.setFrom(subprojects.map { it.the<SourceSetContainer>()["main"].allSource.srcDirs })
-    classDirectories.setFrom(subprojects.map { it.the<SourceSetContainer>()["main"].output.asFileTree.matching {
-        exclude("**/ApplicationKt.class")
-    } })
-    executionData.setFrom(
-        project.fileTree(".") {
-            include("**/build/jacoco/test.exec")
-        }
-    )
-    reports {
-        xml.required.set(true)
-        csv.required.set(true)
-        html.required.set(true)
-        html.outputLocation.set(file("$buildDir/reports/jacoco/html"))
     }
 }
