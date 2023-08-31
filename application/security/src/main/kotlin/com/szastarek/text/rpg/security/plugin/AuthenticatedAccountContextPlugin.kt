@@ -29,15 +29,12 @@ class AuthenticatedAccountContextPlugin {
 
     companion object Feature : BaseRouteScopedPlugin<Configuration, AuthenticatedAccountContextPlugin> {
         override val key = AttributeKey<AuthenticatedAccountContextPlugin>("AuthenticatedAccountContextPlugin")
-        private var config = Configuration()
 
         override fun install(
             pipeline: ApplicationCallPipeline,
             configure: Configuration.() -> Unit
         ): AuthenticatedAccountContextPlugin {
-            config = Configuration().apply(configure)
             val feature = AuthenticatedAccountContextPlugin()
-
             val phase = PipelinePhase("AuthenticatedAccountContextProvider")
             pipeline.insertPhaseAfter(ApplicationCallPipeline.Plugins, phase)
 
