@@ -1,5 +1,5 @@
 package com.szastarek.text.rpg.acl
 
-interface AccountContextProvider {
+fun interface AccountContextProvider {
     suspend fun currentContext(): AccountContext
 }
