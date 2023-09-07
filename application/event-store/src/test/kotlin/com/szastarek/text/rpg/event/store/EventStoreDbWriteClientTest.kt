@@ -5,9 +5,10 @@ import com.eventstore.dbclient.EventStoreDBConnectionString.parseOrThrow
 import com.eventstore.dbclient.ExpectedRevision
 import com.eventstore.dbclient.ReadStreamOptions
 import com.eventstore.dbclient.WrongExpectedVersionException
+import com.szastarek.text.rpg.event.store.utils.AccountCreated
+import com.szastarek.text.rpg.event.store.utils.AccountNameUpdated
+import com.szastarek.text.rpg.event.store.utils.EmailSent
 import com.szastarek.text.rpg.event.store.utils.EventStoreContainer
-import com.szastarek.text.rpg.shared.Version
-import com.szastarek.text.rpg.shared.Versioned
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
@@ -19,10 +20,7 @@ import io.opentelemetry.sdk.testing.exporter.InMemorySpanExporter
 import io.opentelemetry.sdk.trace.SdkTracerProvider
 import io.opentelemetry.sdk.trace.export.SimpleSpanProcessor
 import kotlinx.coroutines.future.await
-import kotlinx.serialization.Contextual
-import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
-import org.litote.kmongo.Id
 import org.litote.kmongo.id.serialization.IdKotlinXSerializationModule
 import org.litote.kmongo.newId
 
@@ -148,47 +146,5 @@ class EventStoreDbWriteClientTest : DescribeSpec() {
                 accountCreatedMetadata.tracingData["traceparent"] shouldBe "00-${span.traceId}-${span.spanId}-01"
             }
         }
-    }
-}
-
-@Serializable
-data class Account(@Contextual val id: Id<Account>, val name: String)
-
-@Serializable
-data class AccountCreated(@Contextual val id: Id<Account>, val name: String) : DomainEvent, Versioned {
-    override fun getMetadata(causedBy: EventMetadata?): EventMetadata {
-        return EventMetadataBuilder(
-            id.asAggregateId(),
-            EventCategory("account"),
-            EventType("account-created")
-        ).optionalCausedBy(causedBy).build()
-    }
-
-    override val version: Version = Version.initial
-}
-
-@Serializable
-data class AccountNameUpdated(@Contextual val id: Id<Account>, val name: String, override val version: Version) :
-    DomainEvent, Versioned {
-    override fun getMetadata(causedBy: EventMetadata?): EventMetadata {
-        return EventMetadataBuilder(
-            id.asAggregateId(),
-            EventCategory("account"),
-            EventType("account-name-updated")
-        ).optionalCausedBy(causedBy).build()
-    }
-}
-
-@Serializable
-data class Email(@Contextual val id: Id<Email>)
-
-@Serializable
-data class EmailSent(@Contextual val id: Id<Email>) : DomainEvent {
-    override fun getMetadata(causedBy: EventMetadata?): EventMetadata {
-        return EventMetadataBuilder(
-            id.asAggregateId(),
-            EventCategory("email"),
-            EventType("email-sent")
-        ).optionalCausedBy(causedBy).build()
     }
 }
