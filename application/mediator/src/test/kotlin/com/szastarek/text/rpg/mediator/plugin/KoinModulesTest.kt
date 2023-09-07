@@ -9,7 +9,7 @@ class KoinModulesTest : KoinTest, DescribeSpec() {
 
     init {
 
-        extensions(KoinExtension(mediatorKoinModule))
+        extensions(KoinExtension(mediatorModule))
 
         describe("Mediator Koin module test") {
 

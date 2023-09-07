@@ -28,6 +28,7 @@ dependencies {
     kover(project(":application:documentation"))
     kover(project(":application:mediator"))
     kover(project(":application:acl"))
+    kover(project(":application:event-store"))
     kover(project(":application:account"))
     kover(project(":application:world"))
 }

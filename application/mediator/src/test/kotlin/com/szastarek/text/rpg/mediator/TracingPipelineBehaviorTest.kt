@@ -8,6 +8,7 @@ import io.kotest.matchers.maps.shouldContainKey
 import io.kotest.matchers.shouldBe
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.trace.StatusCode
+import io.opentelemetry.sdk.OpenTelemetrySdk
 import io.opentelemetry.sdk.testing.exporter.InMemorySpanExporter
 import io.opentelemetry.sdk.trace.SdkTracerProvider
 import io.opentelemetry.sdk.trace.export.SimpleSpanProcessor
@@ -19,8 +20,9 @@ class TracingPipelineBehaviorTest : DescribeSpec({
         .builder()
         .addSpanProcessor(SimpleSpanProcessor.create(spanExporter))
         .build()
+    val openTelemetry = OpenTelemetrySdk.builder().setTracerProvider(tracerProvider).build()
 
-    val tracingPipelineBehaviour = TracingPipelineBehavior(tracerProvider)
+    val tracingPipelineBehaviour = TracingPipelineBehavior(openTelemetry)
 
     describe("TracingPipelineBehaviorTest") {
 

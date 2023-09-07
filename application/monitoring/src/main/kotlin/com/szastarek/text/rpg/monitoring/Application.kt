@@ -7,5 +7,5 @@ import org.koin.ktor.ext.get
 
 fun Application.monitoringModule() {
     configureKoin()
-    configureMonitoring(get())
+    configureMonitoring(get(), get())
 }

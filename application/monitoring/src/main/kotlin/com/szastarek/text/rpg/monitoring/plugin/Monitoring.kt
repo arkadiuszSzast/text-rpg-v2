@@ -8,12 +8,12 @@ import io.ktor.server.plugins.callloging.CallLogging
 import io.ktor.server.request.path
 import io.micrometer.registry.otlp.OtlpConfig
 import io.micrometer.registry.otlp.OtlpMeterRegistry
-import io.opentelemetry.api.GlobalOpenTelemetry
 import io.opentelemetry.instrumentation.ktor.v2_0.server.KtorServerTracing
 import io.micrometer.core.instrument.Clock
+import io.opentelemetry.api.OpenTelemetry
 import org.slf4j.event.Level
 
-internal fun Application.configureMonitoring(monitoringProperties: MonitoringProperties) {
+internal fun Application.configureMonitoring(monitoringProperties: MonitoringProperties, openTelemetry: OpenTelemetry) {
     if (monitoringProperties.enabled) {
         val otlpConfig = OtlpConfig {
             when (it) {
@@ -22,7 +22,7 @@ internal fun Application.configureMonitoring(monitoringProperties: MonitoringPro
             }
         }
         installIfNotRegistered(KtorServerTracing) {
-            setOpenTelemetry(GlobalOpenTelemetry.get())
+            setOpenTelemetry(openTelemetry)
         }
         installIfNotRegistered(MicrometerMetrics) {
             registry = OtlpMeterRegistry(otlpConfig, Clock.SYSTEM)

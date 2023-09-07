@@ -3,16 +3,16 @@ package com.szastarek.text.rpg.mediator
 import com.szastarek.text.rpg.monitoring.execute
 import com.trendyol.kediatr.PipelineBehavior
 import io.github.oshai.kotlinlogging.KotlinLogging
-import io.opentelemetry.api.trace.TracerProvider
+import io.opentelemetry.api.OpenTelemetry
 import org.litote.kmongo.newId
 
-class TracingPipelineBehavior(private val tracerProvider: TracerProvider) : PipelineBehavior {
+class TracingPipelineBehavior(private val openTelemetry: OpenTelemetry) : PipelineBehavior {
     private val logger = KotlinLogging.logger {}
     override suspend fun <TRequest, TResponse> handle(
         request: TRequest,
         next: suspend (TRequest) -> TResponse
     ): TResponse {
-        val tracer = tracerProvider["mediator"]
+        val tracer = openTelemetry.getTracer("mediator")
         val requestType = KediatrRequestTypeExtractor.extract(request).code
         val requestSimpleName = request?.let { it::class.simpleName } ?: "not-known-request"
         val requestId = newId<TRequest>()
