@@ -51,6 +51,7 @@ class EventStoreDbSubscribeClientTest : DescribeSpec() {
         describe("EventStoreDbSubscribeClientTest") {
 
             beforeTest {
+                spanExporter.reset()
                 EventStoreContainer.restart()
                 subscriptionClient = EventStoreDBPersistentSubscriptionsClient.create(
                     EventStoreDBConnectionString.parseOrThrow(
