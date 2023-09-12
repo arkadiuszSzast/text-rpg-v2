@@ -7,6 +7,7 @@ val kotest_version: String by project
 val koin_version: String by project
 val kotest_koin_version: String by project
 val kmongo_version: String by project
+val awaitility_version: String by project
 
 plugins {
     kotlin("jvm") version "1.9.10"
@@ -87,6 +88,7 @@ subprojects {
         testImplementation("org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version")
         testImplementation("io.kotest:kotest-runner-junit5:$kotest_version")
         testImplementation("io.kotest:kotest-assertions-core:$kotest_version")
+        testImplementation("org.awaitility:awaitility-kotlin:$awaitility_version")
     }
 
     tasks.withType<Test>().configureEach {

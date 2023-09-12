@@ -162,6 +162,33 @@ services:
           - otel-collector-metrics
     <<: *clickhouse-depend
 
+  text-rpg-eventstore-db:
+    image: eventstore/eventstore:23.6.0-buster-slim
+    environment:
+      - EVENTSTORE_CLUSTER_SIZE=1
+      - EVENTSTORE_RUN_PROJECTIONS=All
+      - EVENTSTORE_START_STANDARD_PROJECTIONS=true
+      - EVENTSTORE_EXT_TCP_PORT=1113
+      - EVENTSTORE_HTTP_PORT=2113
+      - EVENTSTORE_INSECURE=true
+      - EVENTSTORE_ENABLE_EXTERNAL_TCP=true
+      - EVENTSTORE_ENABLE_ATOM_PUB_OVER_HTTP=true
+      - EVENTSTORE_MEM_DB=true
+    ports:
+      - "1113:1113"
+      - "2113:2113"
+    volumes:
+      - type: volume
+        source: eventstore-db-text-rpg-volume-data
+        target: /var/lib/eventstore
+      - type: volume
+        source: eventstore-db-text-rpg-volume-logs
+        target: /var/log/eventstore
+    networks:
+      text-rpg-net:
+        aliases:
+          - text-rpg-eventstore-db
+
   text-rpg:
     image: text-rpg-ktor:0.0.1
     ports:
