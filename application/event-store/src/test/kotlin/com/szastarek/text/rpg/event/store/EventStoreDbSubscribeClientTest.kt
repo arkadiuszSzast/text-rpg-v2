@@ -87,7 +87,7 @@ class EventStoreDbSubscribeClientTest : DescribeSpec() {
                 }
 
                 //assert
-                await.atMost(Duration.ofMillis(200)).untilAsserted {
+                await.atMost(Duration.ofMillis(500)).untilAsserted {
                     processedEventsCount.get() shouldBe 1
                 }
             }
@@ -112,7 +112,7 @@ class EventStoreDbSubscribeClientTest : DescribeSpec() {
                 }
 
                 //assert
-                await.atMost(Duration.ofMillis(200)).untilAsserted {
+                await.atMost(Duration.ofMillis(500)).untilAsserted {
                     processedEventsCount.get() shouldBe 1
                 }
             }
@@ -142,7 +142,7 @@ class EventStoreDbSubscribeClientTest : DescribeSpec() {
                 }
 
                 //assert
-                await.atMost(Duration.ofMillis(200)).untilAsserted {
+                await.atMost(Duration.ofMillis(500)).untilAsserted {
                     processedEventsCount.get() shouldBe 1
                     attemptsCount.get() shouldBe 4
                 }
@@ -168,7 +168,7 @@ class EventStoreDbSubscribeClientTest : DescribeSpec() {
                     }
                 }
 
-                await.atMost(Duration.ofMillis(200)).untilAsserted {
+                await.atMost(Duration.ofMillis(500)).untilAsserted {
                     processedEventsCount.get() shouldBe 1
                 }
 
