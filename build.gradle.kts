@@ -8,6 +8,10 @@ val koin_version: String by project
 val kotest_koin_version: String by project
 val kmongo_version: String by project
 val awaitility_version: String by project
+val arrow_version: String by project
+val jbcrypt_version: String by project
+val kotest_arrow_version: String by project
+val kotlin_datetime_version: String by project
 
 plugins {
     kotlin("jvm") version "1.9.10"
@@ -74,6 +78,10 @@ subprojects {
         implementation("io.ktor:ktor-serialization-kotlinx-json-jvm:$ktor_version")
         implementation("io.ktor:ktor-server-netty-jvm:$ktor_version")
         implementation("ch.qos.logback:logback-classic:$logback_version")
+        implementation("io.arrow-kt:arrow-core:$arrow_version")
+        implementation("io.arrow-kt:arrow-fx-coroutines:$arrow_version")
+        implementation("org.mindrot:jbcrypt:$jbcrypt_version")
+        implementation("org.jetbrains.kotlinx:kotlinx-datetime:$kotlin_datetime_version")
 
         implementation("io.opentelemetry.instrumentation:opentelemetry-logback-1.0:$opentelemetry_logback_version")
         implementation("io.insert-koin:koin-ktor:$koin_version")
@@ -88,6 +96,7 @@ subprojects {
         testImplementation("org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version")
         testImplementation("io.kotest:kotest-runner-junit5:$kotest_version")
         testImplementation("io.kotest:kotest-assertions-core:$kotest_version")
+        testImplementation("io.kotest.extensions:kotest-assertions-arrow:$kotest_arrow_version")
         testImplementation("org.awaitility:awaitility-kotlin:$awaitility_version")
     }
 

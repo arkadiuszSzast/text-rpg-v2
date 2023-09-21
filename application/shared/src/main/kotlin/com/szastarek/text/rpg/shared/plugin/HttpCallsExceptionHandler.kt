@@ -16,10 +16,11 @@ typealias HandlerFunction = suspend (call: ApplicationCall, cause: Throwable) ->
 class HttpCallsExceptionHandler {
 
     class Configuration {
-        val handlers: MutableMap<KClass<*>, HandlerFunction> = mutableMapOf()
+        val handlers: MutableMap<KClass<*>, suspend (call: ApplicationCall, cause: Throwable) -> Unit> = mutableMapOf()
 
-        inline fun <reified T : Throwable> exception(noinline handler: HandlerFunction) {
-            handlers[T::class] = handler
+        inline fun <reified T : Throwable> exception(noinline handler: suspend (call: ApplicationCall, cause: T) -> Unit) {
+            @Suppress("UNCHECKED_CAST")
+            handlers[T::class] = handler as suspend (ApplicationCall, Throwable) -> Unit
         }
 
     }
