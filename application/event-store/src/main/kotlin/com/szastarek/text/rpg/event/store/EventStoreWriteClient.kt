@@ -1,7 +1,6 @@
 package com.szastarek.text.rpg.event.store
 
 import com.eventstore.dbclient.ExpectedRevision
-import com.eventstore.dbclient.WriteResult
 import kotlin.reflect.KClass
 
 interface EventStoreWriteClient {
@@ -10,14 +9,14 @@ interface EventStoreWriteClient {
         event: T,
         clazz: KClass<T>,
         causedBy : EventMetadata? = null
-    ): WriteResult
+    ): EventStoreWriteResult
 
     suspend fun <T : DomainEvent> appendToStream(
         event: T,
         clazz: KClass<T>,
         expectedRevision: ExpectedRevision,
         causedBy : EventMetadata? = null
-    ): WriteResult
+    ): EventStoreWriteResult
 
 }
 

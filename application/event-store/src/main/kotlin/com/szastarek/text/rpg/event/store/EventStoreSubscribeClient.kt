@@ -2,11 +2,10 @@ package com.szastarek.text.rpg.event.store
 
 import com.eventstore.dbclient.PersistentSubscription
 import com.eventstore.dbclient.ResolvedEvent
-import kotlinx.coroutines.CoroutineScope
 
 typealias PersistentEventListener = suspend (subscription: PersistentSubscription, resolvedEvent: ResolvedEvent) -> Unit
 
-interface EventStoreSubscribeClient : CoroutineScope {
+interface EventStoreSubscribeClient {
 
     suspend fun subscribePersistentByEventCategory(
         eventCategory: EventCategory,

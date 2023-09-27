@@ -12,6 +12,7 @@ val arrow_version: String by project
 val jbcrypt_version: String by project
 val kotest_arrow_version: String by project
 val kotlin_datetime_version: String by project
+val faker_version: String by project
 
 plugins {
     kotlin("jvm") version "1.9.10"
@@ -33,7 +34,9 @@ dependencies {
     kover(project(":application:documentation"))
     kover(project(":application:mediator"))
     kover(project(":application:acl"))
+    kover(project(":application:mail"))
     kover(project(":application:event-store"))
+    kover(project(":application:test-utils"))
     kover(project(":application:account"))
     kover(project(":application:world"))
 }
@@ -98,10 +101,13 @@ subprojects {
         testImplementation("io.kotest:kotest-assertions-core:$kotest_version")
         testImplementation("io.kotest.extensions:kotest-assertions-arrow:$kotest_arrow_version")
         testImplementation("org.awaitility:awaitility-kotlin:$awaitility_version")
+        testImplementation("io.github.serpro69:kotlin-faker:$faker_version")
     }
 
     tasks.withType<Test>().configureEach {
         useJUnitPlatform()
         jvmArgs("--add-opens=java.base/java.util=ALL-UNNAMED")
     }
+
+    kotlin.target.compilations["testFixtures"].associateWith(kotlin.target.compilations["main"])
 }

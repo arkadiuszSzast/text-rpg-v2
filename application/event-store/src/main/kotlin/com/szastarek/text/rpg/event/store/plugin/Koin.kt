@@ -23,7 +23,7 @@ internal val eventStoreModule = module {
     single { GlobalOpenTelemetry.get() }
     single { EventStoreDBClient.create(parseOrThrow(get<EventStoreProperties>().connectionString)) }
     single { EventStoreDBPersistentSubscriptionsClient.create(parseOrThrow(get<EventStoreProperties>().connectionString)) }
-    single { EventStoreDbReadClient(get(), get()) } bind EventStoreReadClient::class
+    single { EventStoreDbReadClient(get(), get(), get()) } bind EventStoreReadClient::class
     single { EventStoreDbWriteClient(get(), get(), get()) } bind EventStoreWriteClient::class
     single { EventStoreDbSubscribeClient(get(), get(), get()) } bind EventStoreSubscribeClient::class
 }

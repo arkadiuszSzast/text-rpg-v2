@@ -1,9 +1,12 @@
 package com.szastarek.text.rpg.account.command
 
+import com.szastarek.text.rpg.shared.aRawPassword
+import com.szastarek.text.rpg.shared.anEmail
 import io.kotest.assertions.arrow.core.shouldBeLeft
 import io.kotest.assertions.arrow.core.shouldBeRight
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
+import kotlinx.datetime.TimeZone
 
 class CreateAccountCommandTest : DescribeSpec({
 
@@ -11,7 +14,7 @@ class CreateAccountCommandTest : DescribeSpec({
 
         it("should aggregate errors") {
             //arrange & act
-            val command = CreateAccountCommand("invalid-mail", "short", "invalid-timezone")
+            val command = CreateRegularAccountCommand("invalid-mail", "short", "invalid-timezone")
             val expectedMessages = listOf(
                 "validation.invalid_email",
                 "validation.password_too_short",
@@ -24,7 +27,11 @@ class CreateAccountCommandTest : DescribeSpec({
 
         it("should create command") {
             //arrange & act
-            val command = CreateAccountCommand("test@email.com", "secret-password", "Europe/Warsaw")
+            val command = CreateRegularAccountCommand(
+                anEmail().value,
+                aRawPassword().value,
+                TimeZone.availableZoneIds.random()
+            )
 
             //assert
             command.shouldBeRight()

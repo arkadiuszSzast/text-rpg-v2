@@ -15,7 +15,7 @@ value class EmailAddress private constructor(val value: String) {
         operator fun invoke(address: String) = either {
             ensure(address.matches(Regex(EMAIL_PATTERN))) { ValidationError(".email", "validation.invalid_email").nel() }
 
-            EmailAddress(address)
+            EmailAddress(address.trim())
         }
 
 

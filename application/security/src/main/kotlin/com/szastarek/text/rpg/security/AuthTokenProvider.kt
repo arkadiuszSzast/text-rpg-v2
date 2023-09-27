@@ -13,13 +13,13 @@ import kotlinx.serialization.json.Json
 
 class AuthTokenProvider(private val authenticationProperties: AuthenticationProperties) {
 
-    fun createToken(accountId: AccountId, role: Role, customAuthorities: List<Authority>): String =
-        JWT.create()
+    fun createToken(accountId: AccountId, role: Role, customAuthorities: List<Authority>): JwtToken =
+        JwtToken(JWT.create()
             .withAudience(authenticationProperties.jwtAudience)
             .withIssuer(authenticationProperties.jwtIssuer)
             .withSubject(accountId.value)
             .withClaim("role", Roles.getByRole(role))
             .withClaim("custom_authorities", Json.encodeToString(customAuthorities))
             .withExpiresAt(Date(System.currentTimeMillis() + authenticationProperties.expirationInMillis))
-            .sign(Algorithm.HMAC256(authenticationProperties.jwtSecret))
+            .sign(Algorithm.HMAC256(authenticationProperties.jwtSecret)))
 }

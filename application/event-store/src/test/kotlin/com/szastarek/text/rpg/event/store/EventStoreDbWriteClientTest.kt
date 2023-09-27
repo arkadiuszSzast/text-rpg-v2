@@ -4,11 +4,9 @@ import com.eventstore.dbclient.EventStoreDBClient
 import com.eventstore.dbclient.EventStoreDBConnectionString.parseOrThrow
 import com.eventstore.dbclient.ExpectedRevision
 import com.eventstore.dbclient.ReadStreamOptions
-import com.eventstore.dbclient.WrongExpectedVersionException
 import com.szastarek.text.rpg.event.store.utils.AccountCreated
 import com.szastarek.text.rpg.event.store.utils.AccountNameUpdated
 import com.szastarek.text.rpg.event.store.utils.EmailSent
-import com.szastarek.text.rpg.event.store.utils.EventStoreContainer
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
@@ -26,125 +24,127 @@ import org.litote.kmongo.newId
 
 class EventStoreDbWriteClientTest : DescribeSpec() {
 
-    private val spanExporter = InMemorySpanExporter.create()
+  private val spanExporter = InMemorySpanExporter.create()
 
-    private val tracerProvider = SdkTracerProvider.builder()
-        .addSpanProcessor(SimpleSpanProcessor.create(spanExporter))
-        .build()
+  private val tracerProvider = SdkTracerProvider.builder()
+    .addSpanProcessor(SimpleSpanProcessor.create(spanExporter))
+    .build()
 
-    private val openTelemetry = OpenTelemetrySdk.builder()
-        .setTracerProvider(tracerProvider)
-        .setPropagators(ContextPropagators.create(W3CTraceContextPropagator.getInstance()))
-        .build()
+  private val openTelemetry = OpenTelemetrySdk.builder()
+    .setTracerProvider(tracerProvider)
+    .setPropagators(ContextPropagators.create(W3CTraceContextPropagator.getInstance()))
+    .build()
 
-    private val json = Json { serializersModule = IdKotlinXSerializationModule }
+  private val json = Json { serializersModule = IdKotlinXSerializationModule }
 
-    private lateinit var eventStoreDbClient: EventStoreDBClient
+  private val eventStoreDbClient = EventStoreDBClient.create(parseOrThrow(EventStoreContainer.connectionString))
 
-    private lateinit var eventStoreDbWriteClient: EventStoreWriteClient
+  private val eventStoreDbWriteClient = EventStoreDbWriteClient(
+    eventStoreDbClient,
+    json,
+    openTelemetry
+  )
 
-    init {
+  init {
 
-        describe("EventStoreDbWriteClientTest") {
+    describe("EventStoreDbWriteClientTest") {
 
-            beforeTest {
-                EventStoreContainer.restart()
-                eventStoreDbClient = EventStoreDBClient.create(parseOrThrow(EventStoreContainer.connectionString))
-                eventStoreDbWriteClient = EventStoreDbWriteClient(
-                    eventStoreDbClient,
-                    json,
-                    openTelemetry
-                )
-                spanExporter.reset()
-            }
+      beforeTest {
+        EventStoreContainer.restart()
+        spanExporter.reset()
+      }
 
-            it("should append event") {
-                //arrange
-                val event = EmailSent(newId())
+      it("should append event") {
+        //arrange
+        val event = EmailSent(newId())
 
-                //act
-                val result = eventStoreDbWriteClient.appendToStream(event)
+        //act
+        val result = eventStoreDbWriteClient.appendToStream(event)
 
-                //assert
-                result.nextExpectedRevision.toRawLong() shouldBe 0
-            }
+        //assert
+        result.nextExpectedRevision.toRawLong() shouldBe 0
+      }
 
-            it("should append versioned events") {
-                //arrange
-                val accountCreatedEvent = AccountCreated(newId(), "test")
-                val accountUpdatedEvent = AccountNameUpdated(accountCreatedEvent.id, "test2", accountCreatedEvent.version.next())
+      it("should append versioned events") {
+        //arrange
+        val accountCreatedEvent = AccountCreated(newId(), "test")
+        val accountUpdatedEvent =
+          AccountNameUpdated(accountCreatedEvent.id, "test2", accountCreatedEvent.version.next())
 
-                //act
-                val createAccountResult = eventStoreDbWriteClient.appendToStream(accountCreatedEvent, accountCreatedEvent.revision())
-                val updateAccountResult = eventStoreDbWriteClient.appendToStream(accountUpdatedEvent, accountUpdatedEvent.revision())
+        //act
+        val createAccountResult =
+          eventStoreDbWriteClient.appendToStream(accountCreatedEvent, accountCreatedEvent.revision())
+        val updateAccountResult =
+          eventStoreDbWriteClient.appendToStream(accountUpdatedEvent, accountUpdatedEvent.revision())
 
-                //assert
-                createAccountResult.nextExpectedRevision.toRawLong() shouldBe 0
-                updateAccountResult.nextExpectedRevision.toRawLong() shouldBe 1
-            }
+        //assert
+        createAccountResult.nextExpectedRevision.toRawLong() shouldBe 0
+        updateAccountResult.nextExpectedRevision.toRawLong() shouldBe 1
+      }
 
-            it("should throw exception when appending event with wrong expected revision") {
-                //arrange
-                val accountCreatedEvent = AccountCreated(newId(), "test")
+      it("should throw exception when appending event with wrong expected revision") {
+        //arrange
+        val accountCreatedEvent = AccountCreated(newId(), "test")
 
-                //act & assert
-                shouldThrow<WrongExpectedVersionException> {
-                    eventStoreDbWriteClient.appendToStream(accountCreatedEvent, ExpectedRevision.expectedRevision(1))
-                }
-            }
-
-            it("should append event in new span") {
-                //arrange
-                val accountCreatedEvent = AccountCreated(newId(), "test")
-
-                //act
-                eventStoreDbWriteClient.appendToStream(accountCreatedEvent)
-
-                //assert
-                spanExporter.finishedSpanItems.single().name shouldBe "event_store publish account-created"
-            }
-
-            it("should append event with caused by") {
-                //arrange
-                val accountCreatedEvent = AccountCreated(newId(), "test")
-                val accountUpdatedEvent = AccountNameUpdated(accountCreatedEvent.id, "test2", accountCreatedEvent.version.next())
-
-                eventStoreDbWriteClient.appendToStream(accountCreatedEvent)
-                val accountCreatedMetadata = eventStoreDbClient.readStream(
-                    "account-${accountCreatedEvent.id}",
-                    ReadStreamOptions.get()
-                ).await().events.first().event.userMetadata.let { json.decodeFromString<EventMetadata>(String(it)) }
-
-                //act
-                eventStoreDbWriteClient.appendToStream(accountUpdatedEvent, accountCreatedMetadata)
-
-                //assert
-                val accountUpdatedMetadata = eventStoreDbClient.readStream(
-                    "account-${accountCreatedEvent.id}",
-                    ReadStreamOptions.get()
-                ).await().events.last().event.userMetadata.let { json.decodeFromString<EventMetadata>(String(it)) }
-
-                accountUpdatedMetadata.eventId shouldNotBe accountCreatedMetadata.eventId
-                accountUpdatedMetadata.causationId.value shouldBe accountCreatedMetadata.eventId.value
-                accountUpdatedMetadata.correlationId.value shouldBe accountCreatedMetadata.correlationId.value
-            }
-
-            it("should append span details to event metadata") {
-                //arrange
-                val accountCreatedEvent = AccountCreated(newId(), "test")
-
-                //act
-                eventStoreDbWriteClient.appendToStream(accountCreatedEvent)
-
-                //assert
-                val span = spanExporter.finishedSpanItems.single()
-                val accountCreatedMetadata = eventStoreDbClient.readStream(
-                    "account-${accountCreatedEvent.id}",
-                    ReadStreamOptions.get()
-                ).await().events.first().event.userMetadata.let { json.decodeFromString<EventMetadata>(String(it)) }
-
-                accountCreatedMetadata.tracingData["traceparent"] shouldBe "00-${span.traceId}-${span.spanId}-01"
-            }
+        //act & assert
+        shouldThrow<InvalidExpectedRevisionException> {
+          eventStoreDbWriteClient.appendToStream(accountCreatedEvent, ExpectedRevision.expectedRevision(1))
         }
+      }
+
+      it("should append event in new span") {
+        //arrange
+        val accountCreatedEvent = AccountCreated(newId(), "test")
+
+        //act
+        eventStoreDbWriteClient.appendToStream(accountCreatedEvent)
+
+        //assert
+        spanExporter.finishedSpanItems.single().name shouldBe "event_store publish account-created"
+      }
+
+      it("should append event with caused by") {
+        //arrange
+        val accountCreatedEvent = AccountCreated(newId(), "test")
+        val accountUpdatedEvent =
+          AccountNameUpdated(accountCreatedEvent.id, "test2", accountCreatedEvent.version.next())
+
+        eventStoreDbWriteClient.appendToStream(accountCreatedEvent)
+        val accountCreatedMetadata = eventStoreDbClient.readStream(
+          "account-${accountCreatedEvent.id}",
+          ReadStreamOptions.get()
+        ).await().events.first().event.userMetadata.let { json.decodeFromString<EventMetadata>(String(it)) }
+
+        //act
+        eventStoreDbWriteClient.appendToStream(accountUpdatedEvent, accountCreatedMetadata)
+
+        //assert
+        val accountUpdatedMetadata = eventStoreDbClient.readStream(
+          "account-${accountCreatedEvent.id}",
+          ReadStreamOptions.get()
+        ).await().events.last().event.userMetadata.let { json.decodeFromString<EventMetadata>(String(it)) }
+
+        accountUpdatedMetadata.eventId shouldNotBe accountCreatedMetadata.eventId
+        accountUpdatedMetadata.causationId.value shouldBe accountCreatedMetadata.eventId.value
+        accountUpdatedMetadata.correlationId.value shouldBe accountCreatedMetadata.correlationId.value
+      }
+
+      it("should append span details to event metadata") {
+        //arrange
+        val accountCreatedEvent = AccountCreated(newId(), "test")
+
+        //act
+        eventStoreDbWriteClient.appendToStream(accountCreatedEvent)
+
+        //assert
+        val span = spanExporter.finishedSpanItems.single()
+        val accountCreatedMetadata = eventStoreDbClient.readStream(
+          "account-${accountCreatedEvent.id}",
+          ReadStreamOptions.get()
+        ).await().events.first().event.userMetadata.let { json.decodeFromString<EventMetadata>(String(it)) }
+
+        accountCreatedMetadata.tracingData["traceparent"] shouldBe "00-${span.traceId}-${span.spanId}-01"
+      }
     }
+  }
 }

@@ -4,7 +4,6 @@ import com.eventstore.dbclient.EventStoreDBClient
 import com.eventstore.dbclient.EventStoreDBConnectionString
 import com.eventstore.dbclient.EventStoreDBPersistentSubscriptionsClient
 import com.szastarek.text.rpg.event.store.utils.EmailSent
-import com.szastarek.text.rpg.event.store.utils.EventStoreContainer
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
 import io.opentelemetry.api.trace.propagation.W3CTraceContextPropagator
@@ -38,13 +37,21 @@ class EventStoreDbSubscribeClientTest : DescribeSpec() {
 
     private val json = Json { serializersModule = IdKotlinXSerializationModule }
 
-    private lateinit var eventStoreDbClient: EventStoreDBClient
+    private val eventStoreDbClient = EventStoreDBClient.create(
+        EventStoreDBConnectionString.parseOrThrow(
+            EventStoreContainer.connectionString
+        )
+    )
 
-    private lateinit var subscriptionClient: EventStoreDBPersistentSubscriptionsClient
+    private val subscriptionClient = EventStoreDBPersistentSubscriptionsClient.create(
+        EventStoreDBConnectionString.parseOrThrow(
+            EventStoreContainer.connectionString
+        )
+    )
 
-    private lateinit var eventStoreDbWriteClient: EventStoreWriteClient
+    private val eventStoreDbWriteClient = EventStoreDbWriteClient(eventStoreDbClient, json, openTelemetry)
 
-    private lateinit var eventStoreDbSubscribeClient: EventStoreSubscribeClient
+    private val eventStoreDbSubscribeClient = EventStoreDbSubscribeClient(subscriptionClient, json, openTelemetry)
 
     init {
 
@@ -53,18 +60,6 @@ class EventStoreDbSubscribeClientTest : DescribeSpec() {
             beforeTest {
                 spanExporter.reset()
                 EventStoreContainer.restart()
-                subscriptionClient = EventStoreDBPersistentSubscriptionsClient.create(
-                    EventStoreDBConnectionString.parseOrThrow(
-                        EventStoreContainer.connectionString
-                    )
-                )
-                eventStoreDbClient = EventStoreDBClient.create(
-                    EventStoreDBConnectionString.parseOrThrow(
-                        EventStoreContainer.connectionString
-                    )
-                )
-                eventStoreDbSubscribeClient = EventStoreDbSubscribeClient(subscriptionClient, json, openTelemetry)
-                eventStoreDbWriteClient = EventStoreDbWriteClient(eventStoreDbClient, json, openTelemetry)
             }
 
             it("should subscribe by event category and process event") {

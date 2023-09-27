@@ -19,6 +19,8 @@ value class RawPassword private constructor(val value: String) {
 
             RawPassword(value)
         }
+
+        fun createWithoutValidation(value: String) = RawPassword(value)
     }
 
     fun hashpw() = HashedPassword(BCrypt.hashpw(value, BCrypt.gensalt()))

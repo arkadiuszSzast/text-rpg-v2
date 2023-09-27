@@ -3,11 +3,9 @@ package com.szastarek.text.rpg.event.store
 import com.eventstore.dbclient.EventDataBuilder
 import com.eventstore.dbclient.EventStoreDBClient
 import com.eventstore.dbclient.EventStoreDBConnectionString.parseOrThrow
-import com.eventstore.dbclient.StreamNotFoundException
 import com.szastarek.text.rpg.event.store.utils.EmailSent
-import com.szastarek.text.rpg.event.store.utils.EventStoreContainer
-import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.DescribeSpec
+import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import io.opentelemetry.api.trace.propagation.W3CTraceContextPropagator
@@ -36,9 +34,13 @@ class EventStoreDbReadClientTest : DescribeSpec() {
 
     private val json = Json { serializersModule = IdKotlinXSerializationModule }
 
-    private lateinit var eventStoreDbClient: EventStoreDBClient
+    private val eventStoreDbClient = EventStoreDBClient.create(parseOrThrow(EventStoreContainer.connectionString))
 
-    private lateinit var eventStoreDbReadClient: EventStoreReadClient
+    private val eventStoreDbReadClient = EventStoreDbReadClient(
+        eventStoreDbClient,
+        json,
+        openTelemetry
+    )
 
     init {
 
@@ -46,11 +48,6 @@ class EventStoreDbReadClientTest : DescribeSpec() {
 
             beforeTest {
                 EventStoreContainer.restart()
-                eventStoreDbClient = EventStoreDBClient.create(parseOrThrow(EventStoreContainer.connectionString))
-                eventStoreDbReadClient = EventStoreDbReadClient(
-                    eventStoreDbClient,
-                    openTelemetry
-                )
                 spanExporter.reset()
             }
 
@@ -66,18 +63,16 @@ class EventStoreDbReadClientTest : DescribeSpec() {
                 eventStoreDbClient.appendToStream(eventMetadata.streamName.value, eventData)
 
                 //act
-                val result = eventStoreDbReadClient.readStream(eventMetadata.streamName).events
+                val result = eventStoreDbReadClient.readStream<EmailSent>(eventMetadata.streamName)
 
                 //assert
                 result shouldHaveSize 1
                 spanExporter.finishedSpanItems.single().name shouldBe "event_store read ${eventMetadata.streamName.value}"
             }
 
-            it("should throw exception when stream does not exist") {
+            it("should return empty list when stream does not exist") {
                 //arrange & act & assert
-                shouldThrow<StreamNotFoundException> {
-                    eventStoreDbReadClient.readStream(StreamName("not-existing"))
-                }
+                eventStoreDbReadClient.readStream<EmailSent>(StreamName("not-existing")).shouldBeEmpty()
             }
         }
     }

@@ -31,7 +31,7 @@ class EmailAddressTest : DescribeSpec({
             val email = EmailAddress("test@test")
 
             //assert
-            email.shouldBeLeft().map { it.message } shouldBe listOf("validation.invalid_email_format")
+            email.shouldBeLeft().map { it.message } shouldBe listOf("validation.invalid_email")
         }
     }
 

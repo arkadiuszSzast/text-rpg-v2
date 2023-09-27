@@ -1,31 +1,26 @@
 package com.szastarek.text.rpg.event.store
 
-import com.eventstore.dbclient.EventStoreDBPersistentSubscriptionsClient
-import com.eventstore.dbclient.NackAction
-import com.eventstore.dbclient.PersistentSubscription
-import com.eventstore.dbclient.PersistentSubscriptionListener
-import com.eventstore.dbclient.ResolvedEvent
+import com.eventstore.dbclient.*
 import com.szastarek.text.rpg.monitoring.execute
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.opentelemetry.api.OpenTelemetry
 import io.opentelemetry.api.trace.SpanKind
 import io.opentelemetry.context.Context
 import io.opentelemetry.context.propagation.TextMapGetter
+import kotlinx.coroutines.*
 import kotlin.coroutines.CoroutineContext
-import kotlinx.coroutines.CompletableJob
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.future.await
-import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
+import java.util.concurrent.atomic.AtomicInteger
 
 class EventStoreDbSubscribeClient(
     private val client: EventStoreDBPersistentSubscriptionsClient,
     private val json: Json,
     private val openTelemetry: OpenTelemetry
-) : EventStoreSubscribeClient {
+) : EventStoreSubscribeClient, CoroutineScope {
     private val logger = KotlinLogging.logger {}
 
-    private val parent: CompletableJob = SupervisorJob()
+    private val parent: CompletableJob = Job()
     override val coroutineContext: CoroutineContext
         get() = parent
 
@@ -58,7 +53,8 @@ class EventStoreDbSubscribeClient(
         customerGroup: ConsumerGroup,
         options: PersistentSubscriptionOptions,
         listener: PersistentEventListener
-    ): PersistentSubscription {
+    ): PersistentSubscription = subscriptionContext.let { context ->
+
         val consumerGroupExists = client.getInfoToStream(
             streamName.value,
             customerGroup.value,
@@ -74,13 +70,13 @@ class EventStoreDbSubscribeClient(
             ).await()
         }
 
-        return client.subscribeToStream(
+        client.subscribeToStream(
             streamName.value,
             customerGroup.value,
             options.subscriptionOptions,
             object : PersistentSubscriptionListener() {
                 override fun onEvent(subscription: PersistentSubscription, retryCount: Int, event: ResolvedEvent) {
-                    launch {
+                    launch(context + SupervisorJob()) {
                         runCatching {
                             listener(subscription, event)
                             if (options.autoAcknowledge) {
@@ -109,6 +105,9 @@ class EventStoreDbSubscribeClient(
 
                 override fun onError(subscription: PersistentSubscription?, throwable: Throwable) {
                     logger.error(throwable) { "Error on persisted subscription [${subscription?.subscriptionId}]" }
+                    launch(context + SupervisorJob()) {
+                        subscribeToPersistentStream(streamName, customerGroup, options, listener)
+                    }
                 }
             },
         ).await()
@@ -136,6 +135,12 @@ class EventStoreDbSubscribeClient(
             }
         }
     }
+
+    private val subscriptionContextCounter = AtomicInteger(0)
+
+    @OptIn(DelicateCoroutinesApi::class)
+    private val subscriptionContext: ExecutorCoroutineDispatcher
+        get() = newSingleThreadContext("EventStoreDB-subscription-context-${subscriptionContextCounter.incrementAndGet()}")
 
 }
 
