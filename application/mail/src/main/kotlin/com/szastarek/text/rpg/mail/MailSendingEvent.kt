@@ -2,6 +2,7 @@ package com.szastarek.text.rpg.mail
 
 import com.szastarek.text.rpg.event.store.*
 import kotlinx.datetime.Instant
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 
@@ -20,6 +21,7 @@ val MailSendingEvent.aggregateId: AggregateId
   get() = mail.id.asAggregateId()
 
 @Serializable
+@SerialName("MailSentEvent")
 data class MailSentEvent(override val mail: Mail, val sentAt: Instant) : MailSendingEvent {
   companion object {
     val eventType = EventType(MailSendingEvent.eventCategory, "sent")
@@ -35,6 +37,7 @@ data class MailSentEvent(override val mail: Mail, val sentAt: Instant) : MailSen
 }
 
 @Serializable
+@SerialName("MailSendingErrorEvent")
 data class MailSendingErrorEvent(
   override val mail: Mail,
   val failedAt: Instant,

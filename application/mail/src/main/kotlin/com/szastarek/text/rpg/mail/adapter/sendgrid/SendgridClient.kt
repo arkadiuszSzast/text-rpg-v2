@@ -10,6 +10,7 @@ import io.ktor.client.request.*
 import io.ktor.http.*
 import io.ktor.http.URLProtocol.Companion.HTTPS
 import io.ktor.serialization.kotlinx.json.*
+import kotlinx.serialization.json.Json
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation.Plugin as ClientContentNegotiation
 
 class SendgridClient(
@@ -20,7 +21,7 @@ class SendgridClient(
 
   private val httpClient = HttpClient(engine) {
     install(ClientContentNegotiation) {
-      json()
+      json(Json { ignoreUnknownKeys = true })
     }
     install(Logging) {
       logger = object : Logger {

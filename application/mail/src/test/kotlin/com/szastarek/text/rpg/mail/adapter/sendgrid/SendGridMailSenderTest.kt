@@ -1,6 +1,5 @@
 package com.szastarek.text.rpg.mail.adapter.sendgrid
 
-import arrow.core.nel
 import com.szastarek.text.rpg.event.store.*
 import com.szastarek.text.rpg.mail.*
 import com.szastarek.text.rpg.mail.config.SendGridProperties
@@ -25,6 +24,7 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromStream
 import org.litote.kmongo.newId
 import java.util.UUID
+import kotlinx.serialization.encodeToString
 
 @OptIn(ExperimentalSerializationApi::class)
 class SendGridMailSenderTest : DescribeSpec() {
@@ -49,7 +49,11 @@ class SendGridMailSenderTest : DescribeSpec() {
   private val mockEngine = MockEngine { request ->
     val decodedRequest = json.decodeFromStream<SendgridSendMailRequest>(request.body.toByteArray().inputStream())
     when {
-      decodedRequest.subject == "invalid-mail" -> respondBadRequest()
+      decodedRequest.getSubject() == "invalid-mail" -> respond(
+        json.encodeToString(SendgridErrorResponse(listOf(SendgridError("subject", "Invalid subject")))),
+        HttpStatusCode.BadRequest,
+        headers { append(HttpHeaders.ContentType, ContentType.Application.Json) }
+      )
       else -> respondOk()
     }
   }
@@ -101,13 +105,13 @@ class SendGridMailSenderTest : DescribeSpec() {
           templateId = MailTemplateId("test-template"),
           variables = MailVariables(emptyMap())
         )
-        val expectedEvents = listOf(MailSendingErrorEvent(mail, clock.now(), MailSendingError.Unknown.nel()))
+        val expectedEvents = listOf(MailSendingErrorEvent(mail, clock.now(), listOf(MailSendingError("Invalid subject"))))
 
         //act
         val result = sendgridMailSender.send(mail)
 
         //assert
-        result.shouldBeLeft(MailSendingError.Unknown.nel())
+        result.shouldBeLeft(listOf(MailSendingError("Invalid subject")))
         eventStore.readStreamByEventType(MailSendingErrorEvent.eventType, MailSendingErrorEvent::class) shouldBe expectedEvents
       }
 
@@ -140,4 +144,6 @@ class SendGridMailSenderTest : DescribeSpec() {
       }
     }
   }
+
+  private fun SendgridSendMailRequest.getSubject() = this.personalization.first().dynamicTemplateData["subject"]!!
 }

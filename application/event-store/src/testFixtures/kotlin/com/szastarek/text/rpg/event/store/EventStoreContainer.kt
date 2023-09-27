@@ -21,7 +21,7 @@ object EventStoreContainer {
     instance.start()
   }
 
-  private fun startEventStoreContainer() = GenericContainer("eventstore/eventstore:23.6.0-alpha-arm64v8")
+  private fun startEventStoreContainer() = GenericContainer("eventstore/eventstore:22.10.3-bionic")
     .apply {
       addExposedPorts(EVENT_STORE_DB_PORT)
       addEnv("EVENTSTORE_CLUSTER_SIZE", "1")
