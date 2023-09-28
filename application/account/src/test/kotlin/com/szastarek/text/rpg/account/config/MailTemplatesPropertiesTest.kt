@@ -1,6 +1,6 @@
 package com.szastarek.text.rpg.account.config
 
-import com.szastarek.text.rpg.account.plugin.accountModule
+import com.szastarek.text.rpg.account.plugin.accountConfigModule
 import com.szastarek.text.rpg.mail.MailSubject
 import com.szastarek.text.rpg.mail.MailTemplateId
 import com.szastarek.text.rpg.shared.email.EmailAddress
@@ -16,7 +16,7 @@ class MailTemplatesPropertiesTest : KoinTest, DescribeSpec() {
     private val mailTemplatesProperties by inject<MailTemplatesProperties>()
 
     init {
-        extensions(KoinExtension(accountModule))
+        extensions(KoinExtension(accountConfigModule))
 
         describe("MailTemplatesPropertiesTest") {
 

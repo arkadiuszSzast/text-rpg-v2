@@ -1,5 +1,4 @@
 val kediatr_version: String by project
-val opentelemetry_version: String by project
 
 dependencies {
     api("com.trendyol:kediatr-core:$kediatr_version")
@@ -7,5 +6,5 @@ dependencies {
 
     implementation(project(":application:monitoring"))
 
-    testImplementation("io.opentelemetry:opentelemetry-sdk-testing:$opentelemetry_version")
+    testImplementation(testFixtures(project(":application:test-utils")))
 }

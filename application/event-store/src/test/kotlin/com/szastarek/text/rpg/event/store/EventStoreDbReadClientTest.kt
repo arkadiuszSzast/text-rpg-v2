@@ -4,16 +4,11 @@ import com.eventstore.dbclient.EventDataBuilder
 import com.eventstore.dbclient.EventStoreDBClient
 import com.eventstore.dbclient.EventStoreDBConnectionString.parseOrThrow
 import com.szastarek.text.rpg.event.store.utils.EmailSent
+import com.szastarek.text.rpg.utils.InMemoryOpenTelemetry
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
-import io.opentelemetry.api.trace.propagation.W3CTraceContextPropagator
-import io.opentelemetry.context.propagation.ContextPropagators
-import io.opentelemetry.sdk.OpenTelemetrySdk
-import io.opentelemetry.sdk.testing.exporter.InMemorySpanExporter
-import io.opentelemetry.sdk.trace.SdkTracerProvider
-import io.opentelemetry.sdk.trace.export.SimpleSpanProcessor
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.litote.kmongo.id.serialization.IdKotlinXSerializationModule
@@ -21,16 +16,7 @@ import org.litote.kmongo.newId
 
 class EventStoreDbReadClientTest : DescribeSpec() {
 
-    private val spanExporter = InMemorySpanExporter.create()
-
-    private val tracerProvider = SdkTracerProvider.builder()
-        .addSpanProcessor(SimpleSpanProcessor.create(spanExporter))
-        .build()
-
-    private val openTelemetry = OpenTelemetrySdk.builder()
-        .setTracerProvider(tracerProvider)
-        .setPropagators(ContextPropagators.create(W3CTraceContextPropagator.getInstance()))
-        .build()
+    private val openTelemetry = InMemoryOpenTelemetry()
 
     private val json = Json { serializersModule = IdKotlinXSerializationModule }
 
@@ -39,7 +25,7 @@ class EventStoreDbReadClientTest : DescribeSpec() {
     private val eventStoreDbReadClient = EventStoreDbReadClient(
         eventStoreDbClient,
         json,
-        openTelemetry
+        openTelemetry.get()
     )
 
     init {
@@ -48,7 +34,7 @@ class EventStoreDbReadClientTest : DescribeSpec() {
 
             beforeTest {
                 EventStoreContainer.restart()
-                spanExporter.reset()
+                openTelemetry.reset()
             }
 
             it("should read stream in new span") {
@@ -67,7 +53,7 @@ class EventStoreDbReadClientTest : DescribeSpec() {
 
                 //assert
                 result shouldHaveSize 1
-                spanExporter.finishedSpanItems.single().name shouldBe "event_store read ${eventMetadata.streamName.value}"
+                openTelemetry.getFinishedSpans().single().name shouldBe "event_store read ${eventMetadata.streamName.value}"
             }
 
             it("should return empty list when stream does not exist") {

@@ -5,6 +5,7 @@ import com.szastarek.text.rpg.mail.*
 import com.szastarek.text.rpg.mail.config.SendGridProperties
 import com.szastarek.text.rpg.shared.anEmail
 import com.szastarek.text.rpg.utils.FixedClock
+import com.szastarek.text.rpg.utils.InMemoryOpenTelemetry
 import io.kotest.assertions.arrow.core.shouldBeLeft
 import io.kotest.assertions.arrow.core.shouldBeRight
 import io.kotest.core.spec.style.DescribeSpec
@@ -13,12 +14,6 @@ import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
 import io.ktor.client.engine.mock.*
 import io.ktor.http.*
-import io.opentelemetry.api.trace.propagation.W3CTraceContextPropagator
-import io.opentelemetry.context.propagation.ContextPropagators
-import io.opentelemetry.sdk.OpenTelemetrySdk
-import io.opentelemetry.sdk.testing.exporter.InMemorySpanExporter
-import io.opentelemetry.sdk.trace.SdkTracerProvider
-import io.opentelemetry.sdk.trace.export.SimpleSpanProcessor
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromStream
@@ -33,16 +28,7 @@ class SendGridMailSenderTest : DescribeSpec() {
 
   private val json = Json
 
-  private val spanExporter = InMemorySpanExporter.create()
-
-  private val tracerProvider = SdkTracerProvider.builder()
-    .addSpanProcessor(SimpleSpanProcessor.create(spanExporter))
-    .build()
-
-  private val openTelemetry = OpenTelemetrySdk.builder()
-    .setTracerProvider(tracerProvider)
-    .setPropagators(ContextPropagators.create(W3CTraceContextPropagator.getInstance()))
-    .build()
+  private val openTelemetry = InMemoryOpenTelemetry()
 
   private val sendGridProperties = SendGridProperties("sendgrid-api-key", "sendgrid.test.com")
 
@@ -62,14 +48,14 @@ class SendGridMailSenderTest : DescribeSpec() {
 
   private val eventStore = InMemoryEventStore()
 
-  private val sendgridMailSender = SendGridMailSender(sendgridClient, eventStore, openTelemetry, clock)
+  private val sendgridMailSender = SendGridMailSender(sendgridClient, eventStore, openTelemetry.get(), clock)
 
   init {
 
     describe("SendGridMailSenderTest") {
 
       beforeTest {
-        spanExporter.reset()
+        openTelemetry.reset()
         eventStore.clear()
       }
 
@@ -92,7 +78,7 @@ class SendGridMailSenderTest : DescribeSpec() {
         result.shouldBeRight(mail)
         eventStore.readStreamByEventType(MailSentEvent.eventType, MailSentEvent::class) shouldBe expectedEvents
 
-        spanExporter.finishedSpanItems.single().name shouldBe "send-mail"
+        openTelemetry.getFinishedSpans().single().name shouldBe "send-mail"
       }
 
       it("should append event about error") {

@@ -1,5 +1,6 @@
 package com.szastarek.text.rpg.mediator
 
+import com.szastarek.text.rpg.utils.InMemoryOpenTelemetry
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.shouldHaveSize
@@ -8,26 +9,17 @@ import io.kotest.matchers.maps.shouldContainKey
 import io.kotest.matchers.shouldBe
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.trace.StatusCode
-import io.opentelemetry.sdk.OpenTelemetrySdk
-import io.opentelemetry.sdk.testing.exporter.InMemorySpanExporter
-import io.opentelemetry.sdk.trace.SdkTracerProvider
-import io.opentelemetry.sdk.trace.export.SimpleSpanProcessor
 
 class TracingPipelineBehaviorTest : DescribeSpec({
 
-    val spanExporter = InMemorySpanExporter.create()
-    val tracerProvider = SdkTracerProvider
-        .builder()
-        .addSpanProcessor(SimpleSpanProcessor.create(spanExporter))
-        .build()
-    val openTelemetry = OpenTelemetrySdk.builder().setTracerProvider(tracerProvider).build()
+    val openTelemetry = InMemoryOpenTelemetry()
 
-    val tracingPipelineBehaviour = TracingPipelineBehavior(openTelemetry)
+    val tracingPipelineBehaviour = TracingPipelineBehavior(openTelemetry.get())
 
     describe("TracingPipelineBehaviorTest") {
 
         beforeTest {
-            spanExporter.reset()
+            openTelemetry.reset()
         }
 
         it("should execute Command within new span") {
@@ -37,9 +29,9 @@ class TracingPipelineBehaviorTest : DescribeSpec({
             }
 
             //assert
-            spanExporter.finishedSpanItems shouldHaveSize 1
+            openTelemetry.getFinishedSpans() shouldHaveSize 1
 
-            val span = spanExporter.finishedSpanItems.single()
+            val span = openTelemetry.getFinishedSpans().single()
             span.name shouldBe "SimpleCommand"
             span.attributes.asMap() shouldContain Pair(AttributeKey.stringKey("command"), "SimpleCommand")
             span.attributes.asMap() shouldContainKey AttributeKey.stringKey("requestId")
@@ -52,9 +44,9 @@ class TracingPipelineBehaviorTest : DescribeSpec({
             }
 
             //assert
-            spanExporter.finishedSpanItems shouldHaveSize 1
+            openTelemetry.getFinishedSpans() shouldHaveSize 1
 
-            val span = spanExporter.finishedSpanItems.single()
+            val span = openTelemetry.getFinishedSpans().single()
             span.name shouldBe "SimpleCommandWithResult"
             span.attributes.asMap() shouldContain Pair(AttributeKey.stringKey("command-with-result"), "SimpleCommandWithResult")
             span.attributes.asMap() shouldContainKey AttributeKey.stringKey("requestId")
@@ -67,9 +59,9 @@ class TracingPipelineBehaviorTest : DescribeSpec({
             }
 
             //assert
-            spanExporter.finishedSpanItems shouldHaveSize 1
+            openTelemetry.getFinishedSpans() shouldHaveSize 1
 
-            val span = spanExporter.finishedSpanItems.single()
+            val span = openTelemetry.getFinishedSpans().single()
             span.name shouldBe "SimpleNotification"
             span.attributes.asMap() shouldContain Pair(AttributeKey.stringKey("notification"), "SimpleNotification")
             span.attributes.asMap() shouldContainKey AttributeKey.stringKey("requestId")
@@ -82,9 +74,9 @@ class TracingPipelineBehaviorTest : DescribeSpec({
             }
 
             //assert
-            spanExporter.finishedSpanItems shouldHaveSize 1
+            openTelemetry.getFinishedSpans() shouldHaveSize 1
 
-            val span = spanExporter.finishedSpanItems.single()
+            val span = openTelemetry.getFinishedSpans().single()
             span.name shouldBe "SimpleQuery"
             span.attributes.asMap() shouldContain Pair(AttributeKey.stringKey("query"), "SimpleQuery")
             span.attributes.asMap() shouldContainKey AttributeKey.stringKey("requestId")
@@ -98,9 +90,9 @@ class TracingPipelineBehaviorTest : DescribeSpec({
                 }
             }
 
-            spanExporter.finishedSpanItems shouldHaveSize 1
+            openTelemetry.getFinishedSpans() shouldHaveSize 1
 
-            val span = spanExporter.finishedSpanItems.single()
+            val span = openTelemetry.getFinishedSpans().single()
             span.name shouldBe "SimpleCommand"
             span.attributes.asMap() shouldContain Pair(AttributeKey.stringKey("command"), "SimpleCommand")
             span.attributes.asMap() shouldContainKey AttributeKey.stringKey("requestId")

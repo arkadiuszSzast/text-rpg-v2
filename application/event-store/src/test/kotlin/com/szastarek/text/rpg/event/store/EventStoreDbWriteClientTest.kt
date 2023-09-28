@@ -7,16 +7,11 @@ import com.eventstore.dbclient.ReadStreamOptions
 import com.szastarek.text.rpg.event.store.utils.AccountCreated
 import com.szastarek.text.rpg.event.store.utils.AccountNameUpdated
 import com.szastarek.text.rpg.event.store.utils.EmailSent
+import com.szastarek.text.rpg.utils.InMemoryOpenTelemetry
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
-import io.opentelemetry.api.trace.propagation.W3CTraceContextPropagator
-import io.opentelemetry.context.propagation.ContextPropagators
-import io.opentelemetry.sdk.OpenTelemetrySdk
-import io.opentelemetry.sdk.testing.exporter.InMemorySpanExporter
-import io.opentelemetry.sdk.trace.SdkTracerProvider
-import io.opentelemetry.sdk.trace.export.SimpleSpanProcessor
 import kotlinx.coroutines.future.await
 import kotlinx.serialization.json.Json
 import org.litote.kmongo.id.serialization.IdKotlinXSerializationModule
@@ -24,16 +19,7 @@ import org.litote.kmongo.newId
 
 class EventStoreDbWriteClientTest : DescribeSpec() {
 
-  private val spanExporter = InMemorySpanExporter.create()
-
-  private val tracerProvider = SdkTracerProvider.builder()
-    .addSpanProcessor(SimpleSpanProcessor.create(spanExporter))
-    .build()
-
-  private val openTelemetry = OpenTelemetrySdk.builder()
-    .setTracerProvider(tracerProvider)
-    .setPropagators(ContextPropagators.create(W3CTraceContextPropagator.getInstance()))
-    .build()
+  private val openTelemetry = InMemoryOpenTelemetry()
 
   private val json = Json { serializersModule = IdKotlinXSerializationModule }
 
@@ -42,7 +28,7 @@ class EventStoreDbWriteClientTest : DescribeSpec() {
   private val eventStoreDbWriteClient = EventStoreDbWriteClient(
     eventStoreDbClient,
     json,
-    openTelemetry
+    openTelemetry.get()
   )
 
   init {
@@ -51,7 +37,7 @@ class EventStoreDbWriteClientTest : DescribeSpec() {
 
       beforeTest {
         EventStoreContainer.restart()
-        spanExporter.reset()
+        openTelemetry.reset()
       }
 
       it("should append event") {
@@ -100,7 +86,7 @@ class EventStoreDbWriteClientTest : DescribeSpec() {
         eventStoreDbWriteClient.appendToStream(accountCreatedEvent)
 
         //assert
-        spanExporter.finishedSpanItems.single().name shouldBe "event_store publish account-created"
+        openTelemetry.getFinishedSpans().single().name shouldBe "event_store publish account-created"
       }
 
       it("should append event with caused by") {
@@ -137,7 +123,7 @@ class EventStoreDbWriteClientTest : DescribeSpec() {
         eventStoreDbWriteClient.appendToStream(accountCreatedEvent)
 
         //assert
-        val span = spanExporter.finishedSpanItems.single()
+        val span = openTelemetry.getFinishedSpans().single()
         val accountCreatedMetadata = eventStoreDbClient.readStream(
           "account-${accountCreatedEvent.id}",
           ReadStreamOptions.get()

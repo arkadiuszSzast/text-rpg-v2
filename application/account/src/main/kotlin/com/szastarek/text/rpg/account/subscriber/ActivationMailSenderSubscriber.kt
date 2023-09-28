@@ -1,5 +1,6 @@
 package com.szastarek.text.rpg.account.subscriber
 
+import com.szastarek.text.rpg.account.activation.AccountActivationUrlProvider
 import com.szastarek.text.rpg.account.adapter.mail.ActivationAccountMailVariables
 import com.szastarek.text.rpg.account.config.MailTemplatesProperties
 import com.szastarek.text.rpg.account.event.AccountCreatedEvent
@@ -22,6 +23,7 @@ class ActivationMailSenderSubscriber(
   private val eventStoreSubscribeClient: EventStoreSubscribeClient,
   private val mailSender: MailSender,
   private val mailProperties: MailTemplatesProperties,
+  private val accountActivationUrlProvider: AccountActivationUrlProvider,
   private val json: Json
 ) : CoroutineScope {
 
@@ -40,7 +42,9 @@ class ActivationMailSenderSubscriber(
       val mailTemplateProperties = mailProperties.activateAccount
       val accountCreatedEvent = json.decodeFromStream<AccountCreatedEvent>(resolvedEvent.event.eventData.inputStream())
       val metadata = json.decodeFromStream<EventMetadata>(resolvedEvent.event.userMetadata.inputStream())
-      val mailVariables = ActivationAccountMailVariables("activationUrl").toMailVariables()
+
+      val activationUrl = accountActivationUrlProvider.provide(accountCreatedEvent.accountId)
+      val mailVariables = ActivationAccountMailVariables(activationUrl).toMailVariables()
       val mail = Mail(
         id = newId(),
         subject = mailTemplateProperties.subject,
