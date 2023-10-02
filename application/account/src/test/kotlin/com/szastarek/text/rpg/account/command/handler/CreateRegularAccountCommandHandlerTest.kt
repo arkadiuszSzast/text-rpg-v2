@@ -18,10 +18,10 @@ import org.litote.kmongo.Id
 
 class CreateRegularAccountCommandHandlerTest : DescribeSpec() {
 
-  private val fixedClock = FixedClock()
+  private val clock = FixedClock()
   private val eventStore = InMemoryEventStore()
   private val accountAggregateRepository = AccountAggregateEventStoreRepository(eventStore)
-  private val handler = CreateRegularAccountCommandHandler(accountAggregateRepository, eventStore, fixedClock)
+  private val handler = CreateRegularAccountCommandHandler(accountAggregateRepository, eventStore, clock)
 
   init {
 
@@ -68,7 +68,7 @@ class CreateRegularAccountCommandHandlerTest : DescribeSpec() {
     Roles.RegularUser.role,
     emptyList(),
     password,
-    fixedClock.now(),
+    clock.now(),
     timeZoneId
   )
 }

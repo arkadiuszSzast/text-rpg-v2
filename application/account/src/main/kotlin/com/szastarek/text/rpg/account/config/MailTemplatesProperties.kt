@@ -4,9 +4,19 @@ import com.szastarek.text.rpg.mail.MailSubject
 import com.szastarek.text.rpg.mail.MailTemplateId
 import com.szastarek.text.rpg.shared.email.EmailAddress
 
-data class MailTemplatesProperties(val activateAccount: MailTemplate)
+data class ActivateAccountMailProperties(
+  val templateId: MailTemplateId,
+  val sender: EmailAddress,
+  val subject: MailSubject
+)
 
-data class MailTemplate(
+data class ResetPasswordMailProperties(
+  val templateId: MailTemplateId,
+  val sender: EmailAddress,
+  val subject: MailSubject
+)
+
+data class InviteWorldCreatorMailProperties(
   val templateId: MailTemplateId,
   val sender: EmailAddress,
   val subject: MailSubject

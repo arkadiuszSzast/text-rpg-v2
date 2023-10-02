@@ -25,7 +25,12 @@ class LogInAccountCommandHandler(
     val loginResult = account.logIn(command.password)
 
     return loginResult.map {
-      val token = authTokenProvider.createToken(account.id.toAccountId(), account.role, account.customAuthorities)
+      val token = authTokenProvider.createToken(
+        account.id.toAccountId(),
+        account.emailAddress,
+        account.role,
+        account.customAuthorities
+      )
       LogInAccountCommandSuccessResult(token)
     }
   }

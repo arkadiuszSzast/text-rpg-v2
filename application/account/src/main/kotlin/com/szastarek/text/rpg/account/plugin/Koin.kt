@@ -1,14 +1,14 @@
 package com.szastarek.text.rpg.account.plugin
 
 import com.szastarek.text.rpg.account.AccountAggregateRepository
+import com.szastarek.text.rpg.account.activation.AccountActivationTokenVerifier
 import com.szastarek.text.rpg.account.activation.AccountActivationUrlProvider
 import com.szastarek.text.rpg.account.adapter.event.store.AccountAggregateEventStoreRepository
-import com.szastarek.text.rpg.account.command.handler.LogInAccountCommandHandler
-import com.szastarek.text.rpg.account.command.handler.CreateRegularAccountCommandHandler
-import com.szastarek.text.rpg.account.config.AccountActivationProperties
-import com.szastarek.text.rpg.account.config.MailTemplate
-import com.szastarek.text.rpg.account.config.MailTemplatesProperties
+import com.szastarek.text.rpg.account.command.handler.*
+import com.szastarek.text.rpg.account.config.*
 import com.szastarek.text.rpg.account.subscriber.ActivationMailSenderSubscriber
+import com.szastarek.text.rpg.account.world.creator.RegisterWorldCreatorTokenVerifier
+import com.szastarek.text.rpg.account.world.creator.WorldCreatorRegisterUrlProvider
 import com.szastarek.text.rpg.mail.MailSubject
 import com.szastarek.text.rpg.mail.MailTemplateId
 import com.szastarek.text.rpg.security.JwtIssuer
@@ -33,12 +33,24 @@ import kotlin.time.Duration.Companion.milliseconds
 
 internal val accountConfigModule = module {
   single {
-    MailTemplatesProperties(
-      MailTemplate(
-        MailTemplateId(getStringProperty(ConfigKey("mail.activateAccount.templateId"))),
-        EmailAddress(getStringProperty(ConfigKey("mail.activateAccount.sender"))).getOrThrow(),
-        MailSubject(getStringProperty(ConfigKey("mail.activateAccount.subject")))
-      )
+    ActivateAccountMailProperties(
+      MailTemplateId(getStringProperty(ConfigKey("mail.activateAccount.templateId"))),
+      EmailAddress(getStringProperty(ConfigKey("mail.activateAccount.sender"))).getOrThrow(),
+      MailSubject(getStringProperty(ConfigKey("mail.activateAccount.subject")))
+    )
+  }
+  single {
+    ResetPasswordMailProperties(
+      MailTemplateId(getStringProperty(ConfigKey("mail.resetPassword.templateId"))),
+      EmailAddress(getStringProperty(ConfigKey("mail.resetPassword.sender"))).getOrThrow(),
+      MailSubject(getStringProperty(ConfigKey("mail.resetPassword.subject")))
+    )
+  }
+  single {
+    InviteWorldCreatorMailProperties(
+      MailTemplateId(getStringProperty(ConfigKey("mail.inviteWorldCreator.templateId"))),
+      EmailAddress(getStringProperty(ConfigKey("mail.inviteWorldCreator.sender"))).getOrThrow(),
+      MailSubject(getStringProperty(ConfigKey("mail.inviteWorldCreator.subject")))
     )
   }
   single {
@@ -51,6 +63,23 @@ internal val accountConfigModule = module {
       )
     )
   }
+  single {
+    AccountResetPasswordProperties(
+      Url(getStringProperty(ConfigKey("resetPassword.url"))),
+      JwtIssuer(getStringProperty(ConfigKey("resetPassword.jwt.issuer"))),
+      getLongProperty(ConfigKey("resetPassword.jwt.expirationInMillis")).milliseconds
+    )
+  }
+  single {
+    WorldCreatorRegisterProperties(
+      Url(getStringProperty(ConfigKey("worldCreatorRegister.url"))),
+      JwtProperties(
+        JwtSecret(getStringProperty(ConfigKey("worldCreatorRegister.jwt.secret"))),
+        JwtIssuer(getStringProperty(ConfigKey("worldCreatorRegister.jwt.issuer"))),
+        getLongProperty(ConfigKey("worldCreatorRegister.jwt.expirationInMillis")).milliseconds
+      )
+    )
+  }
 }
 
 internal val accountModule = module {
@@ -59,6 +88,15 @@ internal val accountModule = module {
   singleOf(::AccountAggregateEventStoreRepository) bind AccountAggregateRepository::class
   singleOf(::ActivationMailSenderSubscriber) { createdAtStart() }
   singleOf(::AccountActivationUrlProvider)
+  singleOf(::ActivateAccountCommandHandler)
+  singleOf(::AccountActivationTokenVerifier)
+  singleOf(::SendResetPasswordCommandHandler)
+  singleOf(::ResetPasswordCommandHandler)
+  singleOf(::ChangePasswordCommandHandler)
+  singleOf(::WorldCreatorRegisterUrlProvider)
+  singleOf(::InviteWorldCreatorCommandHandler)
+  singleOf(::CreateWorldCreatorAccountCommandHandler)
+  singleOf(::RegisterWorldCreatorTokenVerifier)
 }
 
 internal fun Application.configureKoin() {

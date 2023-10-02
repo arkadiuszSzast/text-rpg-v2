@@ -49,7 +49,7 @@ class SendGridMailSender(
     val personalization = SendgridPersonalization(
       to = listOf(SendgridEmail(this.to.value)),
       subject = this.subject.value,
-      dynamicTemplateData = this.variables.variables
+      dynamicTemplateData = this.variables.values
     )
 
     return SendgridSendMailRequest(

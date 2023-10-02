@@ -4,5 +4,10 @@ import com.szastarek.text.rpg.mail.MailVariables
 import io.ktor.http.*
 
 data class ActivationAccountMailVariables(val activationUrl: Url) {
-  fun toMailVariables() = MailVariables(mapOf("activate_account_url" to activationUrl.toString()))
+
+  companion object Keys {
+    const val activateAccountUrl = "activate_account_url"
+  }
+
+  fun toMailVariables() = MailVariables(mapOf(activateAccountUrl to activationUrl.toString()))
 }

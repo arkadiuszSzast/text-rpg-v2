@@ -2,11 +2,11 @@ package com.szastarek.text.rpg.account.activation
 
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
-import com.szastarek.text.rpg.account.Account
 import com.szastarek.text.rpg.account.config.AccountActivationProperties
 import com.szastarek.text.rpg.security.JwtIssuer
 import com.szastarek.text.rpg.security.JwtProperties
 import com.szastarek.text.rpg.security.JwtSecret
+import com.szastarek.text.rpg.shared.anEmail
 import com.szastarek.text.rpg.utils.FixedClock
 import io.kotest.assertions.throwables.shouldNotThrowAny
 import io.kotest.core.spec.style.DescribeSpec
@@ -17,7 +17,6 @@ import io.kotest.matchers.string.shouldStartWith
 import io.ktor.http.*
 import kotlinx.datetime.Clock
 import kotlinx.datetime.toJavaInstant
-import org.litote.kmongo.newId
 import java.time.temporal.ChronoUnit
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -39,10 +38,10 @@ class AccountActivationUrlProviderTest : DescribeSpec({
     it("should provide activation url") {
       //arrange
       val jwtConfig = accountActivationProperties.jwtConfig
-      val accountId = newId<Account>()
+      val emailAddress = anEmail()
 
       //act
-      val result = accountActivationUrlProvider.provide(accountId)
+      val result = accountActivationUrlProvider.provide(emailAddress)
 
       result.toString().shouldStartWith(accountActivationProperties.activateAccountUrl.toString())
       result.parameters["token"].shouldNotBeNull().should {
@@ -51,7 +50,7 @@ class AccountActivationUrlProviderTest : DescribeSpec({
         shouldNotThrowAny {
           jwtVerifier.verify(decodedToken)
         }
-        decodedToken.subject shouldBe accountId.toString()
+        decodedToken.subject shouldBe emailAddress.value
         decodedToken.issuer shouldBe jwtConfig.issuer.value
         decodedToken.expiresAtAsInstant.shouldBe(
           clock.now().plus(jwtConfig.expiration).toJavaInstant().truncatedTo(ChronoUnit.SECONDS)

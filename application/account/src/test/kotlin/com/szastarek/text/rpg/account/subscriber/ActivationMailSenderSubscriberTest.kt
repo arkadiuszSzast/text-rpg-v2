@@ -5,8 +5,7 @@ import com.eventstore.dbclient.EventStoreDBConnectionString
 import com.eventstore.dbclient.EventStoreDBPersistentSubscriptionsClient
 import com.szastarek.text.rpg.account.activation.AccountActivationUrlProvider
 import com.szastarek.text.rpg.account.config.AccountActivationProperties
-import com.szastarek.text.rpg.account.config.MailTemplate
-import com.szastarek.text.rpg.account.config.MailTemplatesProperties
+import com.szastarek.text.rpg.account.config.ActivateAccountMailProperties
 import com.szastarek.text.rpg.account.event.AccountEvent
 import com.szastarek.text.rpg.account.support.anAccountCreatedEvent
 import com.szastarek.text.rpg.event.store.*
@@ -40,12 +39,10 @@ class ActivationMailSenderSubscriberTest : DescribeSpec() {
   )
   private val eventStoreSubscribeClient = EventStoreDbSubscribeClient(subscriptionClient, json, openTelemetry.get())
   private val mailSender = RecordingMailSender()
-  private val mailProperties = MailTemplatesProperties(
-    MailTemplate(
-      MailTemplateId("test-template"),
-      anEmail("test-sender@mail.com"),
-      MailSubject("test-subject")
-    )
+  private val mailProperties = ActivateAccountMailProperties(
+    MailTemplateId("test-template"),
+    anEmail("test-sender@mail.com"),
+    MailSubject("test-subject")
   )
   private val accountActivationProperties = AccountActivationProperties(
     activateAccountUrl = Url("http://test-host:3000/account/activate"),
@@ -91,7 +88,7 @@ class ActivationMailSenderSubscriberTest : DescribeSpec() {
         //assert
         await untilAsserted {
           mailSender.hasBeenSent {
-            it.to == event.emailAddress && it.subject == mailProperties.activateAccount.subject
+            it.to == event.emailAddress && it.subject == mailProperties.subject
           }.shouldBeTrue()
         }
       }

@@ -16,6 +16,7 @@ import org.awaitility.kotlin.await
 import org.awaitility.kotlin.untilAsserted
 import org.litote.kmongo.id.serialization.IdKotlinXSerializationModule
 import org.litote.kmongo.newId
+import java.util.UUID
 
 @OptIn(ExperimentalSerializationApi::class)
 class EventStoreDbSubscribeClientTest : DescribeSpec() {
@@ -61,7 +62,7 @@ class EventStoreDbSubscribeClientTest : DescribeSpec() {
         runBlocking {
           eventStoreDbSubscribeClient.subscribePersistentByEventCategory(
             eventMetadata.eventCategory,
-            ConsumerGroup("test")
+            ConsumerGroup(UUID.randomUUID().toString())
           ) { _, resolvedEvent ->
             val result = json.decodeFromStream<EmailSent>(resolvedEvent.event.eventData.inputStream())
             if (result == event) {
@@ -88,7 +89,7 @@ class EventStoreDbSubscribeClientTest : DescribeSpec() {
         runBlocking {
           eventStoreDbSubscribeClient.subscribePersistentByEventType(
             eventMetadata.eventType,
-            ConsumerGroup("test")
+            ConsumerGroup(UUID.randomUUID().toString())
           ) { _, resolvedEvent ->
             val result = json.decodeFromStream<EmailSent>(resolvedEvent.event.eventData.inputStream())
             if (result == event) {
@@ -116,7 +117,7 @@ class EventStoreDbSubscribeClientTest : DescribeSpec() {
         runBlocking {
           eventStoreDbSubscribeClient.subscribePersistentByEventType(
             eventMetadata.eventType,
-            ConsumerGroup("test"),
+            ConsumerGroup(UUID.randomUUID().toString()),
             PersistentSubscriptionOptions().maxRetries(3)
           ) { _, resolvedEvent ->
             if (attemptsCount.getAndIncrement() < 3) {
@@ -149,7 +150,7 @@ class EventStoreDbSubscribeClientTest : DescribeSpec() {
         runBlocking {
           eventStoreDbSubscribeClient.subscribePersistentByEventType(
             eventMetadata.eventType,
-            ConsumerGroup("test")
+            ConsumerGroup(UUID.randomUUID().toString())
           ) { _, resolvedEvent ->
             val result = json.decodeFromStream<EmailSent>(resolvedEvent.event.eventData.inputStream())
             if (result == event) {

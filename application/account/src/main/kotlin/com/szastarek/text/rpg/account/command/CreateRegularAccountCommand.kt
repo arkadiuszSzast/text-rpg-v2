@@ -21,7 +21,8 @@ typealias CreateRegularAccountCommandResult = Either<Nel<CreateAccountError>, Cr
 data class CreateRegularAccountCommand(
     val email: EmailAddress,
     val password: HashedPassword,
-    val timeZoneId: TimeZone) : CommandWithResult<CreateRegularAccountCommandResult> {
+    val timeZoneId: TimeZone
+) : CommandWithResult<CreateRegularAccountCommandResult> {
 
     companion object {
         operator fun invoke(email: String, password: String, timeZoneId: String) =

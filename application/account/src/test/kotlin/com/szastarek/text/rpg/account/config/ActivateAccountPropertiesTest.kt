@@ -4,9 +4,6 @@ import com.szastarek.text.rpg.account.plugin.accountConfigModule
 import com.szastarek.text.rpg.security.JwtIssuer
 import com.szastarek.text.rpg.security.JwtProperties
 import com.szastarek.text.rpg.security.JwtSecret
-import com.szastarek.text.rpg.shared.config.ConfigKey
-import com.szastarek.text.rpg.shared.config.getLongProperty
-import com.szastarek.text.rpg.shared.config.getStringProperty
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.koin.KoinExtension
 import io.kotest.matchers.shouldBe

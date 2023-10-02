@@ -4,6 +4,8 @@ import com.szastarek.text.rpg.acl.*
 import com.szastarek.text.rpg.acl.authority.AclResourceBelongsToAccountPredicate
 import com.szastarek.text.rpg.acl.authority.Authority
 import com.szastarek.text.rpg.acl.authority.authorities
+import com.szastarek.text.rpg.shared.email.EmailAddress
+import com.szastarek.text.rpg.shared.validate.getOrThrow
 
 data class StaticAccountContextProvider(private val accountContext: AccountContext) : AccountContextProvider {
     override suspend fun currentContext(): AccountContext {
@@ -15,6 +17,8 @@ val superUserAccount = object : AuthenticatedAccountContext {
 
     override val accountId: AccountId = AccountId("super-user-account")
 
+    override val email: EmailAddress = EmailAddress("super-user@mail.com").getOrThrow()
+
     override suspend fun getAuthorities(): List<Authority> = emptyList()
 
     override val role: Role = SuperUserRole
@@ -24,6 +28,8 @@ val accountWithoutAuthorities = object : AuthenticatedAccountContext {
 
     override val accountId: AccountId = AccountId("no-authorities-account")
 
+    override val email: EmailAddress = EmailAddress("no-authorities@mail.com").getOrThrow()
+
     override suspend fun getAuthorities(): List<Authority> = emptyList()
 
     override val role: Role = RegularRole("regular-user", emptyList())
@@ -32,6 +38,8 @@ val accountWithoutAuthorities = object : AuthenticatedAccountContext {
 val accountWithAllAuthorities = object : AuthenticatedAccountContext {
 
     override val accountId: AccountId = AccountId("all-authorities-account")
+
+    override val email: EmailAddress = EmailAddress("all-authorities@mail.com").getOrThrow()
 
     override suspend fun getAuthorities(): List<Authority> = authorities {
         featureAccess(sendEmailFeature)
@@ -50,6 +58,8 @@ val accountWithManageAuthority = object : AuthenticatedAccountContext {
 
     override val accountId: AccountId = AccountId("manage-authority-account")
 
+    override val email: EmailAddress = EmailAddress("managed-authorities@mail.com").getOrThrow()
+
     override suspend fun getAuthorities(): List<Authority> = authorities {
         featureAccess(sendEmailFeature)
         entityAccess<Dog>(Dog.aclResourceIdentifier) {
@@ -63,6 +73,8 @@ val accountWithManageAuthority = object : AuthenticatedAccountContext {
 val accountWithAllSpecialAuthorities = object : AuthenticatedAccountContext {
 
     override val accountId: AccountId = AccountId("all-special-authorities-account")
+
+    override val email: EmailAddress = EmailAddress("special-authorities@mail.com").getOrThrow()
 
     override suspend fun getAuthorities(): List<Authority> = authorities {
         featureAccess(sendEmailFeature)
@@ -80,6 +92,8 @@ val accountWithAllSpecialAuthorities = object : AuthenticatedAccountContext {
 val accountAllowedToModifyOnlyOwnedEntities = object : AuthenticatedAccountContext {
 
     override val accountId: AccountId = AccountId("modify-only-owned-entities-account")
+
+    override val email: EmailAddress = EmailAddress("owned-authorities@mail.com").getOrThrow()
 
     override suspend fun getAuthorities(): List<Authority> = authorities {
         featureAccess(sendEmailFeature)

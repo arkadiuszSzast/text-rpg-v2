@@ -2,7 +2,7 @@ package com.szastarek.text.rpg.account.subscriber
 
 import com.szastarek.text.rpg.account.activation.AccountActivationUrlProvider
 import com.szastarek.text.rpg.account.adapter.mail.ActivationAccountMailVariables
-import com.szastarek.text.rpg.account.config.MailTemplatesProperties
+import com.szastarek.text.rpg.account.config.ActivateAccountMailProperties
 import com.szastarek.text.rpg.account.event.AccountCreatedEvent
 import com.szastarek.text.rpg.event.store.ConsumerGroup
 import com.szastarek.text.rpg.event.store.EventMetadata
@@ -22,7 +22,7 @@ import kotlin.coroutines.CoroutineContext
 class ActivationMailSenderSubscriber(
   private val eventStoreSubscribeClient: EventStoreSubscribeClient,
   private val mailSender: MailSender,
-  private val mailProperties: MailTemplatesProperties,
+  private val mailTemplateProperties: ActivateAccountMailProperties,
   private val accountActivationUrlProvider: AccountActivationUrlProvider,
   private val json: Json
 ) : CoroutineScope {
@@ -39,11 +39,10 @@ class ActivationMailSenderSubscriber(
       AccountCreatedEvent.eventType,
       ConsumerGroup("activation-mail-sender")
     ) { _, resolvedEvent ->
-      val mailTemplateProperties = mailProperties.activateAccount
       val accountCreatedEvent = json.decodeFromStream<AccountCreatedEvent>(resolvedEvent.event.eventData.inputStream())
       val metadata = json.decodeFromStream<EventMetadata>(resolvedEvent.event.userMetadata.inputStream())
 
-      val activationUrl = accountActivationUrlProvider.provide(accountCreatedEvent.accountId)
+      val activationUrl = accountActivationUrlProvider.provide(accountCreatedEvent.emailAddress)
       val mailVariables = ActivationAccountMailVariables(activationUrl).toMailVariables()
       val mail = Mail(
         id = newId(),

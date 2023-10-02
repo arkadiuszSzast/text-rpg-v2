@@ -5,10 +5,13 @@ import arrow.core.NonEmptyList
 import arrow.core.raise.either
 import arrow.core.raise.ensureNotNull
 import arrow.core.raise.zipOrAccumulate
+import com.szastarek.text.rpg.account.event.AccountActivatedEvent
 import com.szastarek.text.rpg.account.event.AccountCreatedEvent
 import com.szastarek.text.rpg.account.event.AccountEvent
+import com.szastarek.text.rpg.account.event.AccountPasswordChangedEvent
 import com.szastarek.text.rpg.acl.Role
 import com.szastarek.text.rpg.acl.authority.Authority
+import com.szastarek.text.rpg.shared.Version
 import com.szastarek.text.rpg.shared.email.EmailAddress
 import com.szastarek.text.rpg.shared.password.HashedPassword
 import com.szastarek.text.rpg.shared.validate.ValidationError
@@ -27,6 +30,7 @@ class AccountAggregateBuilder {
   private var password: HashedPassword? = null
   private var createdAt: Instant? = null
   private var timeZone: TimeZone? = null
+  private var version: Version? = null
 
   fun apply(events: NonEmptyList<AccountEvent>): Either<ValidationErrors, AccountAggregate> {
     return events.fold(this) { acc, accountEvent -> acc.apply(accountEvent) }.build()
@@ -35,6 +39,8 @@ class AccountAggregateBuilder {
   private fun apply(event: AccountEvent): AccountAggregateBuilder {
     return when(event) {
       is AccountCreatedEvent -> applyAccountCreated(event)
+      is AccountActivatedEvent -> applyAccountActivatedEvent(event)
+      is AccountPasswordChangedEvent -> applyAccountPasswordChangedEvent(event)
     }
   }
 
@@ -48,6 +54,21 @@ class AccountAggregateBuilder {
       password = accountCreatedEvent.password
       createdAt = accountCreatedEvent.createdAt
       timeZone = accountCreatedEvent.timeZone
+      version = accountCreatedEvent.version
+    }
+  }
+
+  private fun applyAccountActivatedEvent(accountActivatedEvent: AccountActivatedEvent): AccountAggregateBuilder {
+    return this.apply {
+      status = AccountStatus.Active
+      version = accountActivatedEvent.version
+    }
+  }
+
+  private fun applyAccountPasswordChangedEvent(accountPasswordChangedEvent: AccountPasswordChangedEvent): AccountAggregateBuilder {
+    return this.apply {
+      password = accountPasswordChangedEvent.password
+      version = accountPasswordChangedEvent.version
     }
   }
 
@@ -61,7 +82,8 @@ class AccountAggregateBuilder {
       { ensureNotNull(password) { ValidationError(".password", "password_null") } },
       { ensureNotNull(createdAt) { ValidationError(".createdAt", "created_at_null") } },
       { ensureNotNull(timeZone) { ValidationError(".timeZone", "time_zone_null") } },
-      { accountIdN, emailAddressN, statusN, roleN, customAuthoritiesN, passwordN, createdAtN, timeZoneN ->
+      { ensureNotNull(version) { ValidationError(".version", "version_null") } },
+      { accountIdN, emailAddressN, statusN, roleN, customAuthoritiesN, passwordN, createdAtN, timeZoneN, versionN ->
         AccountAggregate(
           accountIdN,
           emailAddressN,
@@ -70,7 +92,8 @@ class AccountAggregateBuilder {
           customAuthoritiesN,
           passwordN,
           createdAtN,
-          timeZoneN
+          timeZoneN,
+          versionN
         )
       }
     )

@@ -9,6 +9,7 @@ dependencies {
     implementation(project(":application:mail"))
 
     testImplementation(testFixtures(project(":application:event-store")))
+    testImplementation(testFixtures(project(":application:acl")))
     testImplementation(testFixtures(project(":application:mail")))
     testImplementation(testFixtures(project(":application:test-utils")))
     testImplementation(testFixtures(project(":application:shared")))

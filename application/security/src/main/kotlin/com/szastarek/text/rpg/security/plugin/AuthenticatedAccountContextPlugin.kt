@@ -1,18 +1,13 @@
 package com.szastarek.text.rpg.security.plugin
 
-import com.szastarek.text.rpg.acl.AccountId
-import com.szastarek.text.rpg.acl.AnonymousAccountContext
-import com.szastarek.text.rpg.acl.AuthenticatedAccountContext
-import com.szastarek.text.rpg.acl.CoroutineAccountContext
-import com.szastarek.text.rpg.acl.CoroutineInjectedAuthorityContext
-import com.szastarek.text.rpg.acl.RegularRole
-import com.szastarek.text.rpg.acl.Role
-import com.szastarek.text.rpg.acl.SuperUserRole
+import com.szastarek.text.rpg.acl.*
 import com.szastarek.text.rpg.acl.authority.Authority
 import com.szastarek.text.rpg.acl.authority.mergeWith
 import com.szastarek.text.rpg.security.accountId
 import com.szastarek.text.rpg.security.customAuthorities
+import com.szastarek.text.rpg.security.emailAddress
 import com.szastarek.text.rpg.security.role
+import com.szastarek.text.rpg.shared.email.EmailAddress
 import io.ktor.server.application.ApplicationCallPipeline
 import io.ktor.server.application.BaseRouteScopedPlugin
 import io.ktor.server.application.call
@@ -43,6 +38,7 @@ class AuthenticatedAccountContextPlugin {
                     is JWTPrincipal -> {
                         val accountContext = object : AuthenticatedAccountContext {
                             override val accountId: AccountId = principal.accountId
+                            override val email: EmailAddress = principal.emailAddress
                             override suspend fun getAuthorities(): List<Authority> {
                                 val roleAuthorities = role.getAuthorities()
                                 val injectedAuthorities = coroutineContext[CoroutineInjectedAuthorityContext]?.authorities ?: emptyList()
@@ -67,12 +63,5 @@ class AuthenticatedAccountContextPlugin {
 
             return feature
         }
-    }
-}
-
-private fun Role.getAuthorities(): List<Authority> {
-    return when(this) {
-        is RegularRole -> this.authorities
-        is SuperUserRole -> emptyList()
     }
 }

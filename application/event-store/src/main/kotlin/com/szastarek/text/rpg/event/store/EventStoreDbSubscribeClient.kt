@@ -2,6 +2,7 @@ package com.szastarek.text.rpg.event.store
 
 import com.eventstore.dbclient.*
 import com.szastarek.text.rpg.monitoring.execute
+import com.szastarek.text.rpg.shared.retry
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.opentelemetry.api.OpenTelemetry
 import io.opentelemetry.api.trace.SpanKind
@@ -104,7 +105,9 @@ class EventStoreDbSubscribeClient(
         override fun onError(subscription: PersistentSubscription?, throwable: Throwable) {
           logger.error(throwable) { "Error on persisted subscription [${subscription?.subscriptionId}]" }
           launch(coroutineContext + SupervisorJob()) {
-            subscribeToPersistentStream(streamName, customerGroup, options, listener)
+            retry(100) {
+              subscribeToPersistentStream(streamName, customerGroup, options, listener)
+            }
           }
         }
       },

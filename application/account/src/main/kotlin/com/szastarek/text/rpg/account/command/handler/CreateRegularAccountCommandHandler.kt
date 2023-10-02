@@ -1,8 +1,8 @@
 package com.szastarek.text.rpg.account.command.handler
 
-import arrow.core.left
 import arrow.core.nel
-import arrow.core.right
+import arrow.core.raise.either
+import arrow.core.raise.ensure
 import com.szastarek.text.rpg.account.AccountAggregate
 import com.szastarek.text.rpg.account.AccountAggregateRepository
 import com.szastarek.text.rpg.account.command.CreateRegularAccountCommand
@@ -22,16 +22,13 @@ class CreateRegularAccountCommandHandler(
   private val eventStoreWriteClient: EventStoreWriteClient,
   private val clock: Clock
 ) : CommandWithResultHandler<CreateRegularAccountCommand, CreateRegularAccountCommandResult> {
-  override suspend fun handle(command: CreateRegularAccountCommand): CreateRegularAccountCommandResult {
-    val accountAlreadyExists = accountAggregateRepository.findByEmail(command.email)
-    if (accountAlreadyExists.isSome()) {
-      return CreateAccountError.EmailAlreadyTaken.nel().left()
-    }
+  override suspend fun handle(command: CreateRegularAccountCommand): CreateRegularAccountCommandResult = either {
+    ensure(accountAggregateRepository.findByEmail(command.email).isNone()) { CreateAccountError.EmailAlreadyTaken.nel() }
 
     val event = AccountAggregate.create(command.email, Roles.RegularUser.role, command.password, command.timeZoneId, clock)
 
     eventStoreWriteClient.appendToStream<AccountEvent>(event, event.revision())
 
-    return CreateRegularAccountCommandSuccessResult(event.accountId).right()
+    CreateRegularAccountCommandSuccessResult(event.accountId)
   }
 }

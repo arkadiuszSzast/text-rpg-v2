@@ -9,6 +9,8 @@ import com.szastarek.text.rpg.acl.Role
 import com.szastarek.text.rpg.acl.Roles
 import com.szastarek.text.rpg.acl.authority.Authority
 import com.szastarek.text.rpg.acl.authority.authorities
+import com.szastarek.text.rpg.shared.email.EmailAddress
+import com.szastarek.text.rpg.shared.validate.getOrThrow
 import io.kotest.core.spec.Spec
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
@@ -69,9 +71,10 @@ class AuthenticatedKtTest : KoinTest, DescribeSpec() {
             it("should return authenticated account info") {
                 //arrange
                 val accountId = AccountId("test-account")
+                val emailAddress = EmailAddress("test@mail.com").getOrThrow()
                 val role = Roles.RegularUser.role
                 val authorities = authorities { featureAccess(Feature("test-feature")) }
-                val token = authTokenProvider.createToken(accountId, role, authorities).value
+                val token = authTokenProvider.createToken(accountId, emailAddress, role, authorities).value
                 val expectedResponse = AccountInfoResponse(accountId, role, authorities)
 
                 //act
