@@ -10,6 +10,7 @@ import com.szastarek.text.rpg.account.config.ResetPasswordMailProperties
 import com.szastarek.text.rpg.event.store.*
 import com.szastarek.text.rpg.mail.MailSender
 import com.szastarek.text.rpg.mail.RecordingMailSender
+import com.szastarek.text.rpg.redis.RedisContainer
 import com.szastarek.text.rpg.shared.email.EmailAddress
 import io.kotest.core.spec.Spec
 import io.kotest.core.spec.style.DescribeSpec
@@ -27,11 +28,13 @@ import org.koin.dsl.module
 import org.koin.test.KoinTest
 import org.koin.test.get
 import org.koin.test.inject
+import org.redisson.api.RedissonClient
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation.Plugin as ClientContentNegotiation
 
 abstract class IntegrationTest : DescribeSpec(), KoinTest {
 
   private val recordingMailSender = RecordingMailSender()
+  private val redisClient by inject<RedissonClient>()
   private val activateAccountMailProperties by inject<ActivateAccountMailProperties>()
   private val resetPasswordMailProperties by inject<ResetPasswordMailProperties>()
   private val inviteWorldCreatorMailProperties by inject<InviteWorldCreatorMailProperties>()
@@ -39,7 +42,8 @@ abstract class IntegrationTest : DescribeSpec(), KoinTest {
   private val testApplication = withEnvironment(
     mapOf(
       "DOCUMENTATION_ENABLED" to "false",
-      "EVENT_STORE_CONNECTION_STRING" to EventStoreContainer.connectionString
+      "EVENT_STORE_CONNECTION_STRING" to EventStoreContainer.connectionString,
+      "REDIS_CONNECTION_STRING" to RedisContainer.connectionString
     ), OverrideMode.SetOrOverride
   ) {
     TestApplication {
@@ -65,6 +69,8 @@ abstract class IntegrationTest : DescribeSpec(), KoinTest {
   override suspend fun beforeEach(testCase: TestCase) {
     EventStoreContainer.restart()
     recordingMailSender.clear()
+    val redisKeys = redisClient.keys.keys
+    redisClient.keys.delete(*redisKeys.toList().toTypedArray())
     super.beforeTest(testCase)
   }
 

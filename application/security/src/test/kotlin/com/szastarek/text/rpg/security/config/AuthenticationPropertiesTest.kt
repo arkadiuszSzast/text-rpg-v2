@@ -6,6 +6,7 @@ import io.kotest.koin.KoinExtension
 import io.kotest.matchers.shouldBe
 import org.koin.test.KoinTest
 import org.koin.test.inject
+import kotlin.time.Duration.Companion.milliseconds
 
 class AuthenticationPropertiesTest : KoinTest, DescribeSpec() {
 
@@ -24,7 +25,7 @@ class AuthenticationPropertiesTest : KoinTest, DescribeSpec() {
                     jwtIssuer = "test-issuer",
                     jwtRealm = "test-realm",
                     jwtSecret = "test-secret",
-                    expirationInMillis = 10000
+                    authTokenExpiration = 10000.milliseconds
                 )
 
                 //act & assert

@@ -1,10 +1,15 @@
 package com.szastarek.text.rpg.account.adapter.rest
 
 import com.szastarek.text.rpg.account.adapter.rest.request.*
+import com.szastarek.text.rpg.account.adapter.rest.response.AccountDetailsResponse
 import com.szastarek.text.rpg.account.adapter.rest.response.LogInAccountResponse
+import com.szastarek.text.rpg.account.adapter.rest.response.RefreshTokenResponse
 import com.szastarek.text.rpg.account.command.*
+import com.szastarek.text.rpg.acl.AnonymousAccountContext
+import com.szastarek.text.rpg.acl.AuthenticatedAccountContext
 import com.szastarek.text.rpg.security.NotAuthenticatedException
 import com.szastarek.text.rpg.security.authenticated
+import com.szastarek.text.rpg.security.getAccountContext
 import com.szastarek.text.rpg.security.getAuthenticatedAccountContext
 import com.szastarek.text.rpg.shared.ValidationErrorHttpMessage
 import com.szastarek.text.rpg.shared.plugin.HttpCallsExceptionHandler
@@ -55,7 +60,18 @@ fun Application.configureAccountRouting() {
 
       result.fold(
         { call.respond(HttpStatusCode.Unauthorized) },
-        { call.respond(HttpStatusCode.OK, LogInAccountResponse(it.token.value)) }
+        { call.respond(HttpStatusCode.OK, LogInAccountResponse(it.authToken.value, it.refreshToken.value)) }
+      )
+    }
+
+    post("${AccountApi.v1}/refresh-token") {
+      val request = call.receive<RefreshTokenRequest>()
+      val command = RefreshAuthTokenCommand(request.accountEmail, request.refreshToken).getOrThrow()
+      val result = mediator.send(command)
+
+      result.fold(
+        { call.respond(HttpStatusCode.Unauthorized) },
+        { call.respond(HttpStatusCode.OK, RefreshTokenResponse(it.authToken.value, it.refreshToken.value)) }
       )
     }
 
@@ -109,6 +125,17 @@ fun Application.configureAccountRouting() {
     }
 
     authenticated {
+      get("${AccountApi.v1}/me") {
+        when(val accountContext = call.getAccountContext()) {
+          is AnonymousAccountContext -> call.respond(HttpStatusCode.Unauthorized)
+          is AuthenticatedAccountContext -> call.respond(AccountDetailsResponse(
+            accountContext.accountId.value,
+            accountContext.email.value,
+            accountContext.role
+          ))
+        }
+      }
+
       patch("${AccountApi.v1}/password") {
         val accountContext = call.getAuthenticatedAccountContext()
         val request = call.receive<ChangePasswordRequest>()
@@ -128,6 +155,14 @@ fun Application.configureAccountRouting() {
       post("${AccountApi.v1}/world-creator/invite") {
         val request = call.receive<InviteWorldCreatorRequest>()
         val command = InviteWorldCreatorCommand(request.email).getOrThrow()
+        mediator.send(command)
+
+        call.respond(HttpStatusCode.OK)
+      }
+
+      post("${AccountApi.v1}/resend-activation-mail") {
+        val request = call.receive<ResendActivationMailRequest>()
+        val command = ResendActivationMailCommand(request.email).getOrThrow()
         mediator.send(command)
 
         call.respond(HttpStatusCode.OK)

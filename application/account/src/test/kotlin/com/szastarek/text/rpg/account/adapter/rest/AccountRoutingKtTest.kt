@@ -2,6 +2,7 @@ package com.szastarek.text.rpg.account.adapter.rest
 
 import com.szastarek.text.rpg.account.AccountStatus
 import com.szastarek.text.rpg.account.adapter.rest.request.*
+import com.szastarek.text.rpg.account.adapter.rest.response.AccountDetailsResponse
 import com.szastarek.text.rpg.account.adapter.rest.response.LogInAccountResponse
 import com.szastarek.text.rpg.account.event.AccountCreatedEvent
 import com.szastarek.text.rpg.account.event.AccountEvent
@@ -20,6 +21,7 @@ import com.szastarek.text.rpg.shared.email.EmailAddress
 import com.szastarek.text.rpg.shared.validate.getOrThrow
 import io.kotest.matchers.booleans.shouldBeTrue
 import io.kotest.matchers.collections.shouldHaveSize
+import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
 import io.ktor.client.call.*
 import io.ktor.http.*
@@ -54,7 +56,7 @@ class AccountRoutingKtTest : IntegrationTest() {
         response.status shouldBe HttpStatusCode.OK
       }
 
-      it("should respond with 400 on invalid request") {
+      it("should respond with 400 on invalid create account request") {
         //arrange
         val invalidRequest = aCreateAccountRequest(email = "invalid-mail", password = "123", timeZone = "invalid")
 
@@ -160,6 +162,59 @@ class AccountRoutingKtTest : IntegrationTest() {
 
         //assert
         response.status.isSuccess().shouldBeTrue()
+      }
+
+      it("should resend activation mail") {
+        //arrange
+        val createSuperUserAccountRequest = aCreateAccountRequest()
+        createSuperUserAccount(createSuperUserAccountRequest)
+        val superUserAuthToken = getAuthToken(
+          LogInAccountRequest(createSuperUserAccountRequest.email, createSuperUserAccountRequest.password)
+        )
+        val createAccountRequest = aCreateAccountRequest()
+        client.createAccount(createAccountRequest).status.isSuccess().shouldBeTrue()
+
+        val resendActivationMailRequest = ResendActivationMailRequest(createAccountRequest.email)
+
+        //act
+        val response = client.resendActivationMail(resendActivationMailRequest, superUserAuthToken)
+
+        //assert
+        response.status.isSuccess().shouldBeTrue()
+      }
+
+      it("should refresh auth token") {
+        //arrange
+        val createAccountRequest = aCreateAccountRequest()
+        createAndActivateAccount(createAccountRequest)
+        val loginResponse = client.logIn(LogInAccountRequest(createAccountRequest.email, createAccountRequest.password))
+          .body<LogInAccountResponse>()
+
+        val request = RefreshTokenRequest(loginResponse.refreshToken, createAccountRequest.email)
+
+        //act
+        val response = client.refreshToken(request)
+
+        //assert
+        response.status.isSuccess().shouldBeTrue()
+      }
+
+      it("should return info about authorized account") {
+       //arrange
+        //arrange
+        val createAccountRequest = aCreateAccountRequest()
+        createAndActivateAccount(createAccountRequest)
+        val authToken = getAuthToken(LogInAccountRequest(createAccountRequest.email, createAccountRequest.password))
+
+        //act
+        val response = client.me(authToken)
+
+        //assert
+        response.status.isSuccess().shouldBeTrue()
+        response.body<AccountDetailsResponse>().should {
+          it.email shouldBe createAccountRequest.email
+          it.role shouldBe Roles.RegularUser.role
+        }
       }
     }
   }

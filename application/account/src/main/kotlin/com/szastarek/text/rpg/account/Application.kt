@@ -7,6 +7,7 @@ import com.szastarek.text.rpg.event.store.eventStoreModule
 import com.szastarek.text.rpg.mail.mailModule
 import com.szastarek.text.rpg.mediator.mediatorModule
 import com.szastarek.text.rpg.monitoring.monitoringModule
+import com.szastarek.text.rpg.redis.redisModule
 import com.szastarek.text.rpg.security.securityModule
 import com.szastarek.text.rpg.shared.sharedModule
 import io.ktor.server.application.Application
@@ -20,5 +21,6 @@ fun Application.accountModule() {
     eventStoreModule()
     mediatorModule()
     mailModule()
+    redisModule()
     configureAccountRouting()
 }

@@ -16,6 +16,7 @@ import org.koin.core.context.loadKoinModules
 import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.bind
 import org.koin.dsl.module
+import kotlin.time.Duration.Companion.milliseconds
 
 internal val securityModule = module {
     single {
@@ -24,7 +25,7 @@ internal val securityModule = module {
             jwtIssuer = getStringProperty(ConfigKey("authentication.jwt.issuer")),
             jwtRealm = getStringProperty(ConfigKey("authentication.jwt.realm")),
             jwtSecret = getStringProperty(ConfigKey("authentication.jwt.secret")),
-            expirationInMillis = getLongProperty(ConfigKey("authentication.jwt.expirationInMillis"))
+            authTokenExpiration = getLongProperty(ConfigKey("authentication.jwt.authExpirationInMillis")).milliseconds
         )
     }
     single {

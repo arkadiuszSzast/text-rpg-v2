@@ -30,6 +30,20 @@ internal suspend fun HttpClient.logIn(request: LogInAccountRequest): HttpRespons
     }
 }
 
+internal suspend fun HttpClient.refreshToken(request: RefreshTokenRequest): HttpResponse {
+    return post("${AccountApi.v1}/refresh-token") {
+        contentType(ContentType.Application.Json)
+        setBody(request)
+    }
+}
+
+internal suspend fun HttpClient.me(authToken: JwtToken): HttpResponse {
+    return get("${AccountApi.v1}/me") {
+        contentType(ContentType.Application.Json)
+        bearerAuth(authToken.value)
+    }
+}
+
 internal suspend fun HttpClient.forgotPassword(request: ForgotPasswordRequest): HttpResponse {
     return post("${AccountApi.v1}/password/forgot") {
         contentType(ContentType.Application.Json)
@@ -63,6 +77,14 @@ internal suspend fun HttpClient.inviteWorldCreator(request: InviteWorldCreatorRe
 internal suspend fun HttpClient.createWorldCreatorAccount(request: CreateWorldCreatorAccountRequest): HttpResponse {
     return post("${AccountApi.v1}/world-creator") {
         contentType(ContentType.Application.Json)
+        setBody(request)
+    }
+}
+
+internal suspend fun HttpClient.resendActivationMail(request: ResendActivationMailRequest, authToken: JwtToken): HttpResponse {
+    return post("${AccountApi.v1}/resend-activation-mail") {
+        contentType(ContentType.Application.Json)
+        bearerAuth(authToken.value)
         setBody(request)
     }
 }

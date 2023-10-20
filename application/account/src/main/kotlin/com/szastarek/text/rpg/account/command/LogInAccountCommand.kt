@@ -3,6 +3,7 @@ package com.szastarek.text.rpg.account.command
 import arrow.core.Either
 import arrow.core.Nel
 import arrow.core.raise.either
+import com.szastarek.text.rpg.account.RefreshToken
 import com.szastarek.text.rpg.security.JwtToken
 import com.szastarek.text.rpg.shared.MaskedString
 import com.szastarek.text.rpg.shared.email.EmailAddress
@@ -21,7 +22,7 @@ data class LogInAccountCommand(val emailAddress: EmailAddress, val password: Raw
   }
 }
 
-data class LogInAccountCommandSuccessResult(val token: JwtToken)
+data class LogInAccountCommandSuccessResult(val authToken: JwtToken, val refreshToken: RefreshToken)
 
 enum class LogInAccountError {
   InvalidPassword,

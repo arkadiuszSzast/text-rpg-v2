@@ -74,7 +74,7 @@ class AuthenticatedKtTest : KoinTest, DescribeSpec() {
                 val emailAddress = EmailAddress("test@mail.com").getOrThrow()
                 val role = Roles.RegularUser.role
                 val authorities = authorities { featureAccess(Feature("test-feature")) }
-                val token = authTokenProvider.createToken(accountId, emailAddress, role, authorities).value
+                val token = authTokenProvider.createAuthToken(accountId, emailAddress, role, authorities).value
                 val expectedResponse = AccountInfoResponse(accountId, role, authorities)
 
                 //act

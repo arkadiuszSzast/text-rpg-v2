@@ -1,9 +1,11 @@
 package com.szastarek.text.rpg.account.plugin
 
 import com.szastarek.text.rpg.account.AccountAggregateRepository
+import com.szastarek.text.rpg.account.RefreshTokenRepository
 import com.szastarek.text.rpg.account.activation.AccountActivationTokenVerifier
 import com.szastarek.text.rpg.account.activation.AccountActivationUrlProvider
 import com.szastarek.text.rpg.account.adapter.event.store.AccountAggregateEventStoreRepository
+import com.szastarek.text.rpg.account.adapter.redis.RefreshTokenRedisRepository
 import com.szastarek.text.rpg.account.command.handler.*
 import com.szastarek.text.rpg.account.config.*
 import com.szastarek.text.rpg.account.subscriber.ActivationMailSenderSubscriber
@@ -97,6 +99,9 @@ internal val accountModule = module {
   singleOf(::InviteWorldCreatorCommandHandler)
   singleOf(::CreateWorldCreatorAccountCommandHandler)
   singleOf(::RegisterWorldCreatorTokenVerifier)
+  singleOf(::ResendActivationMailCommandHandler)
+  singleOf(::RefreshTokenRedisRepository) bind RefreshTokenRepository::class
+  singleOf(::RefreshAuthTokenCommandHandler)
 }
 
 internal fun Application.configureKoin() {

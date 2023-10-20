@@ -13,6 +13,7 @@ val jbcrypt_version: String by project
 val kotest_arrow_version: String by project
 val kotlin_datetime_version: String by project
 val faker_version: String by project
+val redisson_version: String by project
 
 plugins {
     kotlin("jvm") version "1.9.10"
@@ -36,6 +37,7 @@ dependencies {
     kover(project(":application:acl"))
     kover(project(":application:mail"))
     kover(project(":application:event-store"))
+    kover(project(":application:redis"))
     kover(project(":application:test-utils"))
     kover(project(":application:account"))
     kover(project(":application:world"))
@@ -93,6 +95,7 @@ subprojects {
 
         testImplementation("io.insert-koin:koin-test:$koin_version")
         testImplementation("io.kotest.extensions:kotest-extensions-koin:${kotest_koin_version}")
+        testImplementation("io.kotest:kotest-property-jvm:$kotest_version")
         testImplementation("io.ktor:ktor-client-content-negotiation:$ktor_version")
 
         testImplementation("io.ktor:ktor-server-tests-jvm:$ktor_version")
