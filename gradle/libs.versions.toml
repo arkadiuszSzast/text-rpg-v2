@@ -1,6 +1,6 @@
 [versions]
 kotlin = "1.9.21"
-ktor = "2.3.4"
+ktor = "2.3.7"
 logback = "1.2.11"
 opentelemetry-logback = "1.9.2-alpha"
 kotest = "5.7.2"
