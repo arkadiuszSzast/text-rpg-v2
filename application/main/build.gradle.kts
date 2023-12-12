@@ -4,7 +4,7 @@ application {
 
 plugins {
     application
-    id("io.ktor.plugin") version "2.3.3"
+    id("io.ktor.plugin") version "2.3.7"
 }
 
 ktor {
