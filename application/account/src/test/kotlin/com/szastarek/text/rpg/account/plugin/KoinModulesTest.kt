@@ -5,7 +5,6 @@ import com.szastarek.text.rpg.event.store.EventStoreContainer
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.extensions.system.OverrideMode
 import io.kotest.extensions.system.withEnvironment
-import io.kotest.koin.KoinExtension
 import io.ktor.server.testing.*
 import org.koin.test.KoinTest
 import org.koin.test.check.checkModules
@@ -13,6 +12,8 @@ import org.koin.test.check.checkModules
 class KoinModulesTest : KoinTest, DescribeSpec() {
 
     init {
+
+        threads = 1
 
         describe("Account Koin module test") {
 

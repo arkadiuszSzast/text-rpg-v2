@@ -43,6 +43,8 @@ class EventStoreDbSubscribeClientTest : DescribeSpec() {
 
   init {
 
+    threads = 1
+
     describe("EventStoreDbSubscribeClientTest") {
 
       beforeTest {

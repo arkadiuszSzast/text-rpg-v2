@@ -64,6 +64,8 @@ class ActivationMailSenderSubscriberTest : DescribeSpec() {
 
   init {
 
+    threads = 1
+
     describe("ActivationMailSenderSubscriberTest") {
 
       beforeTest {

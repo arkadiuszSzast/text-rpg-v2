@@ -35,6 +35,8 @@ class EventStoreDbWriteClientTest : DescribeSpec() {
 
     describe("EventStoreDbWriteClientTest") {
 
+      threads = 1
+
       beforeTest {
         EventStoreContainer.restart()
         openTelemetry.reset()

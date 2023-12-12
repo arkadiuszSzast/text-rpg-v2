@@ -1,31 +1,23 @@
-val ktor_version: String by project
-val kotlin_version: String by project
-val logback_version: String by project
-val opentelemetry_logback_version: String by project
-val kotlin_logging_version: String by project
-val kotest_version: String by project
-val koin_version: String by project
-val kotest_koin_version: String by project
-val kmongo_version: String by project
-val awaitility_version: String by project
-val arrow_version: String by project
-val jbcrypt_version: String by project
-val kotest_arrow_version: String by project
-val kotlin_datetime_version: String by project
-val faker_version: String by project
-val redisson_version: String by project
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-    kotlin("jvm") version "1.9.21"
-    id("io.ktor.plugin") version "2.3.7"
-    id("org.jetbrains.kotlin.plugin.serialization") version "1.9.21"
-    id("org.sonarqube") version "4.4.1.3373"
-    id("org.jetbrains.kotlinx.kover") version "0.7.5"
+    alias(libs.plugins.kotlin.jvm)
+    alias(libs.plugins.ktor)
+    alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.sonarqube)
+    alias(libs.plugins.kover)
 }
 
 group = "com.szastarek"
 version = "0.0.1"
-java.sourceCompatibility = JavaVersion.VERSION_17
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_21
+}
+
+kotlin {
+    jvmToolchain(21)
+}
 
 dependencies {
     kover(project(":application:main"))
@@ -74,37 +66,38 @@ subprojects {
     apply(plugin = "org.gradle.java-test-fixtures")
 
     dependencies {
-        implementation("io.ktor:ktor-server-core-jvm:$ktor_version")
-        implementation("io.ktor:ktor-server-auth-jvm:$ktor_version")
-        implementation("io.ktor:ktor-server-auth-jwt-jvm:$ktor_version")
-        implementation("io.ktor:ktor-server-host-common-jvm:$ktor_version")
-        implementation("io.ktor:ktor-server-cors-jvm:$ktor_version")
-        implementation("io.ktor:ktor-server-content-negotiation-jvm:$ktor_version")
-        implementation("io.ktor:ktor-serialization-kotlinx-json-jvm:$ktor_version")
-        implementation("io.ktor:ktor-server-netty-jvm:$ktor_version")
-        implementation("ch.qos.logback:logback-classic:$logback_version")
-        implementation("io.arrow-kt:arrow-core:$arrow_version")
-        implementation("io.arrow-kt:arrow-fx-coroutines:$arrow_version")
-        implementation("org.mindrot:jbcrypt:$jbcrypt_version")
-        implementation("org.jetbrains.kotlinx:kotlinx-datetime:$kotlin_datetime_version")
+        implementation(rootProject.libs.ktor.server.core.jvm)
+        implementation(rootProject.libs.ktor.server.auth.jvm)
+        implementation(rootProject.libs.ktor.server.auth.jwt.jvm)
+        implementation(rootProject.libs.ktor.server.host.common.jvm)
+        implementation(rootProject.libs.ktor.server.cors.jvm)
+        implementation(rootProject.libs.ktor.server.content.negotiation.jvm)
+        implementation(rootProject.libs.ktor.serialization.kotlinx.json.jvm)
+        implementation(rootProject.libs.ktor.server.netty.jvm)
 
-        implementation("io.opentelemetry.instrumentation:opentelemetry-logback-1.0:$opentelemetry_logback_version")
-        implementation("io.insert-koin:koin-ktor:$koin_version")
-        implementation("org.litote.kmongo:kmongo-id-serialization:$kmongo_version")
-        implementation("io.github.oshai:kotlin-logging-jvm:$kotlin_logging_version")
+        implementation(rootProject.libs.logback.classic)
+        implementation(rootProject.libs.arrow.core)
+        implementation(rootProject.libs.arrow.coroutines)
+        implementation(rootProject.libs.jbcrypt)
+        implementation(rootProject.libs.kotlinx.datetime)
+        implementation(rootProject.libs.opentelemetry.logback)
+        implementation(rootProject.libs.koin.ktor)
+        implementation(rootProject.libs.kmongo.id.serialization)
+        implementation(rootProject.libs.kotlin.logging.jvm)
 
-        testImplementation("io.insert-koin:koin-test:$koin_version")
-        testImplementation("io.kotest.extensions:kotest-extensions-koin:${kotest_koin_version}")
-        testImplementation("io.kotest:kotest-property-jvm:$kotest_version")
-        testImplementation("io.ktor:ktor-client-content-negotiation:$ktor_version")
 
-        testImplementation("io.ktor:ktor-server-tests-jvm:$ktor_version")
-        testImplementation("org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version")
-        testImplementation("io.kotest:kotest-runner-junit5:$kotest_version")
-        testImplementation("io.kotest:kotest-assertions-core:$kotest_version")
-        testImplementation("io.kotest.extensions:kotest-assertions-arrow:$kotest_arrow_version")
-        testImplementation("org.awaitility:awaitility-kotlin:$awaitility_version")
-        testImplementation("io.github.serpro69:kotlin-faker:$faker_version")
+        testImplementation(rootProject.libs.koin.test)
+        testImplementation(rootProject.libs.kotest.extensions.koin)
+        testImplementation(rootProject.libs.kotest.property.jvm)
+        testImplementation(rootProject.libs.ktor.client.content.negotiation)
+
+        testImplementation(rootProject.libs.ktor.server.tests.jvm)
+        testImplementation(rootProject.libs.kotlin.test.junit)
+        testImplementation(rootProject.libs.kotest.runner.junit5)
+        testImplementation(rootProject.libs.kotest.assertions.core)
+        testImplementation(rootProject.libs.kotest.assertions.arrow)
+        testImplementation(rootProject.libs.awaitility)
+        testImplementation(rootProject.libs.faker)
     }
 
     tasks.withType<Test>().configureEach {

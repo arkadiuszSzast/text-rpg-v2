@@ -1,0 +1,82 @@
+[versions]
+kotlin = "1.9.21"
+ktor = "2.3.4"
+logback = "1.2.11"
+opentelemetry-logback = "1.9.2-alpha"
+kotest = "5.7.2"
+koin = "3.4.3"
+kotest-koin = "1.1.0"
+kmongo = "4.10.0"
+kotlin-logging = "5.1.0"
+kediatr = "3.0.0"
+grpc = "1.58.0"
+eventstore = "4.3.0"
+testcontainers = "1.19.0"
+awaitility = "4.2.0"
+arrow = "1.2.1"
+jbcrypt = "0.4"
+kotest-arrow = "1.3.3"
+kotlin-datetime = "0.4.1"
+faker = "1.14.0"
+redisson = "3.23.5"
+sonarqube = "4.2.1.3168"
+kover = "0.7.3"
+opentelemetry = "1.29.0"
+opentelemetry-ktor = "1.29.0-alpha"
+micrometer-otlp-registry = "1.11.3"
+
+[libraries]
+ktor-server-core-jvm = { module = "io.ktor:ktor-server-core-jvm", version.ref = "ktor" }
+ktor-server-auth-jvm = { module = "io.ktor:ktor-server-auth-jvm", version.ref = "ktor" }
+ktor-server-auth-jwt-jvm = { module = "io.ktor:ktor-server-auth-jwt-jvm", version.ref = "ktor" }
+ktor-server-host-common-jvm = { module = "io.ktor:ktor-server-host-common-jvm", version.ref = "ktor" }
+ktor-server-cors-jvm = { module = "io.ktor:ktor-server-cors-jvm", version.ref = "ktor" }
+ktor-server-netty-jvm = { module = "io.ktor:ktor-server-netty-jvm", version.ref = "ktor" }
+ktor-server-content-negotiation-jvm = { module = "io.ktor:ktor-server-content-negotiation-jvm", version.ref = "ktor" }
+ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
+ktor-client-logging = { module = "io.ktor:ktor-client-logging", version.ref = "ktor" }
+ktor-client-cio = { module = "io.ktor:ktor-client-cio", version.ref = "ktor" }
+ktor-server-swagger-jvm = { module = "io.ktor:ktor-server-swagger-jvm", version.ref = "ktor" }
+ktor-server-metrics-micrometer = { module = "io.ktor:ktor-server-metrics-micrometer", version.ref = "ktor" }
+ktor-server-call-logging-jvm = { module = "io.ktor:ktor-server-call-logging-jvm", version.ref = "ktor" }
+ktor-serialization-kotlinx-json-jvm = { module = "io.ktor:ktor-serialization-kotlinx-json-jvm", version.ref = "ktor" }
+
+logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
+arrow-core = { module = "io.arrow-kt:arrow-core", version.ref = "arrow" }
+arrow-coroutines = { module = "io.arrow-kt:arrow-fx-coroutines", version.ref = "arrow" }
+jbcrypt = { module = "org.mindrot:jbcrypt", version.ref = "jbcrypt" }
+kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlin-datetime" }
+koin-ktor = { module = "io.insert-koin:koin-ktor", version.ref = "koin" }
+kmongo-id-serialization = { module = "org.litote.kmongo:kmongo-id-serialization", version.ref = "kmongo" }
+kotlin-logging-jvm = { module = "io.github.oshai:kotlin-logging-jvm", version.ref = "kotlin-logging" }
+eventstore = { module = "com.eventstore:db-client-java", version.ref = "eventstore" }
+grpc-all = { module = "io.grpc:grpc-all", version.ref = "grpc" }
+kediatr-core = { module = "com.trendyol:kediatr-core", version.ref = "kediatr" }
+kediatr-koin = { module = "com.trendyol:kediatr-koin-starter", version.ref = "kediatr" }
+opentelemetry-ktor = { module = "io.opentelemetry.instrumentation:opentelemetry-ktor-2.0", version.ref = "opentelemetry-ktor" }
+opentelemetry-logback = { module = "io.opentelemetry.instrumentation:opentelemetry-logback-1.0", version.ref = "opentelemetry-logback" }
+opentelemetry-kotin = { module = "io.opentelemetry:opentelemetry-extension-kotlin", version.ref = "opentelemetry" }
+micrometer-registry-otlp = { module = "io.micrometer:micrometer-registry-otlp", version.ref = "micrometer-otlp-registry" }
+redisson = { module = "org.redisson:redisson", version.ref = "redisson" }
+
+koin-test = { module = "io.insert-koin:koin-test", version.ref = "koin" }
+kotest-extensions-koin = { module = "io.kotest.extensions:kotest-extensions-koin", version.ref = "kotest-koin" }
+kotest-property-jvm = { module = "io.kotest:kotest-property-jvm", version.ref = "kotest" }
+ktor-client-content-negotiation = { module = "io.ktor:ktor-client-content-negotiation", version.ref = "ktor" }
+ktor-server-tests-jvm = { module = "io.ktor:ktor-server-tests-jvm", version.ref = "ktor" }
+kotlin-test-junit = { module = "org.jetbrains.kotlin:kotlin-test-junit", version.ref = "kotlin" }
+kotest-runner-junit5 = { module = "io.kotest:kotest-runner-junit5", version.ref = "kotest" }
+kotest-assertions-core = { module = "io.kotest:kotest-assertions-core", version.ref = "kotest" }
+kotest-assertions-arrow = { module = "io.kotest.extensions:kotest-assertions-arrow", version.ref = "kotest-arrow" }
+awaitility = { module = "org.awaitility:awaitility-kotlin", version.ref = "awaitility" }
+faker = { module = "io.github.serpro69:kotlin-faker", version.ref = "faker" }
+opentelemetry-sdk-testing = { module = "io.opentelemetry:opentelemetry-sdk-testing", version.ref = "opentelemetry" }
+ktor-client-mock = { module = "io.ktor:ktor-client-mock", version.ref = "ktor" }
+testcontainers = { module = "org.testcontainers:testcontainers", version.ref = "testcontainers" }
+
+[plugins]
+kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+ktor = { id = "io.ktor.plugin", version.ref = "ktor" }
+kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+sonarqube = { id = "org.sonarqube", version.ref = "sonarqube" }
+kover = { id = "org.jetbrains.kotlinx.kover", version.ref = "kover" }

@@ -66,6 +66,8 @@ abstract class IntegrationTest : DescribeSpec(), KoinTest {
     }
   }
 
+  override fun threads(): Int = 1
+
   override suspend fun beforeEach(testCase: TestCase) {
     EventStoreContainer.restart()
     recordingMailSender.clear()

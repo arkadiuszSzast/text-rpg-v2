@@ -4,7 +4,7 @@ application {
 
 plugins {
     application
-    id("io.ktor.plugin") version "2.3.7"
+    alias(libs.plugins.ktor)
 }
 
 ktor {

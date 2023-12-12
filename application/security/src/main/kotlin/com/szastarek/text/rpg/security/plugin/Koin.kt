@@ -17,6 +17,7 @@ import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.bind
 import org.koin.dsl.module
 import kotlin.time.Duration.Companion.milliseconds
+import kotlinx.datetime.Clock
 
 internal val securityModule = module {
     single {
@@ -36,6 +37,7 @@ internal val securityModule = module {
     singleOf(::AuthTokenProvider)
     singleOf(::CoroutineAccountContextProvider) bind AccountContextProvider::class
     singleOf(::DefaultAuthorizedAccountAbilityProvider) bind AuthorizedAccountAbilityProvider::class
+    single { Clock.System } bind Clock::class
 }
 
 internal fun Application.configureKoin() {
