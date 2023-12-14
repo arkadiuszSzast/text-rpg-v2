@@ -12,6 +12,7 @@ import com.szastarek.text.rpg.mail.MailSender
 import com.szastarek.text.rpg.mail.RecordingMailSender
 import com.szastarek.text.rpg.redis.RedisContainer
 import com.szastarek.text.rpg.shared.email.EmailAddress
+import io.kotest.core.extensions.Extension
 import io.kotest.core.spec.Spec
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.core.test.TestCase
@@ -33,6 +34,8 @@ import io.ktor.client.plugins.contentnegotiation.ContentNegotiation.Plugin as Cl
 
 abstract class IntegrationTest : DescribeSpec(), KoinTest {
 
+  private val eventStoreContainer: EventStoreContainer = EventStoreContainerFactory.spawn()
+
   private val recordingMailSender = RecordingMailSender()
   private val redisClient by inject<RedissonClient>()
   private val activateAccountMailProperties by inject<ActivateAccountMailProperties>()
@@ -42,7 +45,7 @@ abstract class IntegrationTest : DescribeSpec(), KoinTest {
   private val testApplication = withEnvironment(
     mapOf(
       "DOCUMENTATION_ENABLED" to "false",
-      "EVENT_STORE_CONNECTION_STRING" to EventStoreContainer.connectionString,
+      "EVENT_STORE_CONNECTION_STRING" to eventStoreContainer.connectionString,
       "REDIS_CONNECTION_STRING" to RedisContainer.connectionString
     ), OverrideMode.SetOrOverride
   ) {
@@ -66,10 +69,11 @@ abstract class IntegrationTest : DescribeSpec(), KoinTest {
     }
   }
 
-  override fun threads(): Int = 1
+  override fun extensions(): List<Extension> {
+    return super.extensions() + EventStoreLifecycleListener(eventStoreContainer)
+  }
 
   override suspend fun beforeEach(testCase: TestCase) {
-    EventStoreContainer.restart()
     recordingMailSender.clear()
     val redisKeys = redisClient.keys.keys
     redisClient.keys.delete(*redisKeys.toList().toTypedArray())
@@ -82,11 +86,13 @@ abstract class IntegrationTest : DescribeSpec(), KoinTest {
   }
 
   fun getActivationToken(emailAddress: EmailAddress): String {
-    return await.untilNotNull { recordingMailSender.getAll()
+    return await.untilNotNull {
+      recordingMailSender.getAll()
       .lastOrNull { it.to == emailAddress && it.subject == activateAccountMailProperties.subject }
       ?.variables?.values
       ?.get(ActivationAccountMailVariables.activateAccountUrl)
-      ?.let { Url(it).parameters["token"] } }
+      ?.let { Url(it).parameters["token"] }
+    }
   }
 
   fun getResetPasswordToken(emailAddress: EmailAddress): String {

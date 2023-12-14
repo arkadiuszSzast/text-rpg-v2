@@ -67,6 +67,7 @@ class EventStoreDbSubscribeClient(
         customerGroup.value,
         options.createPersistentSubscriptionToStreamOptions
       ).await()
+      logger.debug { "Stream group $customerGroup created." }
     }
 
     client.subscribeToStream(
@@ -102,7 +103,7 @@ class EventStoreDbSubscribeClient(
           }
         }
 
-        override fun onError(subscription: PersistentSubscription?, throwable: Throwable) {
+        override fun onCancelled(subscription: PersistentSubscription?, throwable: Throwable) {
           logger.error(throwable) { "Error on persisted subscription [${subscription?.subscriptionId}]" }
           launch(coroutineContext + SupervisorJob()) {
             retry(100) {

@@ -9,4 +9,5 @@ dependencies {
 
     testFixturesImplementation(libs.testcontainers)
     testFixturesImplementation(libs.koin.test)
+    testFixturesImplementation(libs.kotest.framework.api)
 }

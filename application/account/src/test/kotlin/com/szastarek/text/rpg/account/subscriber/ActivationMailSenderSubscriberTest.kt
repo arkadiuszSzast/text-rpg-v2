@@ -29,12 +29,14 @@ import kotlin.time.Duration.Companion.milliseconds
 
 class ActivationMailSenderSubscriberTest : DescribeSpec() {
 
+  private val eventStoreContainer: EventStoreContainer = EventStoreContainerFactory.spawn()
+
   private val clock = FixedClock()
   private val openTelemetry = InMemoryOpenTelemetry()
   private val json = Json { serializersModule = IdKotlinXSerializationModule; ignoreUnknownKeys = true }
   private val subscriptionClient = EventStoreDBPersistentSubscriptionsClient.create(
     EventStoreDBConnectionString.parseOrThrow(
-      EventStoreContainer.connectionString
+      eventStoreContainer.connectionString
     )
   )
   private val eventStoreSubscribeClient = EventStoreDbSubscribeClient(subscriptionClient, json, openTelemetry.get())
@@ -54,34 +56,31 @@ class ActivationMailSenderSubscriberTest : DescribeSpec() {
   )
   private val eventStoreDbClient = EventStoreDBClient.create(
     EventStoreDBConnectionString.parseOrThrow(
-      EventStoreContainer.connectionString
+      eventStoreContainer.connectionString
     )
   )
   private val eventStoreWriteClient = EventStoreDbWriteClient(eventStoreDbClient, json, openTelemetry.get())
   private val accountActivationUrlProvider = AccountActivationUrlProvider(accountActivationProperties, clock)
-  private lateinit var subscriber: ActivationMailSenderSubscriber
-
 
   init {
 
-    threads = 1
+    listener(EventStoreLifecycleListener(eventStoreContainer))
 
     describe("ActivationMailSenderSubscriberTest") {
 
       beforeTest {
-        EventStoreContainer.restart()
         openTelemetry.reset()
-        subscriber = ActivationMailSenderSubscriber(
+      }
+
+      it("should send mail on account created event") {
+        //arrange
+        ActivationMailSenderSubscriber(
           eventStoreSubscribeClient,
           mailSender,
           mailProperties,
           accountActivationUrlProvider,
           json
         )
-      }
-
-      it("should send mail on account created event") {
-        //arrange
         val event = anAccountCreatedEvent()
 
         //act

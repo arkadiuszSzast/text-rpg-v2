@@ -19,11 +19,13 @@ import org.litote.kmongo.newId
 
 class EventStoreDbWriteClientTest : DescribeSpec() {
 
+  private val eventStoreContainer: EventStoreContainer = EventStoreContainerFactory.spawn()
+
   private val openTelemetry = InMemoryOpenTelemetry()
 
   private val json = Json { serializersModule = IdKotlinXSerializationModule }
 
-  private val eventStoreDbClient = EventStoreDBClient.create(parseOrThrow(EventStoreContainer.connectionString))
+  private val eventStoreDbClient = EventStoreDBClient.create(parseOrThrow(eventStoreContainer.connectionString))
 
   private val eventStoreDbWriteClient = EventStoreDbWriteClient(
     eventStoreDbClient,
@@ -33,12 +35,11 @@ class EventStoreDbWriteClientTest : DescribeSpec() {
 
   init {
 
+    listener(EventStoreLifecycleListener(eventStoreContainer))
+
     describe("EventStoreDbWriteClientTest") {
 
-      threads = 1
-
       beforeTest {
-        EventStoreContainer.restart()
         openTelemetry.reset()
       }
 

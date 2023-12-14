@@ -106,7 +106,10 @@ internal val accountModule = module {
 
 internal fun Application.configureKoin() {
   if (GlobalContext.getOrNull() == null) {
-    install(Koin)
+    install(Koin) {
+      //TODO remove when Koin 3.5.2 would be released
+      GlobalContext.startKoin(this)
+    }
   }
   loadKoinModules(listOf(accountModule, accountConfigModule))
 }

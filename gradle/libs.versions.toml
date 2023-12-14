@@ -4,13 +4,14 @@ ktor = "2.3.7"
 logback = "1.4.14"
 opentelemetry-logback = "1.9.2-alpha"
 kotest = "5.8.0"
-koin = "3.4.3"
+koin = "3.5.1"
+koin-test = "3.5.0"
 kotest-koin = "1.3.0"
 kmongo = "4.11.0"
 kotlin-logging = "5.1.1"
 kediatr = "3.0.0"
 grpc = "1.60.0"
-eventstore = "4.3.0"
+eventstore = "5.2.0"
 testcontainers = "1.19.3"
 awaitility = "4.2.0"
 arrow = "1.2.1"
@@ -25,6 +26,7 @@ opentelemetry = "1.33.0"
 opentelemetry-ktor = "1.32.0-alpha"
 micrometer-otlp-registry = "1.12.1"
 spotless = "6.23.3"
+kotest-testcontainers = "2.0.2"
 
 [libraries]
 ktor-server-core-jvm = { module = "io.ktor:ktor-server-core-jvm", version.ref = "ktor" }
@@ -60,7 +62,7 @@ opentelemetry-kotin = { module = "io.opentelemetry:opentelemetry-extension-kotli
 micrometer-registry-otlp = { module = "io.micrometer:micrometer-registry-otlp", version.ref = "micrometer-otlp-registry" }
 redisson = { module = "org.redisson:redisson", version.ref = "redisson" }
 
-koin-test = { module = "io.insert-koin:koin-test", version.ref = "koin" }
+koin-test = { module = "io.insert-koin:koin-test", version.ref = "koin-test" }
 kotest-extensions-koin = { module = "io.kotest.extensions:kotest-extensions-koin", version.ref = "kotest-koin" }
 kotest-property-jvm = { module = "io.kotest:kotest-property-jvm", version.ref = "kotest" }
 ktor-client-content-negotiation = { module = "io.ktor:ktor-client-content-negotiation", version.ref = "ktor" }
@@ -74,6 +76,7 @@ faker = { module = "io.github.serpro69:kotlin-faker", version.ref = "faker" }
 opentelemetry-sdk-testing = { module = "io.opentelemetry:opentelemetry-sdk-testing", version.ref = "opentelemetry" }
 ktor-client-mock = { module = "io.ktor:ktor-client-mock", version.ref = "ktor" }
 testcontainers = { module = "org.testcontainers:testcontainers", version.ref = "testcontainers" }
+kotest-framework-api = { module = "io.kotest:kotest-framework-api", version.ref = "kotest" }
 
 [plugins]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }

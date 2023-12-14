@@ -6,6 +6,7 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.sonarqube)
     alias(libs.plugins.kover)
+    alias(libs.plugins.spotless)
 }
 
 group = "com.szastarek"

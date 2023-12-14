@@ -21,19 +21,21 @@ import java.util.UUID
 @OptIn(ExperimentalSerializationApi::class)
 class EventStoreDbSubscribeClientTest : DescribeSpec() {
 
+  private val eventStoreContainer: EventStoreContainer = EventStoreContainerFactory.spawn()
+
   private val openTelemetry = InMemoryOpenTelemetry()
 
   private val json = Json { serializersModule = IdKotlinXSerializationModule }
 
   private val eventStoreDbClient = EventStoreDBClient.create(
     EventStoreDBConnectionString.parseOrThrow(
-      EventStoreContainer.connectionString
+      eventStoreContainer.connectionString
     )
   )
 
   private val subscriptionClient = EventStoreDBPersistentSubscriptionsClient.create(
     EventStoreDBConnectionString.parseOrThrow(
-      EventStoreContainer.connectionString
+      eventStoreContainer.connectionString
     )
   )
 
@@ -43,13 +45,12 @@ class EventStoreDbSubscribeClientTest : DescribeSpec() {
 
   init {
 
-    threads = 1
+    listener(EventStoreLifecycleListener(eventStoreContainer))
 
     describe("EventStoreDbSubscribeClientTest") {
 
       beforeTest {
         openTelemetry.reset()
-        EventStoreContainer.restart()
       }
 
       it("should subscribe by event category and process event") {
