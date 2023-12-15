@@ -1,10 +1,23 @@
 package com.szastarek.text.rpg.account.support
 
 import com.szastarek.text.rpg.account.adapter.rest.AccountApi
-import com.szastarek.text.rpg.account.adapter.rest.request.*
+import com.szastarek.text.rpg.account.adapter.rest.request.ActivateAccountRequest
+import com.szastarek.text.rpg.account.adapter.rest.request.ChangePasswordRequest
+import com.szastarek.text.rpg.account.adapter.rest.request.CreateAccountRequest
+import com.szastarek.text.rpg.account.adapter.rest.request.CreateWorldCreatorAccountRequest
+import com.szastarek.text.rpg.account.adapter.rest.request.ForgotPasswordRequest
+import com.szastarek.text.rpg.account.adapter.rest.request.InviteWorldCreatorRequest
+import com.szastarek.text.rpg.account.adapter.rest.request.LogInAccountRequest
+import com.szastarek.text.rpg.account.adapter.rest.request.RefreshTokenRequest
+import com.szastarek.text.rpg.account.adapter.rest.request.ResendActivationMailRequest
+import com.szastarek.text.rpg.account.adapter.rest.request.ResetPasswordRequest
 import com.szastarek.text.rpg.security.JwtToken
 import io.ktor.client.HttpClient
-import io.ktor.client.request.*
+import io.ktor.client.request.bearerAuth
+import io.ktor.client.request.get
+import io.ktor.client.request.patch
+import io.ktor.client.request.post
+import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
 import io.ktor.http.ContentType
 import io.ktor.http.contentType

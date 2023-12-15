@@ -13,7 +13,7 @@ import com.szastarek.text.rpg.account.config.ResetPasswordMailProperties
 import com.szastarek.text.rpg.mail.Mail
 import com.szastarek.text.rpg.mail.MailSender
 import com.trendyol.kediatr.CommandWithResultHandler
-import io.ktor.http.*
+import io.ktor.http.URLBuilder
 import kotlinx.datetime.Clock
 import org.litote.kmongo.newId
 

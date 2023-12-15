@@ -28,7 +28,7 @@ import io.kotest.assertions.arrow.core.shouldBeSome
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
-import io.ktor.http.*
+import io.ktor.http.Url
 import kotlinx.datetime.Clock
 import kotlinx.datetime.toJavaInstant
 import kotlin.time.Duration.Companion.milliseconds

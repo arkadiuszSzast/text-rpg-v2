@@ -34,7 +34,7 @@ import io.kotest.property.Exhaustive
 import io.kotest.property.checkAll
 import io.kotest.property.exhaustive.enum
 import io.kotest.property.exhaustive.filter
-import io.ktor.http.*
+import io.ktor.http.Url
 import kotlinx.coroutines.withContext
 import kotlin.coroutines.coroutineContext
 import kotlin.time.Duration.Companion.milliseconds

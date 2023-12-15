@@ -1,6 +1,12 @@
 package com.szastarek.text.rpg.mail
 
-import com.szastarek.text.rpg.event.store.*
+import com.szastarek.text.rpg.event.store.AggregateId
+import com.szastarek.text.rpg.event.store.DomainEvent
+import com.szastarek.text.rpg.event.store.EventCategory
+import com.szastarek.text.rpg.event.store.EventMetadata
+import com.szastarek.text.rpg.event.store.EventMetadataBuilder
+import com.szastarek.text.rpg.event.store.EventType
+import com.szastarek.text.rpg.event.store.asAggregateId
 import kotlinx.datetime.Instant
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable

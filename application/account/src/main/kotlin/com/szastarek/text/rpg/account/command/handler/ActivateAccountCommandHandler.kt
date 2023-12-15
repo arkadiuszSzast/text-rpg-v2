@@ -1,7 +1,7 @@
 package com.szastarek.text.rpg.account.command.handler
 
-import arrow.core.*
 import arrow.core.raise.either
+import arrow.core.toEitherNel
 import com.szastarek.text.rpg.account.AccountAggregateRepository
 import com.szastarek.text.rpg.account.activation.AccountActivationTokenVerifier
 import com.szastarek.text.rpg.account.command.ActivateAccountCommand

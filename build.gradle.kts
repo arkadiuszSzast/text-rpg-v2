@@ -46,6 +46,13 @@ sonar {
     }
 }
 
+spotless {
+    kotlin {
+        target("/application/**/*.kt")
+        ktlint()
+    }
+}
+
 application {
     mainClass.set("io.ktor.server.netty.EngineMain")
 

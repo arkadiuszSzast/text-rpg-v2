@@ -21,7 +21,7 @@ import io.kotest.assertions.arrow.core.shouldBeRight
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.booleans.shouldBeTrue
 import io.kotest.matchers.collections.shouldBeEmpty
-import io.ktor.http.*
+import io.ktor.http.Url
 import kotlin.time.Duration.Companion.minutes
 
 class SendResetPasswordCommandHandlerTest : DescribeSpec() {

@@ -29,7 +29,7 @@ import io.kotest.assertions.arrow.core.shouldBeLeft
 import io.kotest.assertions.arrow.core.shouldBeRight
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.DescribeSpec
-import io.ktor.http.*
+import io.ktor.http.Url
 import kotlinx.coroutines.withContext
 import kotlin.time.Duration.Companion.milliseconds
 

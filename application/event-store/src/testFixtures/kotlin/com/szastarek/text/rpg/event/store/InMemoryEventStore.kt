@@ -1,6 +1,8 @@
 package com.szastarek.text.rpg.event.store
 
-import com.eventstore.dbclient.*
+import com.eventstore.dbclient.ExpectedRevision
+import com.eventstore.dbclient.Position
+import com.eventstore.dbclient.ReadStreamOptions
 import kotlin.reflect.KClass
 
 @Suppress("UNCHECKED_CAST")

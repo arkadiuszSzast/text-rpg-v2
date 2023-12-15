@@ -7,7 +7,9 @@ import com.szastarek.text.rpg.account.adapter.mail.ResetPasswordMailVariables
 import com.szastarek.text.rpg.account.config.ActivateAccountMailProperties
 import com.szastarek.text.rpg.account.config.InviteWorldCreatorMailProperties
 import com.szastarek.text.rpg.account.config.ResetPasswordMailProperties
-import com.szastarek.text.rpg.event.store.*
+import com.szastarek.text.rpg.event.store.EventStoreContainer
+import com.szastarek.text.rpg.event.store.EventStoreContainerFactory
+import com.szastarek.text.rpg.event.store.EventStoreLifecycleListener
 import com.szastarek.text.rpg.mail.MailSender
 import com.szastarek.text.rpg.mail.RecordingMailSender
 import com.szastarek.text.rpg.redis.RedisContainer
@@ -18,7 +20,7 @@ import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.core.test.TestCase
 import io.kotest.extensions.system.OverrideMode
 import io.kotest.extensions.system.withEnvironment
-import io.ktor.http.*
+import io.ktor.http.Url
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.testing.TestApplication
 import org.awaitility.kotlin.await

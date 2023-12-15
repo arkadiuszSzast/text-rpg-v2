@@ -8,7 +8,7 @@ import com.szastarek.text.rpg.redis.RedisContainer
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.extensions.system.OverrideMode
 import io.kotest.extensions.system.withEnvironment
-import io.ktor.server.testing.*
+import io.ktor.server.testing.TestApplication
 import org.koin.test.KoinTest
 import org.koin.test.check.checkModules
 

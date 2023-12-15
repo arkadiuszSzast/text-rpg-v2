@@ -14,7 +14,11 @@ import com.szastarek.text.rpg.account.command.ResetPasswordError
 import com.szastarek.text.rpg.account.event.AccountActivatedEvent
 import com.szastarek.text.rpg.account.event.AccountCreatedEvent
 import com.szastarek.text.rpg.account.event.AccountPasswordChangedEvent
-import com.szastarek.text.rpg.acl.*
+import com.szastarek.text.rpg.acl.AccountId
+import com.szastarek.text.rpg.acl.AclResource
+import com.szastarek.text.rpg.acl.AclResourceIdentifier
+import com.szastarek.text.rpg.acl.BelongsToAccount
+import com.szastarek.text.rpg.acl.Role
 import com.szastarek.text.rpg.acl.authority.Authority
 import com.szastarek.text.rpg.security.JwtIssuer
 import com.szastarek.text.rpg.security.JwtToken

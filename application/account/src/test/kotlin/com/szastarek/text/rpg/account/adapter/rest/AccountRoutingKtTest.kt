@@ -1,14 +1,34 @@
 package com.szastarek.text.rpg.account.adapter.rest
 
 import com.szastarek.text.rpg.account.AccountStatus
-import com.szastarek.text.rpg.account.adapter.rest.request.*
+import com.szastarek.text.rpg.account.adapter.rest.request.ActivateAccountRequest
+import com.szastarek.text.rpg.account.adapter.rest.request.ChangePasswordRequest
+import com.szastarek.text.rpg.account.adapter.rest.request.CreateAccountRequest
+import com.szastarek.text.rpg.account.adapter.rest.request.ForgotPasswordRequest
+import com.szastarek.text.rpg.account.adapter.rest.request.InviteWorldCreatorRequest
+import com.szastarek.text.rpg.account.adapter.rest.request.LogInAccountRequest
+import com.szastarek.text.rpg.account.adapter.rest.request.RefreshTokenRequest
+import com.szastarek.text.rpg.account.adapter.rest.request.ResendActivationMailRequest
+import com.szastarek.text.rpg.account.adapter.rest.request.ResetPasswordRequest
 import com.szastarek.text.rpg.account.adapter.rest.response.AccountDetailsResponse
 import com.szastarek.text.rpg.account.adapter.rest.response.LogInAccountResponse
 import com.szastarek.text.rpg.account.event.AccountCreatedEvent
 import com.szastarek.text.rpg.account.event.AccountEvent
-import com.szastarek.text.rpg.account.support.*
+import com.szastarek.text.rpg.account.support.IntegrationTest
+import com.szastarek.text.rpg.account.support.aCreateAccountRequest
+import com.szastarek.text.rpg.account.support.aCreateWorldCreatorAccountRequest
 import com.szastarek.text.rpg.account.support.activateAccount
+import com.szastarek.text.rpg.account.support.anAccountCreatedEvent
+import com.szastarek.text.rpg.account.support.changePassword
 import com.szastarek.text.rpg.account.support.createAccount
+import com.szastarek.text.rpg.account.support.createWorldCreatorAccount
+import com.szastarek.text.rpg.account.support.forgotPassword
+import com.szastarek.text.rpg.account.support.inviteWorldCreator
+import com.szastarek.text.rpg.account.support.logIn
+import com.szastarek.text.rpg.account.support.me
+import com.szastarek.text.rpg.account.support.refreshToken
+import com.szastarek.text.rpg.account.support.resendActivationMail
+import com.szastarek.text.rpg.account.support.resetPassword
 import com.szastarek.text.rpg.acl.Roles
 import com.szastarek.text.rpg.event.store.EventStoreWriteClient
 import com.szastarek.text.rpg.event.store.appendToStream
@@ -23,8 +43,9 @@ import io.kotest.matchers.booleans.shouldBeTrue
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
-import io.ktor.client.call.*
-import io.ktor.http.*
+import io.ktor.client.call.body
+import io.ktor.http.HttpStatusCode
+import io.ktor.http.isSuccess
 import org.koin.test.inject
 
 class AccountRoutingKtTest : IntegrationTest() {

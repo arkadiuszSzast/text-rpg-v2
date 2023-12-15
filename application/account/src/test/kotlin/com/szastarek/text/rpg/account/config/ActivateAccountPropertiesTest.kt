@@ -7,7 +7,7 @@ import com.szastarek.text.rpg.security.JwtSecret
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.koin.KoinExtension
 import io.kotest.matchers.shouldBe
-import io.ktor.http.*
+import io.ktor.http.Url
 import org.koin.test.KoinTest
 import org.koin.test.inject
 import kotlin.time.Duration.Companion.milliseconds

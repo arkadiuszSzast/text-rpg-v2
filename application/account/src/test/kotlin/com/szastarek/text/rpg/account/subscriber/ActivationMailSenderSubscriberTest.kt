@@ -8,7 +8,12 @@ import com.szastarek.text.rpg.account.config.AccountActivationProperties
 import com.szastarek.text.rpg.account.config.ActivateAccountMailProperties
 import com.szastarek.text.rpg.account.event.AccountEvent
 import com.szastarek.text.rpg.account.support.anAccountCreatedEvent
-import com.szastarek.text.rpg.event.store.*
+import com.szastarek.text.rpg.event.store.EventStoreContainer
+import com.szastarek.text.rpg.event.store.EventStoreContainerFactory
+import com.szastarek.text.rpg.event.store.EventStoreDbSubscribeClient
+import com.szastarek.text.rpg.event.store.EventStoreDbWriteClient
+import com.szastarek.text.rpg.event.store.EventStoreLifecycleListener
+import com.szastarek.text.rpg.event.store.appendToStream
 import com.szastarek.text.rpg.mail.MailSubject
 import com.szastarek.text.rpg.mail.MailTemplateId
 import com.szastarek.text.rpg.mail.RecordingMailSender
@@ -20,7 +25,7 @@ import com.szastarek.text.rpg.utils.FixedClock
 import com.szastarek.text.rpg.utils.InMemoryOpenTelemetry
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.booleans.shouldBeTrue
-import io.ktor.http.*
+import io.ktor.http.Url
 import kotlinx.serialization.json.Json
 import org.awaitility.kotlin.await
 import org.awaitility.kotlin.untilAsserted

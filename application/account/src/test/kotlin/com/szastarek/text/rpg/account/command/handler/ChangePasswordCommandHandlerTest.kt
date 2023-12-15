@@ -6,7 +6,7 @@ import com.szastarek.text.rpg.account.command.ChangePasswordError
 import com.szastarek.text.rpg.account.event.AccountEvent
 import com.szastarek.text.rpg.account.support.anAccountCreatedEvent
 import com.szastarek.text.rpg.account.support.toAccountContext
-import com.szastarek.text.rpg.acl.*
+import com.szastarek.text.rpg.acl.CoroutineAccountContext
 import com.szastarek.text.rpg.acl.authority.DefaultAuthorizedAccountAbilityProvider
 import com.szastarek.text.rpg.event.store.InMemoryEventStore
 import com.szastarek.text.rpg.security.CoroutineAccountContextProvider

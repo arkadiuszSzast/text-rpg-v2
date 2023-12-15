@@ -12,7 +12,7 @@ import com.szastarek.text.rpg.utils.FixedClock
 import io.kotest.assertions.arrow.core.shouldBeLeft
 import io.kotest.assertions.arrow.core.shouldBeRight
 import io.kotest.core.spec.style.DescribeSpec
-import io.ktor.http.*
+import io.ktor.http.Url
 import kotlinx.datetime.Clock
 import kotlinx.datetime.toJavaInstant
 import kotlin.time.Duration.Companion.hours

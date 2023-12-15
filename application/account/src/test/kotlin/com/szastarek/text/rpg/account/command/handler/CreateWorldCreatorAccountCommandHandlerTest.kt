@@ -26,7 +26,7 @@ import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
-import io.ktor.http.*
+import io.ktor.http.Url
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import org.litote.kmongo.Id

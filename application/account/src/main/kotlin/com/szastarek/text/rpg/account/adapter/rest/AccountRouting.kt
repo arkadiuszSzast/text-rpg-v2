@@ -1,10 +1,28 @@
 package com.szastarek.text.rpg.account.adapter.rest
 
-import com.szastarek.text.rpg.account.adapter.rest.request.*
+import com.szastarek.text.rpg.account.adapter.rest.request.ActivateAccountRequest
+import com.szastarek.text.rpg.account.adapter.rest.request.ChangePasswordRequest
+import com.szastarek.text.rpg.account.adapter.rest.request.CreateAccountRequest
+import com.szastarek.text.rpg.account.adapter.rest.request.CreateWorldCreatorAccountRequest
+import com.szastarek.text.rpg.account.adapter.rest.request.ForgotPasswordRequest
+import com.szastarek.text.rpg.account.adapter.rest.request.InviteWorldCreatorRequest
+import com.szastarek.text.rpg.account.adapter.rest.request.LogInAccountRequest
+import com.szastarek.text.rpg.account.adapter.rest.request.RefreshTokenRequest
+import com.szastarek.text.rpg.account.adapter.rest.request.ResendActivationMailRequest
+import com.szastarek.text.rpg.account.adapter.rest.request.ResetPasswordRequest
 import com.szastarek.text.rpg.account.adapter.rest.response.AccountDetailsResponse
 import com.szastarek.text.rpg.account.adapter.rest.response.LogInAccountResponse
 import com.szastarek.text.rpg.account.adapter.rest.response.RefreshTokenResponse
-import com.szastarek.text.rpg.account.command.*
+import com.szastarek.text.rpg.account.command.ActivateAccountCommand
+import com.szastarek.text.rpg.account.command.ChangePasswordCommand
+import com.szastarek.text.rpg.account.command.CreateRegularAccountCommand
+import com.szastarek.text.rpg.account.command.CreateWorldCreatorAccountCommand
+import com.szastarek.text.rpg.account.command.InviteWorldCreatorCommand
+import com.szastarek.text.rpg.account.command.LogInAccountCommand
+import com.szastarek.text.rpg.account.command.RefreshAuthTokenCommand
+import com.szastarek.text.rpg.account.command.ResendActivationMailCommand
+import com.szastarek.text.rpg.account.command.ResetPasswordCommand
+import com.szastarek.text.rpg.account.command.SendResetPasswordCommand
 import com.szastarek.text.rpg.acl.AnonymousAccountContext
 import com.szastarek.text.rpg.acl.AuthenticatedAccountContext
 import com.szastarek.text.rpg.security.NotAuthenticatedException
@@ -17,13 +35,16 @@ import com.szastarek.text.rpg.shared.validate.ValidationException
 import com.szastarek.text.rpg.shared.validate.getOrThrow
 import com.trendyol.kediatr.Mediator
 import io.ktor.http.HttpStatusCode
-import io.ktor.server.application.*
 import io.ktor.server.application.Application
 import io.ktor.server.application.call
+import io.ktor.server.application.install
 import io.ktor.server.request.receive
 import io.ktor.server.request.uri
 import io.ktor.server.response.respond
-import io.ktor.server.routing.*
+import io.ktor.server.routing.get
+import io.ktor.server.routing.patch
+import io.ktor.server.routing.post
+import io.ktor.server.routing.routing
 import org.koin.ktor.ext.inject
 
 fun Application.configureAccountRouting() {

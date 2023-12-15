@@ -14,7 +14,7 @@ import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldStartWith
-import io.ktor.http.*
+import io.ktor.http.Url
 import kotlinx.datetime.Clock
 import kotlinx.datetime.toJavaInstant
 import java.time.temporal.ChronoUnit

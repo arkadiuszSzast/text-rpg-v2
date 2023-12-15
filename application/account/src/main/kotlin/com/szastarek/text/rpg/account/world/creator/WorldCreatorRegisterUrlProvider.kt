@@ -6,7 +6,8 @@ import com.szastarek.text.rpg.account.config.WorldCreatorRegisterProperties
 import com.szastarek.text.rpg.security.JwtProperties
 import com.szastarek.text.rpg.security.JwtToken
 import com.szastarek.text.rpg.shared.email.EmailAddress
-import io.ktor.http.*
+import io.ktor.http.URLBuilder
+import io.ktor.http.Url
 import kotlinx.datetime.Clock
 import kotlinx.datetime.toJavaInstant
 

@@ -6,10 +6,15 @@ import arrow.core.right
 import com.szastarek.text.rpg.event.store.EventMetadata
 import com.szastarek.text.rpg.event.store.EventStoreWriteClient
 import com.szastarek.text.rpg.event.store.appendToStream
-import com.szastarek.text.rpg.mail.*
+import com.szastarek.text.rpg.mail.Mail
+import com.szastarek.text.rpg.mail.MailSender
+import com.szastarek.text.rpg.mail.MailSendingError
+import com.szastarek.text.rpg.mail.MailSendingErrorEvent
+import com.szastarek.text.rpg.mail.MailSendingEvent
+import com.szastarek.text.rpg.mail.MailSentEvent
 import com.szastarek.text.rpg.monitoring.execute
 import io.ktor.client.call.body
-import io.ktor.http.*
+import io.ktor.http.isSuccess
 import io.opentelemetry.api.OpenTelemetry
 import kotlinx.datetime.Clock
 

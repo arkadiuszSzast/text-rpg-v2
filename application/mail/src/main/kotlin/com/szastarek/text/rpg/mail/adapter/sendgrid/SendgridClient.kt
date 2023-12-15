@@ -2,14 +2,22 @@ package com.szastarek.text.rpg.mail.adapter.sendgrid
 
 import com.szastarek.text.rpg.mail.config.SendGridProperties
 import io.github.oshai.kotlinlogging.KotlinLogging
-import io.ktor.client.*
-import io.ktor.client.engine.*
-import io.ktor.client.plugins.*
-import io.ktor.client.plugins.logging.*
-import io.ktor.client.request.*
-import io.ktor.http.*
+import io.ktor.client.HttpClient
+import io.ktor.client.engine.HttpClientEngine
+import io.ktor.client.plugins.HttpRequestRetry
+import io.ktor.client.plugins.logging.LogLevel
+import io.ktor.client.plugins.logging.Logger
+import io.ktor.client.plugins.logging.Logging
+import io.ktor.client.request.bearerAuth
+import io.ktor.client.request.post
+import io.ktor.client.request.setBody
+import io.ktor.http.ContentType
+import io.ktor.http.HttpHeaders
 import io.ktor.http.URLProtocol.Companion.HTTPS
-import io.ktor.serialization.kotlinx.json.*
+import io.ktor.http.contentType
+import io.ktor.http.headers
+import io.ktor.http.path
+import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation.Plugin as ClientContentNegotiation
 
