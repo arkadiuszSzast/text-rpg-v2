@@ -44,13 +44,6 @@ sonar {
     }
 }
 
-spotless {
-    kotlin {
-        target("/application/**/*.kt")
-        ktlint().setEditorConfigPath("${project.rootDir}/spotless/.editorconfig")
-    }
-}
-
 application {
     mainClass.set("io.ktor.server.netty.EngineMain")
 
@@ -70,6 +63,14 @@ allprojects {
 subprojects {
     apply(plugin = "org.jetbrains.kotlin.plugin.serialization")
     apply(plugin = "org.gradle.java-test-fixtures")
+    apply(plugin = "com.diffplug.spotless")
+
+    spotless {
+        kotlin {
+            target("**/*.kt")
+            ktlint().setEditorConfigPath("${rootProject.rootDir}/spotless/.editorconfig")
+        }
+    }
 
     dependencies {
         implementation(rootProject.libs.ktor.server.core.jvm)
