@@ -10,23 +10,23 @@ import io.ktor.server.auth.jwt.JWTPrincipal
 import io.ktor.server.auth.jwt.jwt
 
 fun Application.configureAuthentication(authenticationProperties: AuthenticationProperties) {
-    installIfNotRegistered(Authentication) {
-        jwt {
-            realm = authenticationProperties.jwtRealm
-            verifier(
-                JWT
-                    .require(Algorithm.HMAC256(authenticationProperties.jwtSecret))
-                    .withAudience(authenticationProperties.jwtAudience)
-                    .withIssuer(authenticationProperties.jwtIssuer)
-                    .build()
-            )
-            validate { credential ->
-                if (credential.payload.audience.contains(authenticationProperties.jwtAudience)) {
-                    JWTPrincipal(credential.payload)
-                } else {
-                    null
-                }
-            }
-        }
-    }
+	installIfNotRegistered(Authentication) {
+		jwt {
+			realm = authenticationProperties.jwtRealm
+			verifier(
+				JWT
+					.require(Algorithm.HMAC256(authenticationProperties.jwtSecret))
+					.withAudience(authenticationProperties.jwtAudience)
+					.withIssuer(authenticationProperties.jwtIssuer)
+					.build(),
+			)
+			validate { credential ->
+				if (credential.payload.audience.contains(authenticationProperties.jwtAudience)) {
+					JWTPrincipal(credential.payload)
+				} else {
+					null
+				}
+			}
+		}
+	}
 }

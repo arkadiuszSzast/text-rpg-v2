@@ -26,87 +26,86 @@ import kotlinx.datetime.TimeZone
 import org.litote.kmongo.Id
 import org.litote.kmongo.newId
 
-
 private val faker = faker {}
 
 fun aCreateAccountRequest(
-  email: String = faker.internet.email(),
-  password: String = faker.random.randomString(8),
-  timeZone: String = TimeZone.availableZoneIds.random()
+	email: String = faker.internet.email(),
+	password: String = faker.random.randomString(8),
+	timeZone: String = TimeZone.availableZoneIds.random(),
 ) = CreateAccountRequest(
-  email,
-  MaskedString(password),
-  timeZone
+	email,
+	MaskedString(password),
+	timeZone,
 )
 
 fun aCreateRegularAccountCommand(
-  email: EmailAddress = anEmail(),
-  password: RawPassword = aRawPassword(),
-  timeZone: TimeZone = TimeZone.of(TimeZone.availableZoneIds.random())
+	email: EmailAddress = anEmail(),
+	password: RawPassword = aRawPassword(),
+	timeZone: TimeZone = TimeZone.of(TimeZone.availableZoneIds.random()),
 ) = CreateRegularAccountCommand(
-  email,
-  password.hashpw(),
-  timeZone
+	email,
+	password.hashpw(),
+	timeZone,
 )
 
 fun aCreateWorldCreatorAccountRequest(
-  email: String = faker.internet.email(),
-  password: String = faker.random.randomString(8),
-  timeZone: TimeZone = TimeZone.of(TimeZone.availableZoneIds.random()),
-  token: JwtToken
+	email: String = faker.internet.email(),
+	password: String = faker.random.randomString(8),
+	timeZone: TimeZone = TimeZone.of(TimeZone.availableZoneIds.random()),
+	token: JwtToken,
 ) = CreateWorldCreatorAccountRequest(
-  email,
-  password,
-  timeZone.id,
-  token.value
+	email,
+	password,
+	timeZone.id,
+	token.value,
 )
 
 fun anAccountCreatedEvent(
-  accountId: Id<Account> = newId(),
-  email: EmailAddress = anEmail(),
-  status: AccountStatus = faker.random.nextEnum(),
-  role: Role = faker.random.nextEnum<Roles>().role,
-  customAuthorities: List<Authority> = emptyList(),
-  password: RawPassword = aRawPassword(),
-  createdAt: Instant = Clock.System.now(),
-  timeZone: TimeZone = TimeZone.of(TimeZone.availableZoneIds.random())
+	accountId: Id<Account> = newId(),
+	email: EmailAddress = anEmail(),
+	status: AccountStatus = faker.random.nextEnum(),
+	role: Role = faker.random.nextEnum<Roles>().role,
+	customAuthorities: List<Authority> = emptyList(),
+	password: RawPassword = aRawPassword(),
+	createdAt: Instant = Clock.System.now(),
+	timeZone: TimeZone = TimeZone.of(TimeZone.availableZoneIds.random()),
 ) = AccountCreatedEvent(
-  accountId,
-  email,
-  status,
-  role,
-  customAuthorities,
-  password.hashpw(),
-  createdAt,
-  timeZone
+	accountId,
+	email,
+	status,
+	role,
+	customAuthorities,
+	password.hashpw(),
+	createdAt,
+	timeZone,
 )
 
 fun aLogInAccountCommand(
-  email: EmailAddress = anEmail(),
-  password: RawPassword = aRawPassword()
+	email: EmailAddress = anEmail(),
+	password: RawPassword = aRawPassword(),
 ) = LogInAccountCommand(
-  email,
-  password
+	email,
+	password,
 )
 
 fun anAccountAggregate(
-  id: Id<Account> = newId(),
-  emailAddress: EmailAddress = anEmail(),
-  status: AccountStatus = faker.random.nextEnum(),
-  role: Role = faker.random.nextEnum<Roles>().role,
-  customAuthorities: List<Authority> = emptyList(),
-  password: HashedPassword = aRawPassword().hashpw(),
-  createdAt: Instant = Clock.System.now(),
-  timeZone: TimeZone = TimeZone.of(TimeZone.availableZoneIds.random()),
-  version: Version = Version(faker.random.nextLong(10))
+	id: Id<Account> = newId(),
+	emailAddress: EmailAddress = anEmail(),
+	status: AccountStatus = faker.random.nextEnum(),
+	role: Role = faker.random.nextEnum<Roles>().role,
+	customAuthorities: List<Authority> = emptyList(),
+	password: HashedPassword = aRawPassword().hashpw(),
+	createdAt: Instant = Clock.System.now(),
+	timeZone: TimeZone = TimeZone.of(TimeZone.availableZoneIds.random()),
+	version: Version = Version(faker.random.nextLong(10)),
 ) = AccountAggregate(
-  id = id,
-  emailAddress = emailAddress,
-  status = status,
-  role = role,
-  customAuthorities = customAuthorities,
-  password = password,
-  createdAt = createdAt,
-  timeZone = timeZone,
-  version = version
+	id = id,
+	emailAddress = emailAddress,
+	status = status,
+	role = role,
+	customAuthorities = customAuthorities,
+	password = password,
+	createdAt = createdAt,
+	timeZone = timeZone,
+	version = version,
 )

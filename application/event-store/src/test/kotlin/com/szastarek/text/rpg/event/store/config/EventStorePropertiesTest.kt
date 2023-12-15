@@ -8,24 +8,24 @@ import org.koin.test.KoinTest
 import org.koin.test.inject
 
 class EventStorePropertiesTest : KoinTest, DescribeSpec() {
+	private val eventStoreProperties by inject<EventStoreProperties>()
 
-    private val eventStoreProperties by inject<EventStoreProperties>()
+	init {
 
-    init {
+		extensions(KoinExtension(eventStoreModule))
 
-        extensions(KoinExtension(eventStoreModule))
+		describe("EventStorePropertiesTest") {
 
-        describe("EventStorePropertiesTest") {
+			it("should pick correct values from application.conf") {
+				// arrange
+				val expected =
+					EventStoreProperties(
+						connectionString = "esdb://test-host:2113?tls=false",
+					)
 
-            it("should pick correct values from application.conf") {
-                //arrange
-                val expected = EventStoreProperties(
-                    connectionString = "esdb://test-host:2113?tls=false"
-                )
-
-                //act & assert
-                eventStoreProperties shouldBe expected
-            }
-        }
-    }
+				// act & assert
+				eventStoreProperties shouldBe expected
+			}
+		}
+	}
 }

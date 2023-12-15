@@ -49,226 +49,230 @@ import io.ktor.http.isSuccess
 import org.koin.test.inject
 
 class AccountRoutingKtTest : IntegrationTest() {
+	private val eventStoreWriteClient by inject<EventStoreWriteClient>()
 
-  private val eventStoreWriteClient by inject<EventStoreWriteClient>()
+	init {
 
-  init {
+		describe("AccountRoutingTest") {
 
-    describe("AccountRoutingTest") {
+			it("should create new account") {
+				// arrange & act
+				val response = client.createAccount(aCreateAccountRequest())
 
-      it("should create new account") {
-        //arrange & act
-        val response = client.createAccount(aCreateAccountRequest())
+				// assert
+				response.status shouldBe HttpStatusCode.OK
+			}
 
-        //assert
-        response.status shouldBe HttpStatusCode.OK
-      }
+			it("should respond with 200 even when account already exists") {
+				// arrange
+				val request = aCreateAccountRequest()
+				val existingAccountRequest = aCreateAccountRequest(email = request.email)
+				client.createAccount(request)
 
-      it("should respond with 200 even when account already exists") {
-        //arrange
-        val request = aCreateAccountRequest()
-        val existingAccountRequest = aCreateAccountRequest(email = request.email)
-        client.createAccount(request)
+				// act
+				val response = client.createAccount(existingAccountRequest)
 
-        //act
-        val response = client.createAccount(existingAccountRequest)
+				// assert
+				response.status shouldBe HttpStatusCode.OK
+			}
 
-        //assert
-        response.status shouldBe HttpStatusCode.OK
-      }
+			it("should respond with 400 on invalid create account request") {
+				// arrange
+				val invalidRequest = aCreateAccountRequest(email = "invalid-mail", password = "123", timeZone = "invalid")
 
-      it("should respond with 400 on invalid create account request") {
-        //arrange
-        val invalidRequest = aCreateAccountRequest(email = "invalid-mail", password = "123", timeZone = "invalid")
+				// act
+				val response = client.createAccount(invalidRequest)
 
-        //act
-        val response = client.createAccount(invalidRequest)
+				// assert
+				response.status shouldBe HttpStatusCode.BadRequest
+				response.body<ValidationErrorHttpMessage>().validationErrors shouldHaveSize 3
+			}
 
-        //assert
-        response.status shouldBe HttpStatusCode.BadRequest
-        response.body<ValidationErrorHttpMessage>().validationErrors shouldHaveSize 3
-      }
+			it("should activate account") {
+				// arrange
+				val createAccountRequest = aCreateAccountRequest()
+				client.createAccount(createAccountRequest)
+				val token = getActivationToken(EmailAddress(createAccountRequest.email).getOrThrow())
+				val activateAccountRequest = ActivateAccountRequest(token)
 
-      it("should activate account") {
-        //arrange
-        val createAccountRequest = aCreateAccountRequest()
-        client.createAccount(createAccountRequest)
-        val token = getActivationToken(EmailAddress(createAccountRequest.email).getOrThrow())
-        val activateAccountRequest = ActivateAccountRequest(token)
+				// act
+				val response = client.activateAccount(activateAccountRequest)
 
-        //act
-        val response = client.activateAccount(activateAccountRequest)
+				// assert
+				response.status shouldBe HttpStatusCode.OK
+			}
 
-        //assert
-        response.status shouldBe HttpStatusCode.OK
-      }
+			it("should reset password") {
+				// arrange
+				val createAccountRequest = aCreateAccountRequest()
+				val updatedPassword = aRawPassword()
+				createAndActivateAccount(createAccountRequest)
+				val forgotPasswordRequest = ForgotPasswordRequest(createAccountRequest.email)
 
-      it("should reset password") {
-        //arrange
-        val createAccountRequest = aCreateAccountRequest()
-        val updatedPassword = aRawPassword()
-        createAndActivateAccount(createAccountRequest)
-        val forgotPasswordRequest = ForgotPasswordRequest(createAccountRequest.email)
+				client.forgotPassword(forgotPasswordRequest).status.isSuccess().shouldBeTrue()
 
-        client.forgotPassword(forgotPasswordRequest).status.isSuccess().shouldBeTrue()
+				val resetPasswordToken = getResetPasswordToken(EmailAddress(createAccountRequest.email).getOrThrow())
 
-        val resetPasswordToken = getResetPasswordToken(EmailAddress(createAccountRequest.email).getOrThrow())
+				// act
+				val response =
+					client.resetPassword(
+						ResetPasswordRequest(
+							resetPasswordToken,
+							MaskedString(updatedPassword.value),
+						),
+					)
 
-        //act
-        val response = client.resetPassword(
-          ResetPasswordRequest(
-            resetPasswordToken,
-            MaskedString(updatedPassword.value)
-          )
-        )
+				// assert
+				response.status.isSuccess().shouldBeTrue()
 
-        //assert
-        response.status.isSuccess().shouldBeTrue()
+				// and should log in using updated password
+				client.logIn(LogInAccountRequest(createAccountRequest.email, MaskedString(updatedPassword.value)))
+					.status.isSuccess().shouldBeTrue()
+			}
 
-        //and should log in using updated password
-        client.logIn(LogInAccountRequest(createAccountRequest.email, MaskedString(updatedPassword.value)))
-          .status.isSuccess().shouldBeTrue()
-      }
+			it("should change password") {
+				// arrange
+				val createAccountRequest = aCreateAccountRequest()
+				val updatedPassword = aRawPassword()
+				createAndActivateAccount(createAccountRequest)
+				val authToken = getAuthToken(LogInAccountRequest(createAccountRequest.email, createAccountRequest.password))
 
-      it("should change password") {
-        //arrange
-        val createAccountRequest = aCreateAccountRequest()
-        val updatedPassword = aRawPassword()
-        createAndActivateAccount(createAccountRequest)
-        val authToken = getAuthToken(LogInAccountRequest(createAccountRequest.email, createAccountRequest.password))
+				val changePasswordRequest =
+					ChangePasswordRequest(
+						createAccountRequest.password,
+						MaskedString(updatedPassword.value),
+					)
 
-        val changePasswordRequest = ChangePasswordRequest(
-          createAccountRequest.password,
-          MaskedString(updatedPassword.value)
-        )
+				// act
+				val response = client.changePassword(changePasswordRequest, authToken)
 
-        //act
-        val response = client.changePassword(changePasswordRequest, authToken)
+				// assert
+				response.status.isSuccess().shouldBeTrue()
 
-        //assert
-        response.status.isSuccess().shouldBeTrue()
+				// and should log in using updated password
+				client.logIn(LogInAccountRequest(createAccountRequest.email, MaskedString(updatedPassword.value)))
+					.status.isSuccess().shouldBeTrue()
+			}
 
-        //and should log in using updated password
-        client.logIn(LogInAccountRequest(createAccountRequest.email, MaskedString(updatedPassword.value)))
-          .status.isSuccess().shouldBeTrue()
-      }
+			it("should invite world creator") {
+				// arrange
+				val createAccountRequest = aCreateAccountRequest()
+				createSuperUserAccount(createAccountRequest)
+				val request = InviteWorldCreatorRequest(anEmail().value)
+				val authToken = getAuthToken(LogInAccountRequest(createAccountRequest.email, createAccountRequest.password))
 
-      it("should invite world creator") {
-        //arrange
-        val createAccountRequest = aCreateAccountRequest()
-        createSuperUserAccount(createAccountRequest)
-        val request = InviteWorldCreatorRequest(anEmail().value)
-        val authToken = getAuthToken(LogInAccountRequest(createAccountRequest.email, createAccountRequest.password))
+				// act
+				val response = client.inviteWorldCreator(request, authToken)
 
-        //act
-        val response = client.inviteWorldCreator(request, authToken)
+				// assert
+				response.status.isSuccess().shouldBeTrue()
+			}
 
-        //assert
-        response.status.isSuccess().shouldBeTrue()
-      }
+			it("should create world creator account") {
+				// arrange
+				val email = anEmail()
+				val password = aRawPassword()
+				val token = inviteWorldCreatorReturningToken(email)
+				val request =
+					aCreateWorldCreatorAccountRequest(
+						email = email.value,
+						password = password.value,
+						token = token,
+					)
 
-      it("should create world creator account") {
-        //arrange
-        val email = anEmail()
-        val password = aRawPassword()
-        val token = inviteWorldCreatorReturningToken(email)
-        val request = aCreateWorldCreatorAccountRequest(
-          email = email.value,
-          password = password.value,
-          token = token
-        )
+				// act
+				val response = client.createWorldCreatorAccount(request)
 
-        //act
-        val response = client.createWorldCreatorAccount(request)
+				// assert
+				response.status.isSuccess().shouldBeTrue()
+			}
 
-        //assert
-        response.status.isSuccess().shouldBeTrue()
-      }
+			it("should resend activation mail") {
+				// arrange
+				val createSuperUserAccountRequest = aCreateAccountRequest()
+				createSuperUserAccount(createSuperUserAccountRequest)
+				val superUserAuthToken =
+					getAuthToken(
+						LogInAccountRequest(createSuperUserAccountRequest.email, createSuperUserAccountRequest.password),
+					)
+				val createAccountRequest = aCreateAccountRequest()
+				client.createAccount(createAccountRequest).status.isSuccess().shouldBeTrue()
 
-      it("should resend activation mail") {
-        //arrange
-        val createSuperUserAccountRequest = aCreateAccountRequest()
-        createSuperUserAccount(createSuperUserAccountRequest)
-        val superUserAuthToken = getAuthToken(
-          LogInAccountRequest(createSuperUserAccountRequest.email, createSuperUserAccountRequest.password)
-        )
-        val createAccountRequest = aCreateAccountRequest()
-        client.createAccount(createAccountRequest).status.isSuccess().shouldBeTrue()
+				val resendActivationMailRequest = ResendActivationMailRequest(createAccountRequest.email)
 
-        val resendActivationMailRequest = ResendActivationMailRequest(createAccountRequest.email)
+				// act
+				val response = client.resendActivationMail(resendActivationMailRequest, superUserAuthToken)
 
-        //act
-        val response = client.resendActivationMail(resendActivationMailRequest, superUserAuthToken)
+				// assert
+				response.status.isSuccess().shouldBeTrue()
+			}
 
-        //assert
-        response.status.isSuccess().shouldBeTrue()
-      }
+			it("should refresh auth token") {
+				// arrange
+				val createAccountRequest = aCreateAccountRequest()
+				createAndActivateAccount(createAccountRequest)
+				val loginResponse =
+					client.logIn(LogInAccountRequest(createAccountRequest.email, createAccountRequest.password))
+						.body<LogInAccountResponse>()
 
-      it("should refresh auth token") {
-        //arrange
-        val createAccountRequest = aCreateAccountRequest()
-        createAndActivateAccount(createAccountRequest)
-        val loginResponse = client.logIn(LogInAccountRequest(createAccountRequest.email, createAccountRequest.password))
-          .body<LogInAccountResponse>()
+				val request = RefreshTokenRequest(loginResponse.refreshToken, createAccountRequest.email)
 
-        val request = RefreshTokenRequest(loginResponse.refreshToken, createAccountRequest.email)
+				// act
+				val response = client.refreshToken(request)
 
-        //act
-        val response = client.refreshToken(request)
+				// assert
+				response.status.isSuccess().shouldBeTrue()
+			}
 
-        //assert
-        response.status.isSuccess().shouldBeTrue()
-      }
+			it("should return info about authorized account") {
+				// arrange
+				// arrange
+				val createAccountRequest = aCreateAccountRequest()
+				createAndActivateAccount(createAccountRequest)
+				val authToken = getAuthToken(LogInAccountRequest(createAccountRequest.email, createAccountRequest.password))
 
-      it("should return info about authorized account") {
-       //arrange
-        //arrange
-        val createAccountRequest = aCreateAccountRequest()
-        createAndActivateAccount(createAccountRequest)
-        val authToken = getAuthToken(LogInAccountRequest(createAccountRequest.email, createAccountRequest.password))
+				// act
+				val response = client.me(authToken)
 
-        //act
-        val response = client.me(authToken)
+				// assert
+				response.status.isSuccess().shouldBeTrue()
+				response.body<AccountDetailsResponse>().should {
+					it.email shouldBe createAccountRequest.email
+					it.role shouldBe Roles.RegularUser.role
+				}
+			}
+		}
+	}
 
-        //assert
-        response.status.isSuccess().shouldBeTrue()
-        response.body<AccountDetailsResponse>().should {
-          it.email shouldBe createAccountRequest.email
-          it.role shouldBe Roles.RegularUser.role
-        }
-      }
-    }
-  }
+	private suspend fun createAndActivateAccount(createAccountRequest: CreateAccountRequest) {
+		client.createAccount(createAccountRequest).status.isSuccess().shouldBeTrue()
+		val token = getActivationToken(EmailAddress(createAccountRequest.email).getOrThrow())
+		val activateAccountRequest = ActivateAccountRequest(token)
+		client.activateAccount(activateAccountRequest).status.isSuccess().shouldBeTrue()
+	}
 
-  private suspend fun createAndActivateAccount(createAccountRequest: CreateAccountRequest) {
-    client.createAccount(createAccountRequest).status.isSuccess().shouldBeTrue()
-    val token = getActivationToken(EmailAddress(createAccountRequest.email).getOrThrow())
-    val activateAccountRequest = ActivateAccountRequest(token)
-    client.activateAccount(activateAccountRequest).status.isSuccess().shouldBeTrue()
-  }
+	private suspend fun getAuthToken(logInAccountRequest: LogInAccountRequest): JwtToken {
+		val response = client.logIn(logInAccountRequest)
+		response.status.isSuccess().shouldBeTrue()
+		return JwtToken(response.body<LogInAccountResponse>().authToken)
+	}
 
-  private suspend fun getAuthToken(logInAccountRequest: LogInAccountRequest): JwtToken {
-    val response = client.logIn(logInAccountRequest)
-    response.status.isSuccess().shouldBeTrue()
-    return JwtToken(response.body<LogInAccountResponse>().authToken)
-  }
+	private suspend fun createSuperUserAccount(createAccountRequest: CreateAccountRequest): AccountCreatedEvent {
+		return anAccountCreatedEvent(
+			email = EmailAddress(createAccountRequest.email).getOrThrow(),
+			password = aRawPassword(createAccountRequest.password.value),
+			status = AccountStatus.Active,
+			role = Roles.SuperUser.role,
+		).also { eventStoreWriteClient.appendToStream<AccountEvent>(it) }
+	}
 
-  private suspend fun createSuperUserAccount(createAccountRequest: CreateAccountRequest): AccountCreatedEvent {
-    return anAccountCreatedEvent(
-      email = EmailAddress(createAccountRequest.email).getOrThrow(),
-      password = aRawPassword(createAccountRequest.password.value),
-      status = AccountStatus.Active,
-      role = Roles.SuperUser.role
-    ).also { eventStoreWriteClient.appendToStream<AccountEvent>(it) }
-  }
+	private suspend fun inviteWorldCreatorReturningToken(emailAddress: EmailAddress): JwtToken {
+		val createSuperUserRequest = aCreateAccountRequest()
+		createSuperUserAccount(createSuperUserRequest)
+		val superUserAuthToken = getAuthToken(LogInAccountRequest(createSuperUserRequest.email, createSuperUserRequest.password))
+		val request = InviteWorldCreatorRequest(emailAddress.value)
+		client.inviteWorldCreator(request, superUserAuthToken).status.isSuccess().shouldBeTrue()
 
-  private suspend fun inviteWorldCreatorReturningToken(emailAddress: EmailAddress): JwtToken {
-    val createSuperUserRequest = aCreateAccountRequest()
-    createSuperUserAccount(createSuperUserRequest)
-    val superUserAuthToken = getAuthToken(LogInAccountRequest(createSuperUserRequest.email, createSuperUserRequest.password))
-    val request = InviteWorldCreatorRequest(emailAddress.value)
-    client.inviteWorldCreator(request, superUserAuthToken).status.isSuccess().shouldBeTrue()
-
-    return JwtToken(getRegisterWorldCreatorToken(emailAddress))
-  }
+		return JwtToken(getRegisterWorldCreatorToken(emailAddress))
+	}
 }

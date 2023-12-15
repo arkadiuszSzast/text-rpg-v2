@@ -6,28 +6,28 @@ import io.kotest.matchers.shouldBe
 
 class PasswordTest : DescribeSpec({
 
-    describe("PasswordTest") {
+	describe("PasswordTest") {
 
-        it("should hash password and compare") {
-            //arrange
-            val notHashedPassword = "Super_secret1!"
+		it("should hash password and compare") {
+			// arrange
+			val notHashedPassword = "Super_secret1!"
 
-            //act
-            val password = RawPassword(notHashedPassword).getOrNull()!!.hashpw()
+			// act
+			val password = RawPassword(notHashedPassword).getOrNull()!!.hashpw()
 
-            //assert
-            password.matches(RawPassword(notHashedPassword).getOrNull()!!) shouldBe true
-        }
+			// assert
+			password.matches(RawPassword(notHashedPassword).getOrNull()!!) shouldBe true
+		}
 
-        it("should return invalid when password is too short") {
-            // arrange && act
-            val password = RawPassword("short")
+		it("should return invalid when password is too short") {
+			// arrange && act
+			val password = RawPassword("short")
 
-            // assert
-            password.shouldBeLeft().map { it.message } shouldBe listOf(
-                "validation.password_too_short",
-            )
-        }
-    }
-
+			// assert
+			password.shouldBeLeft().map { it.message } shouldBe
+				listOf(
+					"validation.password_too_short",
+				)
+		}
+	}
 })

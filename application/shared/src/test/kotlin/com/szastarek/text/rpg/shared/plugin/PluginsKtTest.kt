@@ -8,41 +8,41 @@ import java.util.concurrent.atomic.AtomicInteger
 
 class PluginsKtTest : DescribeSpec({
 
+	describe("Plugins extensions") {
 
-    describe("Plugins extensions") {
+		val installCounter = AtomicInteger(0)
+		val testPlugin =
+			createApplicationPlugin("stateful-plugin") {
+				installCounter.incrementAndGet()
+			}
 
-        val installCounter = AtomicInteger(0)
-        val testPlugin = createApplicationPlugin("stateful-plugin") {
-            installCounter.incrementAndGet()
-        }
+		beforeTest {
+			installCounter.set(0)
+		}
 
-        beforeTest {
-            installCounter.set(0)
-        }
+		it("should install plugin") {
+			// arrange && act
+			TestApplication {
+				application {
+					installIfNotRegistered(testPlugin)
+				}
+			}.start()
 
-        it("should install plugin") {
-            //arrange && act
-            TestApplication {
-                application {
-                    installIfNotRegistered(testPlugin)
-                }
-            }.start()
+			// assert
+			installCounter.get() shouldBe 1
+		}
 
-            //assert
-            installCounter.get() shouldBe 1
-        }
+		it("should not install plugin if already registered") {
+			// arrange && act
+			TestApplication {
+				application {
+					installIfNotRegistered(testPlugin)
+					installIfNotRegistered(testPlugin)
+				}
+			}.start()
 
-        it("should not install plugin if already registered") {
-            //arrange && act
-            TestApplication {
-                application {
-                    installIfNotRegistered(testPlugin)
-                    installIfNotRegistered(testPlugin)
-                }
-            }.start()
-
-            //assert
-            installCounter.get() shouldBe 1
-        }
-    }
+			// assert
+			installCounter.get() shouldBe 1
+		}
+	}
 })

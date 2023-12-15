@@ -6,6 +6,6 @@ import io.ktor.server.application.Application
 import org.koin.ktor.ext.get
 
 fun Application.documentationModule() {
-    configureKoin()
-    configureDocumentation(get())
+	configureKoin()
+	configureDocumentation(get())
 }

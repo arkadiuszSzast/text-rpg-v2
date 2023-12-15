@@ -17,59 +17,57 @@ import io.kotest.matchers.shouldBe
 import org.litote.kmongo.Id
 
 class CreateRegularAccountCommandHandlerTest : DescribeSpec() {
+	private val clock = FixedClock()
+	private val eventStore = InMemoryEventStore()
+	private val accountAggregateRepository = AccountAggregateEventStoreRepository(eventStore)
+	private val handler = CreateRegularAccountCommandHandler(accountAggregateRepository, eventStore, clock)
 
-  private val clock = FixedClock()
-  private val eventStore = InMemoryEventStore()
-  private val accountAggregateRepository = AccountAggregateEventStoreRepository(eventStore)
-  private val handler = CreateRegularAccountCommandHandler(accountAggregateRepository, eventStore, clock)
+	init {
 
-  init {
+		describe("CreateRegularAccountCommandHandlerTest") {
 
-    describe("CreateRegularAccountCommandHandlerTest") {
+			beforeTest { eventStore.clear() }
 
-      beforeTest { eventStore.clear() }
+			it("should create account when email is not taken") {
+				// arrange
+				val command = aCreateRegularAccountCommand()
 
-      it("should create account when email is not taken") {
-        //arrange
-        val command = aCreateRegularAccountCommand()
+				// act
+				val result = handler.handle(command)
 
-        //act
-        val result = handler.handle(command)
+				// assert
+				val appendedEvent = eventStore.readStreamByEventType(AccountCreatedEvent.eventType, AccountCreatedEvent::class).single()
+				result.shouldBeRight().should {
+					val expectedEvent = command.toExpectedEvent(it.accountId)
+					appendedEvent shouldBe expectedEvent
+				}
+			}
 
-        //assert
-        val appendedEvent = eventStore.readStreamByEventType(AccountCreatedEvent.eventType, AccountCreatedEvent::class).single()
-        result.shouldBeRight().should {
-          val expectedEvent = command.toExpectedEvent(it.accountId)
-          appendedEvent shouldBe expectedEvent
-        }
-      }
+			it("should not create new account when email is taken") {
+				// arrange
+				val command = aCreateRegularAccountCommand()
+				handler.handle(command)
 
-      it("should not create new account when email is taken") {
-        //arrange
-        val command = aCreateRegularAccountCommand()
-        handler.handle(command)
+				val takenEmailCommand = aCreateRegularAccountCommand(email = command.email)
 
-        val takenEmailCommand = aCreateRegularAccountCommand(email = command.email)
+				// act
+				val result = handler.handle(takenEmailCommand)
 
-        //act
-        val result = handler.handle(takenEmailCommand)
+				// assert
+				result.shouldBeLeft()
+			}
+		}
+	}
 
-        //assert
-        result.shouldBeLeft()
-      }
-
-    }
-  }
-
-  private fun CreateRegularAccountCommand.toExpectedEvent(id: Id<Account>) = AccountCreatedEvent(
-    id,
-    email,
-    AccountStatus.Staged,
-    Roles.RegularUser.role,
-    emptyList(),
-    password,
-    clock.now(),
-    timeZoneId
-  )
+	private fun CreateRegularAccountCommand.toExpectedEvent(id: Id<Account>) =
+		AccountCreatedEvent(
+			id,
+			email,
+			AccountStatus.Staged,
+			Roles.RegularUser.role,
+			emptyList(),
+			password,
+			clock.now(),
+			timeZoneId,
+		)
 }
-

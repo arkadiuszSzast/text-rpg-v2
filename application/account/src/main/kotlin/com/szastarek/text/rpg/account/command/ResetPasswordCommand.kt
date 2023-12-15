@@ -15,29 +15,32 @@ import com.trendyol.kediatr.CommandWithResult
 typealias ResetPasswordCommandResult = Either<Nel<ResetPasswordError>, ResetPasswordCommandSuccessResult>
 
 data class ResetPasswordCommand(
-  val token: JwtToken,
-  val newPassword: RawPassword
+	val token: JwtToken,
+	val newPassword: RawPassword,
 ) : CommandWithResult<ResetPasswordCommandResult> {
-  companion object {
-    operator fun invoke(token: String, newPassword: String) = either<Nel<ValidationError>, ResetPasswordCommand> {
-      zipOrAccumulate(
-        { e1, e2 -> e1 + e2 },
-        {
-          ensure(runCatching { JWT.decode(token) }.isSuccess) {
-            ValidationError(".token", "validation.invalid_reset_password_token").nel()
-          }
-        },
-        { RawPassword(newPassword).bind() },
-        { _, pass -> ResetPasswordCommand(JwtToken(token), pass) }
-      )
-    }
-  }
+	companion object {
+		operator fun invoke(
+			token: String,
+			newPassword: String,
+		) = either<Nel<ValidationError>, ResetPasswordCommand> {
+			zipOrAccumulate(
+				{ e1, e2 -> e1 + e2 },
+				{
+					ensure(runCatching { JWT.decode(token) }.isSuccess) {
+						ValidationError(".token", "validation.invalid_reset_password_token").nel()
+					}
+				},
+				{ RawPassword(newPassword).bind() },
+				{ _, pass -> ResetPasswordCommand(JwtToken(token), pass) },
+			)
+		}
+	}
 }
 
 data object ResetPasswordCommandSuccessResult
 
 enum class ResetPasswordError {
-  AccountNotFound,
-  InvalidSubject,
-  InvalidToken
+	AccountNotFound,
+	InvalidSubject,
+	InvalidToken,
 }

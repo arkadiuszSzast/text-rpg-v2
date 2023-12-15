@@ -6,7 +6,7 @@ import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import kotlinx.serialization.json.Json
 
 fun Application.configureSerialization(jsonMapper: Json) {
-    installIfNotRegistered(ContentNegotiation) {
-        json(jsonMapper)
-    }
+	installIfNotRegistered(ContentNegotiation) {
+		json(jsonMapper)
+	}
 }

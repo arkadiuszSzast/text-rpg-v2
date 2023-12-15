@@ -11,31 +11,34 @@ import org.redisson.api.RedissonClient
 import java.time.Duration
 
 class RefreshTokenRedisRepository(
-  private val redisClient: RedissonClient,
-  private val openTelemetry: OpenTelemetry
+	private val redisClient: RedissonClient,
+	private val openTelemetry: OpenTelemetry,
 ) : RefreshTokenRepository {
-  override suspend fun getAndDelete(accountEmail: EmailAddress): Option<RefreshToken> {
-    val tracer = openTelemetry.getTracer("redis")
-    return tracer.spanBuilder("redis-get-refresh-token")
-      .startSpan()
-      .execute {
-        redisClient.getBucket<String>(getKey(accountEmail)).getNullableAndDelete().map { RefreshToken(it) }
-      }
-  }
+	override suspend fun getAndDelete(accountEmail: EmailAddress): Option<RefreshToken> {
+		val tracer = openTelemetry.getTracer("redis")
+		return tracer.spanBuilder("redis-get-refresh-token")
+			.startSpan()
+			.execute {
+				redisClient.getBucket<String>(getKey(accountEmail)).getNullableAndDelete().map { RefreshToken(it) }
+			}
+	}
 
-  override suspend fun replace(accountEmail: EmailAddress, token: RefreshToken): RefreshToken {
-    val tracer = openTelemetry.getTracer("redis")
-    return tracer.spanBuilder("redis-replace-refresh-token")
-      .startSpan()
-      .execute {
-        redisClient.getBucket<String>(getKey(accountEmail)).set(token.value, refresh_token_ttl)
-        token
-      }
-  }
+	override suspend fun replace(
+		accountEmail: EmailAddress,
+		token: RefreshToken,
+	): RefreshToken {
+		val tracer = openTelemetry.getTracer("redis")
+		return tracer.spanBuilder("redis-replace-refresh-token")
+			.startSpan()
+			.execute {
+				redisClient.getBucket<String>(getKey(accountEmail)).set(token.value, refresh_token_ttl)
+				token
+			}
+	}
 
-  private fun getKey(accountEmail: EmailAddress) = "refresh_token_${accountEmail.value}"
+	private fun getKey(accountEmail: EmailAddress) = "refresh_token_${accountEmail.value}"
 
-  companion object {
-    private val refresh_token_ttl = Duration.ofDays(7)
-  }
+	companion object {
+		private val refresh_token_ttl = Duration.ofDays(7)
+	}
 }

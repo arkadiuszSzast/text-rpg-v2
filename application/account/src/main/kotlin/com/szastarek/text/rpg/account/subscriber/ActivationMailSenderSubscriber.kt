@@ -20,40 +20,41 @@ import kotlin.coroutines.CoroutineContext
 
 @OptIn(ExperimentalSerializationApi::class)
 class ActivationMailSenderSubscriber(
-  private val eventStoreSubscribeClient: EventStoreSubscribeClient,
-  private val mailSender: MailSender,
-  private val mailTemplateProperties: ActivateAccountMailProperties,
-  private val accountActivationUrlProvider: AccountActivationUrlProvider,
-  private val json: Json
+	private val eventStoreSubscribeClient: EventStoreSubscribeClient,
+	private val mailSender: MailSender,
+	private val mailTemplateProperties: ActivateAccountMailProperties,
+	private val accountActivationUrlProvider: AccountActivationUrlProvider,
+	private val json: Json,
 ) : CoroutineScope {
+	override val coroutineContext: CoroutineContext
+		get() = SupervisorJob()
 
-  override val coroutineContext: CoroutineContext
-    get() = SupervisorJob()
+	init {
+		subscribe().start()
+	}
 
-  init {
-    subscribe().start()
-  }
+	private fun subscribe() =
+		launch(coroutineContext) {
+			eventStoreSubscribeClient.subscribePersistentByEventType(
+				AccountCreatedEvent.eventType,
+				ConsumerGroup("activation-mail-sender"),
+			) { _, resolvedEvent ->
+				val accountCreatedEvent = json.decodeFromStream<AccountCreatedEvent>(resolvedEvent.event.eventData.inputStream())
+				val metadata = json.decodeFromStream<EventMetadata>(resolvedEvent.event.userMetadata.inputStream())
 
-  private fun subscribe() = launch(coroutineContext) {
-    eventStoreSubscribeClient.subscribePersistentByEventType(
-      AccountCreatedEvent.eventType,
-      ConsumerGroup("activation-mail-sender")
-    ) { _, resolvedEvent ->
-      val accountCreatedEvent = json.decodeFromStream<AccountCreatedEvent>(resolvedEvent.event.eventData.inputStream())
-      val metadata = json.decodeFromStream<EventMetadata>(resolvedEvent.event.userMetadata.inputStream())
+				val activationUrl = accountActivationUrlProvider.provide(accountCreatedEvent.emailAddress)
+				val mailVariables = ActivationAccountMailVariables(activationUrl).toMailVariables()
+				val mail =
+					Mail(
+						id = newId(),
+						subject = mailTemplateProperties.subject,
+						from = mailTemplateProperties.sender,
+						to = accountCreatedEvent.emailAddress,
+						templateId = mailTemplateProperties.templateId,
+						variables = mailVariables,
+					)
 
-      val activationUrl = accountActivationUrlProvider.provide(accountCreatedEvent.emailAddress)
-      val mailVariables = ActivationAccountMailVariables(activationUrl).toMailVariables()
-      val mail = Mail(
-        id = newId(),
-        subject = mailTemplateProperties.subject,
-        from = mailTemplateProperties.sender,
-        to = accountCreatedEvent.emailAddress,
-        templateId = mailTemplateProperties.templateId,
-        variables = mailVariables
-      )
-
-      mailSender.send(mail, metadata)
-    }
-  }
+				mailSender.send(mail, metadata)
+			}
+		}
 }

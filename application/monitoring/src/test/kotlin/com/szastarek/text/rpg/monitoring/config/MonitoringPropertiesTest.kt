@@ -8,25 +8,25 @@ import org.koin.test.KoinTest
 import org.koin.test.inject
 
 class MonitoringPropertiesTest : KoinTest, DescribeSpec() {
+	private val monitoringProperties by inject<MonitoringProperties>()
 
-    private val monitoringProperties by inject<MonitoringProperties>()
+	init {
 
-    init {
+		extensions(KoinExtension(monitoringModule))
 
-        extensions(KoinExtension(monitoringModule))
+		describe("MonitoringPropertiesTest") {
 
-        describe("MonitoringPropertiesTest") {
+			it("should pick correct values from application.conf") {
+				// arrange
+				val expected =
+					MonitoringProperties(
+						enabled = true,
+						otelMetricsUrl = "http://test-host:4318/v1/metrics",
+					)
 
-            it("should pick correct values from application.conf") {
-                //arrange
-                val expected = MonitoringProperties(
-                    enabled = true,
-                    otelMetricsUrl = "http://test-host:4318/v1/metrics"
-                )
-
-                //act & assert
-                monitoringProperties shouldBe expected
-            }
-        }
-    }
+				// act & assert
+				monitoringProperties shouldBe expected
+			}
+		}
+	}
 }

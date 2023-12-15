@@ -18,16 +18,17 @@ import org.koin.core.context.GlobalContext.loadKoinModules
 import org.koin.dsl.bind
 import org.koin.dsl.module
 
-internal val eventStoreModule = module {
-    single { EventStoreProperties(getStringProperty(ConfigKey("eventStore.connectionString"))) }
-    single { GlobalOpenTelemetry.get() }
-    single { EventStoreDBClient.create(parseOrThrow(get<EventStoreProperties>().connectionString)) }
-    single { EventStoreDBPersistentSubscriptionsClient.create(parseOrThrow(get<EventStoreProperties>().connectionString)) }
-    single { EventStoreDbReadClient(get(), get(), get()) } bind EventStoreReadClient::class
-    single { EventStoreDbWriteClient(get(), get(), get()) } bind EventStoreWriteClient::class
-    single { EventStoreDbSubscribeClient(get(), get(), get()) } bind EventStoreSubscribeClient::class
-}
+internal val eventStoreModule =
+	module {
+		single { EventStoreProperties(getStringProperty(ConfigKey("eventStore.connectionString"))) }
+		single { GlobalOpenTelemetry.get() }
+		single { EventStoreDBClient.create(parseOrThrow(get<EventStoreProperties>().connectionString)) }
+		single { EventStoreDBPersistentSubscriptionsClient.create(parseOrThrow(get<EventStoreProperties>().connectionString)) }
+		single { EventStoreDbReadClient(get(), get(), get()) } bind EventStoreReadClient::class
+		single { EventStoreDbWriteClient(get(), get(), get()) } bind EventStoreWriteClient::class
+		single { EventStoreDbSubscribeClient(get(), get(), get()) } bind EventStoreSubscribeClient::class
+	}
 
 internal fun Application.configureKoin() {
-    loadKoinModules(eventStoreModule)
+	loadKoinModules(eventStoreModule)
 }

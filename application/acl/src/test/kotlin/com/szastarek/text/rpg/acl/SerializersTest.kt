@@ -11,29 +11,28 @@ import kotlinx.serialization.json.Json
 
 class SerializersTest : DescribeSpec({
 
-    describe("Serializers") {
+	describe("Serializers") {
 
+		it("should serialize and deserialize authorities") {
+			val json = Json
 
-        it("should serialize and deserialize authorities") {
-            val json = Json
+			// accountWithAllAuthorities
+			val encodedAllAuthorities = json.encodeToString(accountWithAllAuthorities.getAuthorities())
+			val decodedAllAuthorities = json.decodeFromString<List<Authority>>(encodedAllAuthorities)
 
-            //accountWithAllAuthorities
-            val encodedAllAuthorities = json.encodeToString(accountWithAllAuthorities.getAuthorities())
-            val decodedAllAuthorities = json.decodeFromString<List<Authority>>(encodedAllAuthorities)
+			decodedAllAuthorities shouldBe accountWithAllAuthorities.getAuthorities()
 
-            decodedAllAuthorities shouldBe accountWithAllAuthorities.getAuthorities()
+			// accountWithAllSpecialAuthorities
+			val encodedAllSpecialAuthorities = json.encodeToString(accountWithAllSpecialAuthorities.getAuthorities())
+			val decodedAllSpecialAuthorities = json.decodeFromString<List<Authority>>(encodedAllSpecialAuthorities)
 
-            //accountWithAllSpecialAuthorities
-            val encodedAllSpecialAuthorities = json.encodeToString(accountWithAllSpecialAuthorities.getAuthorities())
-            val decodedAllSpecialAuthorities = json.decodeFromString<List<Authority>>(encodedAllSpecialAuthorities)
+			decodedAllSpecialAuthorities shouldBe accountWithAllSpecialAuthorities.getAuthorities()
 
-            decodedAllSpecialAuthorities shouldBe accountWithAllSpecialAuthorities.getAuthorities()
+			// accountAllowedToModifyOnlyOwnedEntities
+			val encodedAllowedToModifyOnlyOwnedEntities = json.encodeToString(accountAllowedToModifyOnlyOwnedEntities.getAuthorities())
+			val decodedAllowedToModifyOnlyOwnedEntities = json.decodeFromString<List<Authority>>(encodedAllowedToModifyOnlyOwnedEntities)
 
-            //accountAllowedToModifyOnlyOwnedEntities
-            val encodedAllowedToModifyOnlyOwnedEntities = json.encodeToString(accountAllowedToModifyOnlyOwnedEntities.getAuthorities())
-            val decodedAllowedToModifyOnlyOwnedEntities = json.decodeFromString<List<Authority>>(encodedAllowedToModifyOnlyOwnedEntities)
-
-            decodedAllowedToModifyOnlyOwnedEntities shouldBe accountAllowedToModifyOnlyOwnedEntities.getAuthorities()
-        }
-    }
+			decodedAllowedToModifyOnlyOwnedEntities shouldBe accountAllowedToModifyOnlyOwnedEntities.getAuthorities()
+		}
+	}
 })

@@ -23,68 +23,67 @@ import kotlinx.datetime.Clock
 import kotlin.time.Duration.Companion.minutes
 
 class ResetPasswordCommandHandlerTest : DescribeSpec() {
+	private val clock = FixedClock(Clock.System.now())
+	private val eventStore = InMemoryEventStore()
+	private val accountAggregateRepository = AccountAggregateEventStoreRepository(eventStore)
+	private val resetPasswordProperties =
+		AccountResetPasswordProperties(
+			Url("http://test-host:3000/account/reset/password"),
+			JwtIssuer("test-issuer"),
+			15.minutes,
+		)
+	private val handler = ResetPasswordCommandHandler(accountAggregateRepository, resetPasswordProperties, eventStore)
 
-  private val clock = FixedClock(Clock.System.now())
-  private val eventStore = InMemoryEventStore()
-  private val accountAggregateRepository = AccountAggregateEventStoreRepository(eventStore)
-  private val resetPasswordProperties = AccountResetPasswordProperties(
-    Url("http://test-host:3000/account/reset/password"),
-    JwtIssuer("test-issuer"),
-    15.minutes
-  )
-  private val handler = ResetPasswordCommandHandler(accountAggregateRepository, resetPasswordProperties, eventStore)
+	init {
 
-  init {
+		describe("ResetPasswordCommandHandlerTest") {
 
-    describe("ResetPasswordCommandHandlerTest") {
+			it("should reset password") {
+				// arrange
+				val accountCreatedEvent = anAccountCreatedEvent().also { eventStore.appendToStream(it, AccountEvent::class) }
+				val token = accountCreatedEvent.getResetPasswordToken()
+				val newPassword = aRawPassword()
 
-      it("should reset password") {
-        //arrange
-        val accountCreatedEvent = anAccountCreatedEvent().also { eventStore.appendToStream(it, AccountEvent::class) }
-        val token = accountCreatedEvent.getResetPasswordToken()
-        val newPassword = aRawPassword()
+				val command = ResetPasswordCommand(token, newPassword)
 
-        val command = ResetPasswordCommand(token, newPassword)
+				// act
+				val result = handler.handle(command)
 
-        //act
-        val result = handler.handle(command)
+				// assert
+				result.shouldBeRight()
+			}
+		}
 
-        //assert
-        result.shouldBeRight()
-      }
-    }
+		it("should not reset password when token is invalid") {
+			// arrange
+			val token = JwtToken("invalid-token")
+			val newPassword = aRawPassword()
 
-    it("should not reset password when token is invalid") {
-      //arrange
-      val token = JwtToken("invalid-token")
-      val newPassword = aRawPassword()
+			val command = ResetPasswordCommand(token, newPassword)
 
-      val command = ResetPasswordCommand(token, newPassword)
+			// act
+			val result = handler.handle(command)
 
-      //act
-      val result = handler.handle(command)
+			// assert
+			result.shouldBeLeft(listOf(ResetPasswordError.InvalidToken))
+		}
 
-      //assert
-      result.shouldBeLeft(listOf(ResetPasswordError.InvalidToken))
-    }
+		it("should not reset password when account not found") {
+			// arrange
+			val notSavedAccountCreatedEvent = anAccountCreatedEvent()
+			val newPassword = aRawPassword()
+			val command = ResetPasswordCommand(notSavedAccountCreatedEvent.getResetPasswordToken(), newPassword)
 
-    it("should not reset password when account not found") {
-      //arrange
-      val notSavedAccountCreatedEvent = anAccountCreatedEvent()
-      val newPassword = aRawPassword()
-      val command = ResetPasswordCommand(notSavedAccountCreatedEvent.getResetPasswordToken(), newPassword)
+			// act
+			val result = handler.handle(command)
 
-      //act
-      val result = handler.handle(command)
+			// assert
+			result.shouldBeLeft(listOf(ResetPasswordError.AccountNotFound))
+		}
+	}
 
-      //assert
-      result.shouldBeLeft(listOf(ResetPasswordError.AccountNotFound))
-    }
-
-  }
-
-  private fun AccountCreatedEvent.getResetPasswordToken(): JwtToken {
-    val account = AccountAggregateBuilder().apply(this.nel()).getOrThrow()
-    return account.getResetPasswordToken(resetPasswordProperties.jwtIssuer, resetPasswordProperties.jwtExpiration, clock)
-  }
+	private fun AccountCreatedEvent.getResetPasswordToken(): JwtToken {
+		val account = AccountAggregateBuilder().apply(this.nel()).getOrThrow()
+		return account.getResetPasswordToken(resetPasswordProperties.jwtIssuer, resetPasswordProperties.jwtExpiration, clock)
+	}
 }

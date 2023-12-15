@@ -14,20 +14,24 @@ import com.szastarek.text.rpg.shared.email.EmailAddress
 import io.github.oshai.kotlinlogging.KotlinLogging
 
 class RegisterWorldCreatorTokenVerifier(private val worldCreatorRegisterProperties: WorldCreatorRegisterProperties) {
-  private val logger = KotlinLogging.logger {}
+	private val logger = KotlinLogging.logger {}
 
-  fun verify(jwtToken: JwtToken, subject: EmailAddress): Either<InvalidJwtResult, ValidJwtResult> {
-    val jwtConfig = worldCreatorRegisterProperties.jwtConfig
-    val verifier = JWT.require(Algorithm.HMAC256(jwtConfig.secret.value))
-      .withSubject(subject.value)
-      .withIssuer(jwtConfig.issuer.value)
-      .build()
-    return try {
-      val decoded = verifier.verify(jwtToken.value)
-      ValidJwtResult(decoded).right()
-    } catch (ex: JWTVerificationException) {
-      logger.error(ex) { "Register world creator token verification failed." }
-      InvalidJwtResult.left()
-    }
-  }
+	fun verify(
+		jwtToken: JwtToken,
+		subject: EmailAddress,
+	): Either<InvalidJwtResult, ValidJwtResult> {
+		val jwtConfig = worldCreatorRegisterProperties.jwtConfig
+		val verifier =
+			JWT.require(Algorithm.HMAC256(jwtConfig.secret.value))
+				.withSubject(subject.value)
+				.withIssuer(jwtConfig.issuer.value)
+				.build()
+		return try {
+			val decoded = verifier.verify(jwtToken.value)
+			ValidJwtResult(decoded).right()
+		} catch (ex: JWTVerificationException) {
+			logger.error(ex) { "Register world creator token verification failed." }
+			InvalidJwtResult.left()
+		}
+	}
 }

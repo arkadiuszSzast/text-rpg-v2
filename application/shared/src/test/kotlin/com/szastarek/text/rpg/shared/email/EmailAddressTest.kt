@@ -7,32 +7,31 @@ import io.kotest.matchers.shouldBe
 
 class EmailAddressTest : DescribeSpec({
 
-    describe("EmailAddressTest") {
+	describe("EmailAddressTest") {
 
-            it("should create email address") {
-                // arrange & act
-                val email = EmailAddress("test@test.com")
+		it("should create email address") {
+			// arrange & act
+			val email = EmailAddress("test@test.com")
 
-                //assert
-                email.shouldBeRight()
-            }
+			// assert
+			email.shouldBeRight()
+		}
 
-        it("should trim email address") {
-            // arrange & act
-            val email = EmailAddress("  test@test.com  ")
+		it("should trim email address") {
+			// arrange & act
+			val email = EmailAddress("  test@test.com  ")
 
-            //assert
-            email.shouldBeRight()
-                .value shouldBe "test@test.com"
-        }
+			// assert
+			email.shouldBeRight()
+				.value shouldBe "test@test.com"
+		}
 
-        it("should not create email address") {
-            // arrange & act
-            val email = EmailAddress("test@test")
+		it("should not create email address") {
+			// arrange & act
+			val email = EmailAddress("test@test")
 
-            //assert
-            email.shouldBeLeft().map { it.message } shouldBe listOf("validation.invalid_email")
-        }
-    }
-
+			// assert
+			email.shouldBeLeft().map { it.message } shouldBe listOf("validation.invalid_email")
+		}
+	}
 })

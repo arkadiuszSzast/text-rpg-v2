@@ -8,24 +8,24 @@ import org.koin.test.KoinTest
 import org.koin.test.inject
 
 class CorsPropertiesTest : KoinTest, DescribeSpec() {
+	private val corsProperties by inject<CorsProperties>()
 
-    private val corsProperties by inject<CorsProperties>()
+	init {
 
-    init {
+		extensions(KoinExtension(securityModule))
 
-        extensions(KoinExtension(securityModule))
+		describe("CorsPropertiesTest") {
 
-        describe("CorsPropertiesTest") {
+			it("should pick correct values from application.conf") {
+				// arrange
+				val expected =
+					CorsProperties(
+						allowedHosts = listOf("test-host-1:3000", "test-host-2:3000"),
+					)
 
-            it("should pick correct values from application.conf") {
-                //arrange
-                val expected = CorsProperties(
-                    allowedHosts = listOf("test-host-1:3000", "test-host-2:3000")
-                )
-
-                //act & assert
-                corsProperties shouldBe expected
-            }
-        }
-    }
+				// act & assert
+				corsProperties shouldBe expected
+			}
+		}
+	}
 }

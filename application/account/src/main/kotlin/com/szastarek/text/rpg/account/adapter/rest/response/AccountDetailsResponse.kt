@@ -5,7 +5,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class AccountDetailsResponse(
-  val accountId: String,
-  val email: String,
-  val role: Role
+	val accountId: String,
+	val email: String,
+	val role: Role,
 )

@@ -18,75 +18,75 @@ import kotlin.time.Duration.Companion.minutes
 
 class AccountAggregateTest : DescribeSpec({
 
-  describe("AccountAggregateTest") {
+	describe("AccountAggregateTest") {
 
-    it("should activate account") {
-      //arrange
-      val account = anAccountAggregate(status = AccountStatus.Staged)
+		it("should activate account") {
+			// arrange
+			val account = anAccountAggregate(status = AccountStatus.Staged)
 
-      //act
-      val result = account.activate()
+			// act
+			val result = account.activate()
 
-      //assert
-      result.shouldBeRight(AccountActivatedEvent(account.id, account.emailAddress, account.version.next()))
-    }
+			// assert
+			result.shouldBeRight(AccountActivatedEvent(account.id, account.emailAddress, account.version.next()))
+		}
 
-    it("should not activate account when is in suspended status") {
-      //arrange
-      val account = anAccountAggregate(status = AccountStatus.Suspended)
+		it("should not activate account when is in suspended status") {
+			// arrange
+			val account = anAccountAggregate(status = AccountStatus.Suspended)
 
-      //act
-      val result = account.activate()
+			// act
+			val result = account.activate()
 
-      //assert
-      result.shouldBeLeft(listOf(ActivateAccountError.InvalidAccountStatus))
-    }
+			// assert
+			result.shouldBeLeft(listOf(ActivateAccountError.InvalidAccountStatus))
+		}
 
-    it("should not activate account when is already active") {
-      //arrange
-      val account = anAccountAggregate(status = AccountStatus.Active)
+		it("should not activate account when is already active") {
+			// arrange
+			val account = anAccountAggregate(status = AccountStatus.Active)
 
-      //act
-      val result = account.activate()
+			// act
+			val result = account.activate()
 
-      //assert
-      result.shouldBeLeft(listOf(ActivateAccountError.InvalidAccountStatus))
-    }
+			// assert
+			result.shouldBeLeft(listOf(ActivateAccountError.InvalidAccountStatus))
+		}
 
-    it("should reset password") {
-      //arrange
-      val clock = FixedClock(Clock.System.now())
-      val jwtIssuer = JwtIssuer("test-issuer")
-      val jwtExpiration = 15.minutes
-      val updatedPassword = aRawPassword()
-      val account = anAccountAggregate()
-      val token = account.getResetPasswordToken(jwtIssuer, jwtExpiration, clock)
+		it("should reset password") {
+			// arrange
+			val clock = FixedClock(Clock.System.now())
+			val jwtIssuer = JwtIssuer("test-issuer")
+			val jwtExpiration = 15.minutes
+			val updatedPassword = aRawPassword()
+			val account = anAccountAggregate()
+			val token = account.getResetPasswordToken(jwtIssuer, jwtExpiration, clock)
 
-      //act
-      val event = account.resetPassword(token, jwtIssuer, updatedPassword)
+			// act
+			val event = account.resetPassword(token, jwtIssuer, updatedPassword)
 
-      //assert
-      event.shouldBeRight() should {
-        it.accountId shouldBe  account.id
-        it.password.matches(updatedPassword).shouldBeTrue()
-        it.version shouldBe account.version.next()
-      }
-    }
+			// assert
+			event.shouldBeRight() should {
+				it.accountId shouldBe account.id
+				it.password.matches(updatedPassword).shouldBeTrue()
+				it.version shouldBe account.version.next()
+			}
+		}
 
-    it("should not update password when token expired") {
-      //arrange
-      val clock = FixedClock(Clock.System.now().minus(30.minutes))
-      val jwtIssuer = JwtIssuer("test-issuer")
-      val jwtExpiration = 15.minutes
-      val updatedPassword = aRawPassword()
-      val account = anAccountAggregate()
-      val token = account.getResetPasswordToken(jwtIssuer, jwtExpiration, clock)
+		it("should not update password when token expired") {
+			// arrange
+			val clock = FixedClock(Clock.System.now().minus(30.minutes))
+			val jwtIssuer = JwtIssuer("test-issuer")
+			val jwtExpiration = 15.minutes
+			val updatedPassword = aRawPassword()
+			val account = anAccountAggregate()
+			val token = account.getResetPasswordToken(jwtIssuer, jwtExpiration, clock)
 
-      //act
-      val event = account.resetPassword(token, jwtIssuer, updatedPassword)
+			// act
+			val event = account.resetPassword(token, jwtIssuer, updatedPassword)
 
-      //assert
-      event.shouldBeLeft(ResetPasswordError.InvalidToken)
-    }
-  }
+			// assert
+			event.shouldBeLeft(ResetPasswordError.InvalidToken)
+		}
+	}
 })

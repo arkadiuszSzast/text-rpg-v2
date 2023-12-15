@@ -22,40 +22,42 @@ import kotlin.time.Duration.Companion.milliseconds
 
 class AccountActivationUrlProviderTest : DescribeSpec({
 
-  describe("AccountActivationUrlProviderTest") {
+	describe("AccountActivationUrlProviderTest") {
 
-    val clock = FixedClock(Clock.System.now())
-    val accountActivationProperties = AccountActivationProperties(
-      activateAccountUrl = Url("http://test-host:3000/account/activate"),
-      jwtConfig = JwtProperties(
-        JwtSecret("activate-account-jwt-test-secret"),
-        JwtIssuer("activate-account-jwt-test-issuer"),
-        3600000.milliseconds
-      )
-    )
-    val accountActivationUrlProvider = AccountActivationUrlProvider(accountActivationProperties, clock)
+		val clock = FixedClock(Clock.System.now())
+		val accountActivationProperties =
+			AccountActivationProperties(
+				activateAccountUrl = Url("http://test-host:3000/account/activate"),
+				jwtConfig =
+					JwtProperties(
+						JwtSecret("activate-account-jwt-test-secret"),
+						JwtIssuer("activate-account-jwt-test-issuer"),
+						3600000.milliseconds,
+					),
+			)
+		val accountActivationUrlProvider = AccountActivationUrlProvider(accountActivationProperties, clock)
 
-    it("should provide activation url") {
-      //arrange
-      val jwtConfig = accountActivationProperties.jwtConfig
-      val emailAddress = anEmail()
+		it("should provide activation url") {
+			// arrange
+			val jwtConfig = accountActivationProperties.jwtConfig
+			val emailAddress = anEmail()
 
-      //act
-      val result = accountActivationUrlProvider.provide(emailAddress)
+			// act
+			val result = accountActivationUrlProvider.provide(emailAddress)
 
-      result.toString().shouldStartWith(accountActivationProperties.activateAccountUrl.toString())
-      result.parameters["token"].shouldNotBeNull().should {
-        val decodedToken = JWT.decode(it)
-        val jwtVerifier = JWT.require(Algorithm.HMAC256(jwtConfig.secret.value)).build()
-        shouldNotThrowAny {
-          jwtVerifier.verify(decodedToken)
-        }
-        decodedToken.subject shouldBe emailAddress.value
-        decodedToken.issuer shouldBe jwtConfig.issuer.value
-        decodedToken.expiresAtAsInstant.shouldBe(
-          clock.now().plus(jwtConfig.expiration).toJavaInstant().truncatedTo(ChronoUnit.SECONDS)
-        )
-      }
-    }
-  }
+			result.toString().shouldStartWith(accountActivationProperties.activateAccountUrl.toString())
+			result.parameters["token"].shouldNotBeNull().should {
+				val decodedToken = JWT.decode(it)
+				val jwtVerifier = JWT.require(Algorithm.HMAC256(jwtConfig.secret.value)).build()
+				shouldNotThrowAny {
+					jwtVerifier.verify(decodedToken)
+				}
+				decodedToken.subject shouldBe emailAddress.value
+				decodedToken.issuer shouldBe jwtConfig.issuer.value
+				decodedToken.expiresAtAsInstant.shouldBe(
+					clock.now().plus(jwtConfig.expiration).toJavaInstant().truncatedTo(ChronoUnit.SECONDS),
+				)
+			}
+		}
+	}
 })

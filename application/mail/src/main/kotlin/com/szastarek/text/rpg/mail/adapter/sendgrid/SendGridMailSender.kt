@@ -19,48 +19,52 @@ import io.opentelemetry.api.OpenTelemetry
 import kotlinx.datetime.Clock
 
 class SendGridMailSender(
-  private val sendGridClient: SendgridClient,
-  private val writeEventStoreClient: EventStoreWriteClient,
-  private val openTelemetry: OpenTelemetry,
-  private val clock: Clock
+	private val sendGridClient: SendgridClient,
+	private val writeEventStoreClient: EventStoreWriteClient,
+	private val openTelemetry: OpenTelemetry,
+	private val clock: Clock,
 ) : MailSender {
-  override suspend fun send(mail: Mail, causedBy: EventMetadata?): Either<List<MailSendingError>, Mail> {
-    val tracer = openTelemetry.getTracer("sendgrid-client")
+	override suspend fun send(
+		mail: Mail,
+		causedBy: EventMetadata?,
+	): Either<List<MailSendingError>, Mail> {
+		val tracer = openTelemetry.getTracer("sendgrid-client")
 
-    return tracer.spanBuilder("send-mail")
-      .startSpan()
-      .execute {
-        val request = mail.toSendgridSendMailRequest()
+		return tracer.spanBuilder("send-mail")
+			.startSpan()
+			.execute {
+				val request = mail.toSendgridSendMailRequest()
 
-        val response = sendGridClient.sendMail(request)
+				val response = sendGridClient.sendMail(request)
 
-        when (response.status.isSuccess()) {
-          false -> {
-            val errors = response.body<SendgridErrorResponse>().errors.map { MailSendingError(it.message) }
-            val event = MailSendingErrorEvent(mail, clock.now(), errors)
-            writeEventStoreClient.appendToStream<MailSendingEvent>(event, causedBy)
-            errors.left()
-          }
+				when (response.status.isSuccess()) {
+					false -> {
+						val errors = response.body<SendgridErrorResponse>().errors.map { MailSendingError(it.message) }
+						val event = MailSendingErrorEvent(mail, clock.now(), errors)
+						writeEventStoreClient.appendToStream<MailSendingEvent>(event, causedBy)
+						errors.left()
+					}
 
-          true -> {
-            writeEventStoreClient.appendToStream<MailSendingEvent>(MailSentEvent(mail, clock.now()), causedBy)
-            mail.right()
-          }
-        }
-      }
-  }
+					true -> {
+						writeEventStoreClient.appendToStream<MailSendingEvent>(MailSentEvent(mail, clock.now()), causedBy)
+						mail.right()
+					}
+				}
+			}
+	}
 
-  private fun Mail.toSendgridSendMailRequest(): SendgridSendMailRequest {
-    val personalization = SendgridPersonalization(
-      to = listOf(SendgridEmail(this.to.value)),
-      subject = this.subject.value,
-      dynamicTemplateData = this.variables.values
-    )
+	private fun Mail.toSendgridSendMailRequest(): SendgridSendMailRequest {
+		val personalization =
+			SendgridPersonalization(
+				to = listOf(SendgridEmail(this.to.value)),
+				subject = this.subject.value,
+				dynamicTemplateData = this.variables.values,
+			)
 
-    return SendgridSendMailRequest(
-      from = SendgridEmail(this.from.value),
-      templateId = this.templateId.value,
-      personalization = listOf(personalization)
-    )
-  }
+		return SendgridSendMailRequest(
+			from = SendgridEmail(this.from.value),
+			templateId = this.templateId.value,
+			personalization = listOf(personalization),
+		)
+	}
 }

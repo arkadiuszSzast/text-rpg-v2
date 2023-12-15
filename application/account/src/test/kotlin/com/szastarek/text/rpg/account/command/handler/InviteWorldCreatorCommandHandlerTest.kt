@@ -34,80 +34,85 @@ import kotlinx.coroutines.withContext
 import kotlin.time.Duration.Companion.milliseconds
 
 class InviteWorldCreatorCommandHandlerTest : DescribeSpec() {
+	private val clock = FixedClock()
+	private val eventStore = InMemoryEventStore()
+	private val accountAggregateRepository = AccountAggregateEventStoreRepository(eventStore)
+	private val worldCreatorRegisterProperties =
+		WorldCreatorRegisterProperties(
+			registerUrl = Url("http://test-host:3000/account/world-creator"),
+			jwtConfig =
+				JwtProperties(
+					JwtSecret("world-creator-register-jwt-test-secret"),
+					JwtIssuer("world-creator-register-jwt-test-issuer"),
+					60000.milliseconds,
+				),
+		)
+	private val worldCreatorRegisterUrlProvider =
+		WorldCreatorRegisterUrlProvider(worldCreatorRegisterProperties, clock)
+	private val inviteWorldCreatorMailProperties =
+		InviteWorldCreatorMailProperties(
+			templateId = MailTemplateId("invite-world-creator-test-templateId"),
+			sender = EmailAddress("invite-world-creator-test-sender@mail.com").getOrThrow(),
+			subject = MailSubject("invite-world-creator-test-subject"),
+		)
+	private val mailSender = RecordingMailSender()
+	private val acl = DefaultAuthorizedAccountAbilityProvider(CoroutineAccountContextProvider())
+	private val handler =
+		InviteWorldCreatorCommandHandler(
+			worldCreatorRegisterUrlProvider,
+			inviteWorldCreatorMailProperties,
+			accountAggregateRepository,
+			mailSender,
+			acl,
+		)
 
-  private val clock = FixedClock()
-  private val eventStore = InMemoryEventStore()
-  private val accountAggregateRepository = AccountAggregateEventStoreRepository(eventStore)
-  private val worldCreatorRegisterProperties = WorldCreatorRegisterProperties(
-    registerUrl = Url("http://test-host:3000/account/world-creator"),
-    jwtConfig = JwtProperties(
-      JwtSecret("world-creator-register-jwt-test-secret"),
-      JwtIssuer("world-creator-register-jwt-test-issuer"),
-      60000.milliseconds
-    )
-  )
-  private val worldCreatorRegisterUrlProvider =
-    WorldCreatorRegisterUrlProvider(worldCreatorRegisterProperties, clock)
-  private val inviteWorldCreatorMailProperties = InviteWorldCreatorMailProperties(
-    templateId = MailTemplateId("invite-world-creator-test-templateId"),
-    sender = EmailAddress("invite-world-creator-test-sender@mail.com").getOrThrow(),
-    subject = MailSubject("invite-world-creator-test-subject")
-  )
-  private val mailSender = RecordingMailSender()
-  private val acl = DefaultAuthorizedAccountAbilityProvider(CoroutineAccountContextProvider())
-  private val handler = InviteWorldCreatorCommandHandler(
-    worldCreatorRegisterUrlProvider,
-    inviteWorldCreatorMailProperties,
-    accountAggregateRepository,
-    mailSender,
-    acl
-  )
+	init {
 
-  init {
+		describe("InviteWorldCreatorCommandHandlerTest") {
 
-    describe("InviteWorldCreatorCommandHandlerTest") {
+			it("should invite world creator") {
+				// arrange
+				val superUserCreatedEvent = anAccountCreatedEvent(role = Roles.SuperUser.role)
+				val command = InviteWorldCreatorCommand(anEmail())
 
-      it("should invite world creator") {
-        //arrange
-        val superUserCreatedEvent = anAccountCreatedEvent(role = Roles.SuperUser.role)
-        val command = InviteWorldCreatorCommand(anEmail())
+				// act
+				val result =
+					withContext(coroutineContext + CoroutineAccountContext(superUserCreatedEvent.toAccountContext())) {
+						handler.handle(command)
+					}
 
-        //act
-        val result = withContext(coroutineContext + CoroutineAccountContext(superUserCreatedEvent.toAccountContext())) {
-          handler.handle(command)
-        }
+				// assert
+				result.shouldBeRight()
+			}
 
-        //assert
-        result.shouldBeRight()
-      }
+			it("regular user cannot invite world creator") {
+				// arrange
+				val userCreatedEvent = anAccountCreatedEvent(role = Roles.RegularUser.role)
+				val command = InviteWorldCreatorCommand(anEmail())
 
-      it("regular user cannot invite world creator") {
-        //arrange
-        val userCreatedEvent = anAccountCreatedEvent(role = Roles.RegularUser.role)
-        val command = InviteWorldCreatorCommand(anEmail())
+				// act & assert
+				withContext(coroutineContext + CoroutineAccountContext(userCreatedEvent.toAccountContext())) {
+					shouldThrow<AuthorityCheckException> {
+						handler.handle(command)
+					}
+				}
+			}
 
-        //act & assert
-       withContext(coroutineContext + CoroutineAccountContext(userCreatedEvent.toAccountContext())) {
-          shouldThrow<AuthorityCheckException> {
-            handler.handle(command)
-          }
-        }
-      }
+			it("should not invite world creator when email is already taken") {
+				// arrange
+				val superUserCreatedEvent = anAccountCreatedEvent(role = Roles.SuperUser.role)
+				val existingAccount = anAccountCreatedEvent().also { eventStore.appendToStream(it, AccountEvent::class) }
+				val command = InviteWorldCreatorCommand(existingAccount.emailAddress)
 
-      it("should not invite world creator when email is already taken") {
-        //arrange
-        val superUserCreatedEvent = anAccountCreatedEvent(role = Roles.SuperUser.role)
-        val existingAccount = anAccountCreatedEvent().also { eventStore.appendToStream(it, AccountEvent::class) }
-        val command = InviteWorldCreatorCommand(existingAccount.emailAddress)
+				// act
+				val result =
+					withContext(coroutineContext + CoroutineAccountContext(superUserCreatedEvent.toAccountContext())) {
+						handler.handle(command)
+					}
 
-        //act
-        val result = withContext(coroutineContext + CoroutineAccountContext(superUserCreatedEvent.toAccountContext())) {
-          handler.handle(command)
-        }
-
-        //assert
-        result.shouldBeLeft(listOf(InviteWorldCreatorError.EmailAlreadyTaken))
-      }
-    }
-  }
+				// assert
+				result.shouldBeLeft(listOf(InviteWorldCreatorError.EmailAlreadyTaken))
+			}
+		}
+	}
 }

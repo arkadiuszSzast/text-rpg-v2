@@ -5,7 +5,7 @@ import kotlinx.serialization.Serializable
 @JvmInline
 @Serializable
 value class MaskedString(val value: String) {
-    override fun toString(): String {
-        return "*masked*"
-    }
+	override fun toString(): String {
+		return "*masked*"
+	}
 }

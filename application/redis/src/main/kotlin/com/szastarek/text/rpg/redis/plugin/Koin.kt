@@ -9,15 +9,18 @@ import org.koin.dsl.module
 import org.redisson.Redisson
 import org.redisson.config.Config
 
-internal val redisModule = module {
-  single { RedisProperties(getStringProperty(ConfigKey("redis.connectionString"))) }
-  single {
-    Redisson.create(Config().apply {
-      useSingleServer().setAddress(get<RedisProperties>().connectionString)
-    })
-  }
-}
+internal val redisModule =
+	module {
+		single { RedisProperties(getStringProperty(ConfigKey("redis.connectionString"))) }
+		single {
+			Redisson.create(
+				Config().apply {
+					useSingleServer().setAddress(get<RedisProperties>().connectionString)
+				},
+			)
+		}
+	}
 
 internal fun Application.configureKoin() {
-  loadKoinModules(redisModule)
+	loadKoinModules(redisModule)
 }

@@ -33,71 +33,79 @@ import org.litote.kmongo.id.serialization.IdKotlinXSerializationModule
 import kotlin.time.Duration.Companion.milliseconds
 
 class ActivationMailSenderSubscriberTest : DescribeSpec() {
+	private val eventStoreContainer: EventStoreContainer = EventStoreContainerFactory.spawn()
 
-  private val eventStoreContainer: EventStoreContainer = EventStoreContainerFactory.spawn()
+	private val clock = FixedClock()
+	private val openTelemetry = InMemoryOpenTelemetry()
+	private val json =
+		Json {
+			serializersModule = IdKotlinXSerializationModule
+			ignoreUnknownKeys = true
+		}
+	private val subscriptionClient =
+		EventStoreDBPersistentSubscriptionsClient.create(
+			EventStoreDBConnectionString.parseOrThrow(
+				eventStoreContainer.connectionString,
+			),
+		)
+	private val eventStoreSubscribeClient = EventStoreDbSubscribeClient(subscriptionClient, json, openTelemetry.get())
+	private val mailSender = RecordingMailSender()
+	private val mailProperties =
+		ActivateAccountMailProperties(
+			MailTemplateId("test-template"),
+			anEmail("test-sender@mail.com"),
+			MailSubject("test-subject"),
+		)
+	private val accountActivationProperties =
+		AccountActivationProperties(
+			activateAccountUrl = Url("http://test-host:3000/account/activate"),
+			jwtConfig =
+				JwtProperties(
+					JwtSecret("activate-account-jwt-test-secret"),
+					JwtIssuer("activate-account-jwt-test-issuer"),
+					3600000.milliseconds,
+				),
+		)
+	private val eventStoreDbClient =
+		EventStoreDBClient.create(
+			EventStoreDBConnectionString.parseOrThrow(
+				eventStoreContainer.connectionString,
+			),
+		)
+	private val eventStoreWriteClient = EventStoreDbWriteClient(eventStoreDbClient, json, openTelemetry.get())
+	private val accountActivationUrlProvider = AccountActivationUrlProvider(accountActivationProperties, clock)
 
-  private val clock = FixedClock()
-  private val openTelemetry = InMemoryOpenTelemetry()
-  private val json = Json { serializersModule = IdKotlinXSerializationModule; ignoreUnknownKeys = true }
-  private val subscriptionClient = EventStoreDBPersistentSubscriptionsClient.create(
-    EventStoreDBConnectionString.parseOrThrow(
-      eventStoreContainer.connectionString
-    )
-  )
-  private val eventStoreSubscribeClient = EventStoreDbSubscribeClient(subscriptionClient, json, openTelemetry.get())
-  private val mailSender = RecordingMailSender()
-  private val mailProperties = ActivateAccountMailProperties(
-    MailTemplateId("test-template"),
-    anEmail("test-sender@mail.com"),
-    MailSubject("test-subject")
-  )
-  private val accountActivationProperties = AccountActivationProperties(
-    activateAccountUrl = Url("http://test-host:3000/account/activate"),
-    jwtConfig = JwtProperties(
-      JwtSecret("activate-account-jwt-test-secret"),
-      JwtIssuer("activate-account-jwt-test-issuer"),
-      3600000.milliseconds
-    )
-  )
-  private val eventStoreDbClient = EventStoreDBClient.create(
-    EventStoreDBConnectionString.parseOrThrow(
-      eventStoreContainer.connectionString
-    )
-  )
-  private val eventStoreWriteClient = EventStoreDbWriteClient(eventStoreDbClient, json, openTelemetry.get())
-  private val accountActivationUrlProvider = AccountActivationUrlProvider(accountActivationProperties, clock)
+	init {
 
-  init {
+		listener(EventStoreLifecycleListener(eventStoreContainer))
 
-    listener(EventStoreLifecycleListener(eventStoreContainer))
+		describe("ActivationMailSenderSubscriberTest") {
 
-    describe("ActivationMailSenderSubscriberTest") {
+			beforeTest {
+				openTelemetry.reset()
+			}
 
-      beforeTest {
-        openTelemetry.reset()
-      }
+			it("should send mail on account created event") {
+				// arrange
+				ActivationMailSenderSubscriber(
+					eventStoreSubscribeClient,
+					mailSender,
+					mailProperties,
+					accountActivationUrlProvider,
+					json,
+				)
+				val event = anAccountCreatedEvent()
 
-      it("should send mail on account created event") {
-        //arrange
-        ActivationMailSenderSubscriber(
-          eventStoreSubscribeClient,
-          mailSender,
-          mailProperties,
-          accountActivationUrlProvider,
-          json
-        )
-        val event = anAccountCreatedEvent()
+				// act
+				eventStoreWriteClient.appendToStream<AccountEvent>(event)
 
-        //act
-        eventStoreWriteClient.appendToStream<AccountEvent>(event)
-
-        //assert
-        await untilAsserted {
-          mailSender.hasBeenSent {
-            it.to == event.emailAddress && it.subject == mailProperties.subject
-          }.shouldBeTrue()
-        }
-      }
-    }
-  }
+				// assert
+				await untilAsserted {
+					mailSender.hasBeenSent {
+						it.to == event.emailAddress && it.subject == mailProperties.subject
+					}.shouldBeTrue()
+				}
+			}
+		}
+	}
 }

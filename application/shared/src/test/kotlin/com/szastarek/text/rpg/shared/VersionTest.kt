@@ -6,33 +6,32 @@ import io.kotest.matchers.shouldBe
 
 class VersionTest : DescribeSpec({
 
-    describe("VersionTest") {
+	describe("VersionTest") {
 
-        it("initial version should be 0") {
-            //arrange & act
-            val result = Version.initial
+		it("initial version should be 0") {
+			// arrange & act
+			val result = Version.initial
 
-            //assert
-            result shouldBe Version(0)
-        }
+			// assert
+			result shouldBe Version(0)
+		}
 
-        it("should generate next version") {
-            //arrange
-            val version = Version(1)
+		it("should generate next version") {
+			// arrange
+			val version = Version(1)
 
-            //act
-            val result = version.next()
+			// act
+			val result = version.next()
 
-            //assert
-            result shouldBe Version(2)
-        }
+			// assert
+			result shouldBe Version(2)
+		}
 
-        it("should throw exception when version is less than 0") {
-            //arrange & act & assert
-            shouldThrow<IllegalArgumentException> {
-                Version(-1)
-            }
-        }
-    }
-
+		it("should throw exception when version is less than 0") {
+			// arrange & act & assert
+			shouldThrow<IllegalArgumentException> {
+				Version(-1)
+			}
+		}
+	}
 })

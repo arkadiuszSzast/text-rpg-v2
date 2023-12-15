@@ -1,0 +1,7 @@
+root = true
+
+[*.{kt,kts}]
+indent_size = 4
+indent_style = tab
+ktlint_code_style = ktlint_official
+max_line_length = 150

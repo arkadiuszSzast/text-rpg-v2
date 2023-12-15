@@ -8,25 +8,25 @@ import org.koin.test.KoinTest
 import org.koin.test.inject
 
 class ApplicationPropertiesTest : KoinTest, DescribeSpec() {
+	private val applicationProperties by inject<ApplicationProperties>()
 
-    private val applicationProperties by inject<ApplicationProperties>()
+	init {
 
-    init {
+		extensions(KoinExtension(sharedKoinModule))
 
-        extensions(KoinExtension(sharedKoinModule))
+		describe("ApplicationPropertiesTest") {
 
-        describe("ApplicationPropertiesTest") {
+			it("should pick correct values from application.conf") {
+				// arrange
+				val expected =
+					ApplicationProperties(
+						environment = "test",
+						webClientAppUrl = "http://test-client-host:3000",
+					)
 
-            it("should pick correct values from application.conf") {
-                //arrange
-                val expected = ApplicationProperties(
-                    environment = "test",
-                    webClientAppUrl = "http://test-client-host:3000"
-                )
-
-                //act & assert
-                applicationProperties shouldBe expected
-            }
-        }
-    }
+				// act & assert
+				applicationProperties shouldBe expected
+			}
+		}
+	}
 }

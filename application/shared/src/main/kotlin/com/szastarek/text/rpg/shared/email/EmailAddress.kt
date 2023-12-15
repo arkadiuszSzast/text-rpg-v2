@@ -9,17 +9,14 @@ import kotlinx.serialization.Serializable
 @JvmInline
 @Serializable
 value class EmailAddress private constructor(val value: String) {
+	companion object {
+		operator fun invoke(address: String) =
+			either {
+				ensure(address.matches(Regex(EMAIL_PATTERN))) { ValidationError(".email", "validation.invalid_email").nel() }
 
-    companion object {
-
-        operator fun invoke(address: String) = either {
-            ensure(address.matches(Regex(EMAIL_PATTERN))) { ValidationError(".email", "validation.invalid_email").nel() }
-
-            EmailAddress(address.trim())
-        }
-
-
-    }
+				EmailAddress(address.trim())
+			}
+	}
 }
 
 private const val EMAIL_PATTERN = """.+@.+\..+"""

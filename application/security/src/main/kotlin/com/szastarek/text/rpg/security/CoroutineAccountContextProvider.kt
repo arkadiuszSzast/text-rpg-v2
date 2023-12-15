@@ -7,7 +7,7 @@ import com.szastarek.text.rpg.acl.CoroutineAccountContext
 import kotlin.coroutines.coroutineContext
 
 class CoroutineAccountContextProvider : AccountContextProvider {
-    override suspend fun currentContext(): AccountContext {
-        return coroutineContext[CoroutineAccountContext]?.accountContext ?: AnonymousAccountContext
-    }
+	override suspend fun currentContext(): AccountContext {
+		return coroutineContext[CoroutineAccountContext]?.accountContext ?: AnonymousAccountContext
+	}
 }

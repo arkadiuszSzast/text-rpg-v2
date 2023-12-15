@@ -19,30 +19,32 @@ import com.trendyol.kediatr.CommandWithResultHandler
 import org.litote.kmongo.newId
 
 class InviteWorldCreatorCommandHandler(
-  private val worldCreatorRegisterUrlProvider: WorldCreatorRegisterUrlProvider,
-  private val inviteWorldCreatorMailProperties: InviteWorldCreatorMailProperties,
-  private val accountAggregateRepository: AccountAggregateRepository,
-  private val mailSender: MailSender,
-  private val acl: AuthorizedAccountAbilityProvider
+	private val worldCreatorRegisterUrlProvider: WorldCreatorRegisterUrlProvider,
+	private val inviteWorldCreatorMailProperties: InviteWorldCreatorMailProperties,
+	private val accountAggregateRepository: AccountAggregateRepository,
+	private val mailSender: MailSender,
+	private val acl: AuthorizedAccountAbilityProvider,
 ) : CommandWithResultHandler<InviteWorldCreatorCommand, InviteWorldCreatorCommandResult> {
-  override suspend fun handle(command: InviteWorldCreatorCommand): InviteWorldCreatorCommandResult = either {
-    val email = command.email
-    acl.ensuring().ensureHasAccessTo(inviteWorldCreatorFeature)
-    ensure(accountAggregateRepository.findByEmail(email).isNone()) { InviteWorldCreatorError.EmailAlreadyTaken.nel() }
+	override suspend fun handle(command: InviteWorldCreatorCommand): InviteWorldCreatorCommandResult =
+		either {
+			val email = command.email
+			acl.ensuring().ensureHasAccessTo(inviteWorldCreatorFeature)
+			ensure(accountAggregateRepository.findByEmail(email).isNone()) { InviteWorldCreatorError.EmailAlreadyTaken.nel() }
 
-    val worldCreatorRegisterUrl = worldCreatorRegisterUrlProvider.provide(email)
-    val mailVariables = InviteWorldCreatorMailVariables(worldCreatorRegisterUrl).toMailVariables()
-    val mail = Mail(
-      newId(),
-      inviteWorldCreatorMailProperties.subject,
-      inviteWorldCreatorMailProperties.sender,
-      email,
-      inviteWorldCreatorMailProperties.templateId,
-      mailVariables
-    )
+			val worldCreatorRegisterUrl = worldCreatorRegisterUrlProvider.provide(email)
+			val mailVariables = InviteWorldCreatorMailVariables(worldCreatorRegisterUrl).toMailVariables()
+			val mail =
+				Mail(
+					newId(),
+					inviteWorldCreatorMailProperties.subject,
+					inviteWorldCreatorMailProperties.sender,
+					email,
+					inviteWorldCreatorMailProperties.templateId,
+					mailVariables,
+				)
 
-    mailSender.send(mail)
+			mailSender.send(mail)
 
-    InviteWorldCreatorCommandSuccessResult
-  }
+			InviteWorldCreatorCommandSuccessResult
+		}
 }

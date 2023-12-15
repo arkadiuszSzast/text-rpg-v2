@@ -13,31 +13,31 @@ import org.koin.test.KoinTest
 import org.koin.test.check.checkModules
 
 class KoinModulesTest : KoinTest, DescribeSpec() {
+	private val eventStoreContainer: EventStoreContainer = EventStoreContainerFactory.spawn()
 
-    private val eventStoreContainer: EventStoreContainer = EventStoreContainerFactory.spawn()
+	init {
 
-    init {
+		listener(EventStoreLifecycleListener(eventStoreContainer))
 
-        listener(EventStoreLifecycleListener(eventStoreContainer))
+		describe("Account Koin module test") {
 
-        describe("Account Koin module test") {
-
-            it("verify account module") {
-                withEnvironment(
-                    mapOf(
-                        "DOCUMENTATION_ENABLED" to "false",
-                        "EVENT_STORE_CONNECTION_STRING" to eventStoreContainer.connectionString,
-                        "REDIS_CONNECTION_STRING" to RedisContainer.connectionString
-                    ), OverrideMode.SetOrOverride
-                ) {
-                    TestApplication {
-                        application {
-                            accountModule()
-                        }
-                    }.also { it.start() }
-                }
-                getKoin().checkModules()
-            }
-        }
-    }
+			it("verify account module") {
+				withEnvironment(
+					mapOf(
+						"DOCUMENTATION_ENABLED" to "false",
+						"EVENT_STORE_CONNECTION_STRING" to eventStoreContainer.connectionString,
+						"REDIS_CONNECTION_STRING" to RedisContainer.connectionString,
+					),
+					OverrideMode.SetOrOverride,
+				) {
+					TestApplication {
+						application {
+							accountModule()
+						}
+					}.also { it.start() }
+				}
+				getKoin().checkModules()
+			}
+		}
+	}
 }

@@ -8,24 +8,24 @@ import org.koin.test.KoinTest
 import org.koin.test.inject
 
 class DocumentationPropertiesTest : KoinTest, DescribeSpec() {
+	private val documentationProperties by inject<DocumentationProperties>()
 
-    private val documentationProperties by inject<DocumentationProperties>()
+	init {
 
-    init {
+		extension(KoinExtension(documentationModule))
 
-        extension(KoinExtension(documentationModule))
+		describe("MonitoringPropertiesTest") {
 
-        describe("MonitoringPropertiesTest") {
+			it("should pick correct values from application.conf") {
+				// arrange
+				val expected =
+					DocumentationProperties(
+						enabled = true,
+					)
 
-            it("should pick correct values from application.conf") {
-                //arrange
-                val expected = DocumentationProperties(
-                    enabled = true,
-                )
-
-                //act & assert
-                documentationProperties shouldBe expected
-            }
-        }
-    }
+				// act & assert
+				documentationProperties shouldBe expected
+			}
+		}
+	}
 }

@@ -16,8 +16,8 @@ data class RegularRole(val name: String, val authorities: List<Authority>) : Rol
 data object SuperUserRole : Role
 
 fun Role.getAuthorities(): List<Authority> {
-  return when(this) {
-    is RegularRole -> this.authorities
-    is SuperUserRole -> emptyList()
-  }
+	return when (this) {
+		is RegularRole -> this.authorities
+		is SuperUserRole -> emptyList()
+	}
 }

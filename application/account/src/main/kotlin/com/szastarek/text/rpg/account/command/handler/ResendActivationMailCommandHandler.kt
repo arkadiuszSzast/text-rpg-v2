@@ -21,34 +21,36 @@ import com.trendyol.kediatr.CommandWithResultHandler
 import org.litote.kmongo.newId
 
 class ResendActivationMailCommandHandler(
-  private val accountAggregateRepository: AccountAggregateRepository,
-  private val mailSender: MailSender,
-  private val mailTemplateProperties: ActivateAccountMailProperties,
-  private val accountActivationUrlProvider: AccountActivationUrlProvider,
-  private val acl: AuthorizedAccountAbilityProvider
-
+	private val accountAggregateRepository: AccountAggregateRepository,
+	private val mailSender: MailSender,
+	private val mailTemplateProperties: ActivateAccountMailProperties,
+	private val accountActivationUrlProvider: AccountActivationUrlProvider,
+	private val acl: AuthorizedAccountAbilityProvider,
 ) : CommandWithResultHandler<ResendActivationMailCommand, ResendActivationMailCommandResult> {
-  override suspend fun handle(command: ResendActivationMailCommand): ResendActivationMailCommandResult = either {
-    acl.ensuring().ensureHasAccessTo(resendActivationLinkFeature)
-    val account = accountAggregateRepository.findByEmail(command.email)
-      .toEither { ResendActivationMailError.AccountNotFound }
-      .toEitherNel().bind()
-    ensure(account.status == AccountStatus.Staged) { ResendActivationMailError.InvalidAccountStatus.nel() }
+	override suspend fun handle(command: ResendActivationMailCommand): ResendActivationMailCommandResult =
+		either {
+			acl.ensuring().ensureHasAccessTo(resendActivationLinkFeature)
+			val account =
+				accountAggregateRepository.findByEmail(command.email)
+					.toEither { ResendActivationMailError.AccountNotFound }
+					.toEitherNel().bind()
+			ensure(account.status == AccountStatus.Staged) { ResendActivationMailError.InvalidAccountStatus.nel() }
 
-    val activationUrl = accountActivationUrlProvider.provide(account.emailAddress)
-    val mailVariables = ActivationAccountMailVariables(activationUrl).toMailVariables()
+			val activationUrl = accountActivationUrlProvider.provide(account.emailAddress)
+			val mailVariables = ActivationAccountMailVariables(activationUrl).toMailVariables()
 
-    val mail = Mail(
-      id = newId(),
-      subject = mailTemplateProperties.subject,
-      from = mailTemplateProperties.sender,
-      to = account.emailAddress,
-      templateId = mailTemplateProperties.templateId,
-      variables = mailVariables
-    )
+			val mail =
+				Mail(
+					id = newId(),
+					subject = mailTemplateProperties.subject,
+					from = mailTemplateProperties.sender,
+					to = account.emailAddress,
+					templateId = mailTemplateProperties.templateId,
+					variables = mailVariables,
+				)
 
-    mailSender.send(mail)
+			mailSender.send(mail)
 
-    ResendActivationMailSuccessResult
-  }
+			ResendActivationMailSuccessResult
+		}
 }

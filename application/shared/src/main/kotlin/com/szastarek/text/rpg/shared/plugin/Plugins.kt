@@ -7,11 +7,11 @@ import io.ktor.server.application.pluginRegistry
 import io.ktor.util.pipeline.Pipeline
 
 fun <P : Pipeline<*, ApplicationCall>, B : Any, F : Any> P.installIfNotRegistered(
-    plugin: Plugin<P, B, F>,
-    configure: B.() -> Unit = {}
+	plugin: Plugin<P, B, F>,
+	configure: B.() -> Unit = {},
 ): F? {
-    if (!pluginRegistry.contains(plugin.key)) {
-        return install(plugin, configure)
-    }
-    return null
+	if (!pluginRegistry.contains(plugin.key)) {
+		return install(plugin, configure)
+	}
+	return null
 }

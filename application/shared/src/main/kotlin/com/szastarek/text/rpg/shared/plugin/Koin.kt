@@ -11,24 +11,25 @@ import org.koin.dsl.bind
 import org.koin.dsl.module
 import org.litote.kmongo.id.serialization.IdKotlinXSerializationModule
 
-internal val sharedKoinModule = module {
-    single {
-        Json {
-            encodeDefaults = true
-            prettyPrint = true
-            ignoreUnknownKeys = true
-            serializersModule = IdKotlinXSerializationModule
-        }
-    }
-    single {
-        ApplicationProperties(
-            environment = getStringProperty(ConfigKey("application.env")),
-            webClientAppUrl = getStringProperty(ConfigKey("application.webClientAppUrl"))
-        )
-    }
-    single { Clock.System } bind Clock::class
-}
+internal val sharedKoinModule =
+	module {
+		single {
+			Json {
+				encodeDefaults = true
+				prettyPrint = true
+				ignoreUnknownKeys = true
+				serializersModule = IdKotlinXSerializationModule
+			}
+		}
+		single {
+			ApplicationProperties(
+				environment = getStringProperty(ConfigKey("application.env")),
+				webClientAppUrl = getStringProperty(ConfigKey("application.webClientAppUrl")),
+			)
+		}
+		single { Clock.System } bind Clock::class
+	}
 
 internal fun Application.configureKoin() {
-    loadKoinModules(sharedKoinModule)
+	loadKoinModules(sharedKoinModule)
 }

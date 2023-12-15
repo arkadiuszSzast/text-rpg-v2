@@ -8,11 +8,11 @@ import kotlin.coroutines.coroutineContext
 sealed interface AccountContext : AuthoritiesProvider
 
 interface AuthenticatedAccountContext : AccountContext, AccountIdProvider, HasRole {
-    val email: EmailAddress
+	val email: EmailAddress
 }
 
 data object AnonymousAccountContext : AccountContext {
-    override suspend fun getAuthorities(): List<Authority> {
-        return coroutineContext[CoroutineInjectedAuthorityContext]?.authorities ?: emptyList()
-    }
+	override suspend fun getAuthorities(): List<Authority> {
+		return coroutineContext[CoroutineInjectedAuthorityContext]?.authorities ?: emptyList()
+	}
 }

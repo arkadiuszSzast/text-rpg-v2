@@ -4,7 +4,7 @@ import com.typesafe.config.ConfigFactory
 import io.ktor.server.config.HoconApplicationConfig
 
 object ConfigMap {
-    val config by lazy { HoconApplicationConfig(ConfigFactory.load()) }
+	val config by lazy { HoconApplicationConfig(ConfigFactory.load()) }
 }
 
 fun getStringProperty(key: ConfigKey) = ConfigMap.config.property(key.key).getString()
@@ -17,5 +17,5 @@ fun getListProperty(key: ConfigKey) = ConfigMap.config.property(key.key).getList
 
 @JvmInline
 value class ConfigKey(val key: String) {
-    operator fun plus(other: ConfigKey) = ConfigKey("$key.${other.key}")
+	operator fun plus(other: ConfigKey) = ConfigKey("$key.${other.key}")
 }

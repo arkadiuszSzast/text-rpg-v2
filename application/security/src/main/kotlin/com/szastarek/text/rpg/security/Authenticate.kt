@@ -6,12 +6,12 @@ import io.ktor.server.auth.authenticate
 import io.ktor.server.routing.Route
 
 fun Route.authenticated(
-    vararg configurations: String? = arrayOf(null),
-    optional: Boolean = false,
-    build: Route.() -> Unit
+	vararg configurations: String? = arrayOf(null),
+	optional: Boolean = false,
+	build: Route.() -> Unit,
 ): Route {
-    return authenticate(*configurations, optional = optional) {
-        install(AuthenticatedAccountContextPlugin)
-        build()
-    }
+	return authenticate(*configurations, optional = optional) {
+		install(AuthenticatedAccountContextPlugin)
+		build()
+	}
 }

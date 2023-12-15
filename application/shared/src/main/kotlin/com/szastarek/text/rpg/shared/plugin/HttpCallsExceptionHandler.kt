@@ -14,62 +14,66 @@ import kotlin.reflect.KClass
 typealias HandlerFunction = suspend (call: ApplicationCall, cause: Throwable) -> Unit
 
 class HttpCallsExceptionHandler {
+	class Configuration {
+		val handlers: MutableMap<KClass<*>, suspend (call: ApplicationCall, cause: Throwable) -> Unit> = mutableMapOf()
 
-    class Configuration {
-        val handlers: MutableMap<KClass<*>, suspend (call: ApplicationCall, cause: Throwable) -> Unit> = mutableMapOf()
+		inline fun <reified T : Throwable> exception(noinline handler: suspend (call: ApplicationCall, cause: T) -> Unit) {
+			@Suppress("UNCHECKED_CAST")
+			handlers[T::class] = handler as suspend (ApplicationCall, Throwable) -> Unit
+		}
+	}
 
-        inline fun <reified T : Throwable> exception(noinline handler: suspend (call: ApplicationCall, cause: T) -> Unit) {
-            @Suppress("UNCHECKED_CAST")
-            handlers[T::class] = handler as suspend (ApplicationCall, Throwable) -> Unit
-        }
+	companion object Plugin : BaseRouteScopedPlugin<Configuration, HttpCallsExceptionHandler> {
+		private val logger = KotlinLogging.logger {}
+		override val key: AttributeKey<HttpCallsExceptionHandler> = AttributeKey("HttpCallsExceptionHandler")
 
-    }
+		override fun install(
+			pipeline: ApplicationCallPipeline,
+			configure: Configuration.() -> Unit,
+		): HttpCallsExceptionHandler {
+			val feature = HttpCallsExceptionHandler()
+			val config = Configuration().apply(configure)
+			val phase = PipelinePhase("HttpCallsExceptionHandler")
+			pipeline.insertPhaseAfter(ApplicationCallPipeline.Plugins, phase)
 
-    companion object Plugin : BaseRouteScopedPlugin<Configuration, HttpCallsExceptionHandler> {
-        private val logger = KotlinLogging.logger {}
-        override val key: AttributeKey<HttpCallsExceptionHandler> = AttributeKey("HttpCallsExceptionHandler")
+			pipeline.intercept(phase) {
+				try {
+					proceed()
+				} catch (e: Throwable) {
+					val handler =
+						config.handlers.keys.filter { e.instanceOf(it) }
+							.let { selectNearestParentClass(e, it) }
+							.let { config.handlers[it] }
 
-        override fun install(
-            pipeline: ApplicationCallPipeline,
-            configure: Configuration.() -> Unit
-        ): HttpCallsExceptionHandler {
-            val feature = HttpCallsExceptionHandler()
-            val config = Configuration().apply(configure)
-            val phase = PipelinePhase("HttpCallsExceptionHandler")
-            pipeline.insertPhaseAfter(ApplicationCallPipeline.Plugins, phase)
+					if (handler == null) {
+						logger.debug { "No handler found for exception: ${e.javaClass.name} for call ${call.request.uri}" }
+						throw e
+					}
+					logger.error(e) { "Handling exception: ${e.javaClass.name} for call ${call.request.uri}" }
+					handler(call, e)
+				}
+			}
 
-            pipeline.intercept(phase) {
-                try {
-                    proceed()
-                } catch (e: Throwable) {
-                    val handler = config.handlers.keys.filter { e.instanceOf(it) }
-                        .let { selectNearestParentClass(e, it) }
-                        .let { config.handlers[it] }
-
-                    if (handler == null) {
-                        logger.debug { "No handler found for exception: ${e.javaClass.name} for call ${call.request.uri}" }
-                        throw e
-                    }
-                    logger.error(e) { "Handling exception: ${e.javaClass.name} for call ${call.request.uri}" }
-                    handler(call, e)
-                }
-            }
-
-            return feature
-        }
-    }
+			return feature
+		}
+	}
 }
 
-private fun selectNearestParentClass(cause: Throwable, keys: List<KClass<*>>): KClass<*>? =
-    keys.minByOrNull { distance(cause.javaClass, it.java) }
+private fun selectNearestParentClass(
+	cause: Throwable,
+	keys: List<KClass<*>>,
+): KClass<*>? = keys.minByOrNull { distance(cause.javaClass, it.java) }
 
-private fun distance(child: Class<*>, parent: Class<*>): Int {
-    var result = 0
-    var current = child
-    while (current != parent) {
-        current = current.superclass
-        result++
-    }
+private fun distance(
+	child: Class<*>,
+	parent: Class<*>,
+): Int {
+	var result = 0
+	var current = child
+	while (current != parent) {
+		current = current.superclass
+		result++
+	}
 
-    return result
+	return result
 }

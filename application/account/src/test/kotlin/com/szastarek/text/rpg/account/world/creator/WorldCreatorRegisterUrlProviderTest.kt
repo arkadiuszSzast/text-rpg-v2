@@ -22,40 +22,42 @@ import kotlin.time.Duration.Companion.milliseconds
 
 class WorldCreatorRegisterUrlProviderTest : DescribeSpec({
 
-  describe("WorldCreatorRegisterUrlProviderTest") {
+	describe("WorldCreatorRegisterUrlProviderTest") {
 
-    val clock = FixedClock(Clock.System.now())
-    val worldCreatorRegisterProperties = WorldCreatorRegisterProperties(
-      registerUrl = Url("http://test-host:3000/account/world-creator"),
-      jwtConfig = JwtProperties(
-        JwtSecret("world-creator-register-jwt-test-secret"),
-        JwtIssuer("world-creator-register-jwt-test-issuer"),
-        3600000.milliseconds
-      )
-    )
-    val worldCreatorRegisterUrlProvider = WorldCreatorRegisterUrlProvider(worldCreatorRegisterProperties, clock)
+		val clock = FixedClock(Clock.System.now())
+		val worldCreatorRegisterProperties =
+			WorldCreatorRegisterProperties(
+				registerUrl = Url("http://test-host:3000/account/world-creator"),
+				jwtConfig =
+					JwtProperties(
+						JwtSecret("world-creator-register-jwt-test-secret"),
+						JwtIssuer("world-creator-register-jwt-test-issuer"),
+						3600000.milliseconds,
+					),
+			)
+		val worldCreatorRegisterUrlProvider = WorldCreatorRegisterUrlProvider(worldCreatorRegisterProperties, clock)
 
-    it("should provide world creator register url") {
-      //arrange
-      val jwtConfig = worldCreatorRegisterProperties.jwtConfig
-      val emailAddress = anEmail()
+		it("should provide world creator register url") {
+			// arrange
+			val jwtConfig = worldCreatorRegisterProperties.jwtConfig
+			val emailAddress = anEmail()
 
-      //act
-      val result = worldCreatorRegisterUrlProvider.provide(emailAddress)
+			// act
+			val result = worldCreatorRegisterUrlProvider.provide(emailAddress)
 
-      result.toString().shouldStartWith(worldCreatorRegisterProperties.registerUrl.toString())
-      result.parameters["token"].shouldNotBeNull().should {
-        val decodedToken = JWT.decode(it)
-        val jwtVerifier = JWT.require(Algorithm.HMAC256(jwtConfig.secret.value)).build()
-        shouldNotThrowAny {
-          jwtVerifier.verify(decodedToken)
-        }
-        decodedToken.subject shouldBe emailAddress.value
-        decodedToken.issuer shouldBe jwtConfig.issuer.value
-        decodedToken.expiresAtAsInstant.shouldBe(
-          clock.now().plus(jwtConfig.expiration).toJavaInstant().truncatedTo(ChronoUnit.SECONDS)
-        )
-      }
-    }
-  }
+			result.toString().shouldStartWith(worldCreatorRegisterProperties.registerUrl.toString())
+			result.parameters["token"].shouldNotBeNull().should {
+				val decodedToken = JWT.decode(it)
+				val jwtVerifier = JWT.require(Algorithm.HMAC256(jwtConfig.secret.value)).build()
+				shouldNotThrowAny {
+					jwtVerifier.verify(decodedToken)
+				}
+				decodedToken.subject shouldBe emailAddress.value
+				decodedToken.issuer shouldBe jwtConfig.issuer.value
+				decodedToken.expiresAtAsInstant.shouldBe(
+					clock.now().plus(jwtConfig.expiration).toJavaInstant().truncatedTo(ChronoUnit.SECONDS),
+				)
+			}
+		}
+	}
 })

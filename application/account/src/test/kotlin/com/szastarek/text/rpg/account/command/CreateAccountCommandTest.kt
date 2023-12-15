@@ -10,32 +10,33 @@ import kotlinx.datetime.TimeZone
 
 class CreateAccountCommandTest : DescribeSpec({
 
-    describe("CreateAccountCommandTest") {
+	describe("CreateAccountCommandTest") {
 
-        it("should aggregate errors") {
-            //arrange & act
-            val command = CreateRegularAccountCommand("invalid-mail", "short", "invalid-timezone")
-            val expectedMessages = listOf(
-                "validation.invalid_email",
-                "validation.password_too_short",
-                "validation.invalid_timezone"
-            )
+		it("should aggregate errors") {
+			// arrange & act
+			val command = CreateRegularAccountCommand("invalid-mail", "short", "invalid-timezone")
+			val expectedMessages =
+				listOf(
+					"validation.invalid_email",
+					"validation.password_too_short",
+					"validation.invalid_timezone",
+				)
 
-            //assert
-            command.shouldBeLeft().map { it.message } shouldBe expectedMessages
-        }
+			// assert
+			command.shouldBeLeft().map { it.message } shouldBe expectedMessages
+		}
 
-        it("should create command") {
-            //arrange & act
-            val command = CreateRegularAccountCommand(
-                anEmail().value,
-                aRawPassword().value,
-                TimeZone.availableZoneIds.random()
-            )
+		it("should create command") {
+			// arrange & act
+			val command =
+				CreateRegularAccountCommand(
+					anEmail().value,
+					aRawPassword().value,
+					TimeZone.availableZoneIds.random(),
+				)
 
-            //assert
-            command.shouldBeRight()
-        }
-    }
-
+			// assert
+			command.shouldBeRight()
+		}
+	}
 })

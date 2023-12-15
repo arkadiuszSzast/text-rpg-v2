@@ -5,7 +5,6 @@ import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.CoroutineContext
 
 data class CoroutineInjectedAuthorityContext(val authorities: List<Authority>) :
-    AbstractCoroutineContextElement(CoroutineInjectedAuthorityContext) {
-
-    companion object Key : CoroutineContext.Key<CoroutineInjectedAuthorityContext>
+	AbstractCoroutineContextElement(CoroutineInjectedAuthorityContext) {
+	companion object Key : CoroutineContext.Key<CoroutineInjectedAuthorityContext>
 }

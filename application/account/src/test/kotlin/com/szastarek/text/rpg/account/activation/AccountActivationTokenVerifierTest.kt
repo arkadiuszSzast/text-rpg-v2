@@ -20,72 +20,76 @@ import kotlin.time.Duration.Companion.milliseconds
 
 class AccountActivationTokenVerifierTest : DescribeSpec({
 
-  describe("AccountActivationTokenVerifierTest") {
+	describe("AccountActivationTokenVerifierTest") {
 
-    val clock = FixedClock(Clock.System.now())
-    val accountActivationProperties = AccountActivationProperties(
-      activateAccountUrl = Url("http://test-host:3000/account/activate"),
-      jwtConfig = JwtProperties(
-        JwtSecret("activate-account-jwt-test-secret"),
-        JwtIssuer("activate-account-jwt-test-issuer"),
-        3600000.milliseconds
-      )
-    )
-    val accountActivationTokenVerifier = AccountActivationTokenVerifier(accountActivationProperties)
-    val accountActivationUrlProvider = AccountActivationUrlProvider(accountActivationProperties, clock)
+		val clock = FixedClock(Clock.System.now())
+		val accountActivationProperties =
+			AccountActivationProperties(
+				activateAccountUrl = Url("http://test-host:3000/account/activate"),
+				jwtConfig =
+					JwtProperties(
+						JwtSecret("activate-account-jwt-test-secret"),
+						JwtIssuer("activate-account-jwt-test-issuer"),
+						3600000.milliseconds,
+					),
+			)
+		val accountActivationTokenVerifier = AccountActivationTokenVerifier(accountActivationProperties)
+		val accountActivationUrlProvider = AccountActivationUrlProvider(accountActivationProperties, clock)
 
-    it("should verify valid token") {
-      //given
-      val token = JwtToken(accountActivationUrlProvider.provide(anEmail()).parameters["token"]!!)
+		it("should verify valid token") {
+			// given
+			val token = JwtToken(accountActivationUrlProvider.provide(anEmail()).parameters["token"]!!)
 
-      //act & assert
-      accountActivationTokenVerifier.verify(token).shouldBeRight()
-    }
+			// act & assert
+			accountActivationTokenVerifier.verify(token).shouldBeRight()
+		}
 
-    it("should return left when secret does not match") {
-      //arrange
-      val jwtConfig = accountActivationProperties.jwtConfig
-      val token = JwtToken(
-        JWT.create()
-          .withIssuer(jwtConfig.issuer.value)
-          .withSubject(anEmail().value)
-          .withExpiresAt(clock.now().plus(jwtConfig.expiration).toJavaInstant())
-          .sign(Algorithm.HMAC256("invalid-secret"))
-      )
+		it("should return left when secret does not match") {
+			// arrange
+			val jwtConfig = accountActivationProperties.jwtConfig
+			val token =
+				JwtToken(
+					JWT.create()
+						.withIssuer(jwtConfig.issuer.value)
+						.withSubject(anEmail().value)
+						.withExpiresAt(clock.now().plus(jwtConfig.expiration).toJavaInstant())
+						.sign(Algorithm.HMAC256("invalid-secret")),
+				)
 
-      //act
-      accountActivationTokenVerifier.verify(token).shouldBeLeft(InvalidJwtResult)
-    }
+			// act
+			accountActivationTokenVerifier.verify(token).shouldBeLeft(InvalidJwtResult)
+		}
 
-    it("should return left when issuer does not match") {
-      //arrange
-      val jwtConfig = accountActivationProperties.jwtConfig
-      val token = JwtToken(
-        JWT.create()
-          .withIssuer("invalid-issuer")
-          .withSubject(anEmail().value)
-          .withExpiresAt(clock.now().plus(jwtConfig.expiration).toJavaInstant())
-          .sign(Algorithm.HMAC256(jwtConfig.secret.value))
-      )
+		it("should return left when issuer does not match") {
+			// arrange
+			val jwtConfig = accountActivationProperties.jwtConfig
+			val token =
+				JwtToken(
+					JWT.create()
+						.withIssuer("invalid-issuer")
+						.withSubject(anEmail().value)
+						.withExpiresAt(clock.now().plus(jwtConfig.expiration).toJavaInstant())
+						.sign(Algorithm.HMAC256(jwtConfig.secret.value)),
+				)
 
-      //act
-      accountActivationTokenVerifier.verify(token).shouldBeLeft(InvalidJwtResult)
-    }
+			// act
+			accountActivationTokenVerifier.verify(token).shouldBeLeft(InvalidJwtResult)
+		}
 
+		it("should return left when token is expired") {
+			// arrange
+			val jwtConfig = accountActivationProperties.jwtConfig
+			val token =
+				JwtToken(
+					JWT.create()
+						.withIssuer(jwtConfig.issuer.value)
+						.withSubject(anEmail().value)
+						.withExpiresAt(clock.now().minus(1.hours).toJavaInstant())
+						.sign(Algorithm.HMAC256(jwtConfig.secret.value)),
+				)
 
-    it("should return left when token is expired") {
-      //arrange
-      val jwtConfig = accountActivationProperties.jwtConfig
-      val token = JwtToken(
-        JWT.create()
-          .withIssuer(jwtConfig.issuer.value)
-          .withSubject(anEmail().value)
-          .withExpiresAt(clock.now().minus(1.hours).toJavaInstant())
-          .sign(Algorithm.HMAC256(jwtConfig.secret.value))
-      )
-
-      //act
-      accountActivationTokenVerifier.verify(token).shouldBeLeft(InvalidJwtResult)
-    }
-  }
+			// act
+			accountActivationTokenVerifier.verify(token).shouldBeLeft(InvalidJwtResult)
+		}
+	}
 })

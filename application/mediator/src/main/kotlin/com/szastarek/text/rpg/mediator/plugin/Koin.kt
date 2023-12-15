@@ -8,12 +8,13 @@ import org.koin.core.context.loadKoinModules
 import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.module
 
-internal val mediatorModule = module {
-    single { GlobalOpenTelemetry.get() }
-    singleOf(::TracingPipelineBehavior)
-    single { KediatRKoin.getMediator() }
-}
+internal val mediatorModule =
+	module {
+		single { GlobalOpenTelemetry.get() }
+		singleOf(::TracingPipelineBehavior)
+		single { KediatRKoin.getMediator() }
+	}
 
 internal fun Application.configureKoin() {
-    loadKoinModules(mediatorModule)
+	loadKoinModules(mediatorModule)
 }

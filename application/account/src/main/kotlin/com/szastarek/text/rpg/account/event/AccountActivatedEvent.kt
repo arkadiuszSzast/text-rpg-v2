@@ -15,19 +15,19 @@ import org.litote.kmongo.Id
 @Serializable
 @SerialName("AccountActivatedEvent")
 data class AccountActivatedEvent(
-  @Contextual override val accountId: Id<Account>,
-  override val emailAddress: EmailAddress,
-  override val version: Version,
+	@Contextual override val accountId: Id<Account>,
+	override val emailAddress: EmailAddress,
+	override val version: Version,
 ) : AccountEvent, Versioned {
+	companion object {
+		val eventType = EventType(AccountEvent.eventCategory, "activated")
+	}
 
-  companion object {
-    val eventType = EventType(AccountEvent.eventCategory, "activated")
-  }
-  override fun getMetadata(causedBy: EventMetadata?): EventMetadata {
-    return EventMetadataBuilder(
-      aggregateId,
-      AccountEvent.eventCategory,
-      eventType
-    ).optionalCausedBy(causedBy).build()
-  }
+	override fun getMetadata(causedBy: EventMetadata?): EventMetadata {
+		return EventMetadataBuilder(
+			aggregateId,
+			AccountEvent.eventCategory,
+			eventType,
+		).optionalCausedBy(causedBy).build()
+	}
 }

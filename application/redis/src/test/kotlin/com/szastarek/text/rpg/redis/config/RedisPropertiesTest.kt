@@ -8,24 +8,24 @@ import org.koin.test.KoinTest
 import org.koin.test.inject
 
 class RedisPropertiesTest : KoinTest, DescribeSpec() {
+	private val redisProperties by inject<RedisProperties>()
 
-  private val redisProperties by inject<RedisProperties>()
+	init {
 
-  init {
+		extensions(KoinExtension(redisModule))
 
-    extensions(KoinExtension(redisModule))
+		describe("RedisPropertiesTest") {
 
-    describe("RedisPropertiesTest") {
+			it("should pick correct values from application.conf") {
+				// arrange
+				val expected =
+					RedisProperties(
+						connectionString = "redis://test-host:7181",
+					)
 
-      it("should pick correct values from application.conf") {
-        //arrange
-        val expected = RedisProperties(
-          connectionString = "redis://test-host:7181"
-        )
-
-        //act & assert
-        redisProperties shouldBe expected
-      }
-    }
-  }
+				// act & assert
+				redisProperties shouldBe expected
+			}
+		}
+	}
 }

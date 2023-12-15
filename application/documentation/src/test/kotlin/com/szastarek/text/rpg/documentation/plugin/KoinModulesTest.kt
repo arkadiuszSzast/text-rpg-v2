@@ -6,17 +6,16 @@ import org.koin.test.KoinTest
 import org.koin.test.check.checkModules
 
 class KoinModulesTest : KoinTest, DescribeSpec() {
+	init {
 
-    init {
+		extensions(KoinExtension(documentationModule))
 
-        extensions(KoinExtension(documentationModule))
+		describe("Documentation Koin module test") {
 
-        describe("Documentation Koin module test") {
-
-            it("verify documentation module") {
-                //arrange & act & assert
-                getKoin().checkModules()
-            }
-        }
-    }
+			it("verify documentation module") {
+				// arrange & act & assert
+				getKoin().checkModules()
+			}
+		}
+	}
 }

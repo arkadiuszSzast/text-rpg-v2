@@ -9,18 +9,19 @@ import com.trendyol.kediatr.CommandWithResult
 typealias InviteWorldCreatorCommandResult = Either<Nel<InviteWorldCreatorError>, InviteWorldCreatorCommandSuccessResult>
 
 data class InviteWorldCreatorCommand(
-  val email: EmailAddress
+	val email: EmailAddress,
 ) : CommandWithResult<InviteWorldCreatorCommandResult> {
-  companion object {
-    operator fun invoke(email: String) = either {
-      val mail = EmailAddress(email).bind()
-      InviteWorldCreatorCommand(mail)
-    }
-  }
+	companion object {
+		operator fun invoke(email: String) =
+			either {
+				val mail = EmailAddress(email).bind()
+				InviteWorldCreatorCommand(mail)
+			}
+	}
 }
 
 data object InviteWorldCreatorCommandSuccessResult
 
 enum class InviteWorldCreatorError {
-  EmailAlreadyTaken
+	EmailAlreadyTaken,
 }

@@ -19,102 +19,104 @@ import io.kotest.core.spec.style.DescribeSpec
 import kotlin.time.Duration.Companion.hours
 
 class LogInAccountCommandHandlerTest : DescribeSpec() {
+	private val clock = FixedClock()
+	private val eventStore = InMemoryEventStore()
+	private val accountAggregateRepository = AccountAggregateEventStoreRepository(eventStore)
+	private val authenticationProperties =
+		AuthenticationProperties(
+			jwtAudience = "test-audience",
+			jwtIssuer = "test-issuer",
+			jwtRealm = "test-realm",
+			jwtSecret = "test-secret",
+			authTokenExpiration = 1.hours,
+		)
+	private val authTokenProvider = AuthTokenProvider(authenticationProperties, clock)
+	private val refreshTokenRepository = InMemoryRefreshTokenRepository()
+	private val handler = LogInAccountCommandHandler(accountAggregateRepository, authTokenProvider, refreshTokenRepository)
 
-  private val clock = FixedClock()
-  private val eventStore = InMemoryEventStore()
-  private val accountAggregateRepository = AccountAggregateEventStoreRepository(eventStore)
-  private val authenticationProperties = AuthenticationProperties(
-    jwtAudience = "test-audience",
-    jwtIssuer = "test-issuer",
-    jwtRealm = "test-realm",
-    jwtSecret = "test-secret",
-    authTokenExpiration = 1.hours,
-  )
-  private val authTokenProvider = AuthTokenProvider(authenticationProperties, clock)
-  private val refreshTokenRepository = InMemoryRefreshTokenRepository()
-  private val handler = LogInAccountCommandHandler(accountAggregateRepository, authTokenProvider, refreshTokenRepository)
+	init {
 
-  init {
+		describe("LogInAccountCommandHandlerTest") {
 
-    describe("LogInAccountCommandHandlerTest") {
+			beforeTest {
+				refreshTokenRepository.clear()
+				eventStore.clear()
+			}
 
-      beforeTest {
-        refreshTokenRepository.clear()
-        eventStore.clear()
-      }
+			it("should fail when account not found") {
+				// arrange
+				val command = aLogInAccountCommand()
 
-      it("should fail when account not found") {
-        //arrange
-        val command = aLogInAccountCommand()
+				// act
+				val result = handler.handle(command)
 
-        //act
-        val result = handler.handle(command)
+				// assert
+				result.shouldBeLeft(nonEmptyListOf(LogInAccountError.AccountNotFound))
+			}
 
-        //assert
-        result.shouldBeLeft(nonEmptyListOf(LogInAccountError.AccountNotFound))
-      }
+			it("should fail when password does not match") {
+				// arrange
+				val password = aRawPassword()
+				val invalidPassword = aRawPassword("${password.value}-invalid")
+				val accountCreatedEvent =
+					anAccountCreatedEvent(password = password, status = AccountStatus.Active)
+						.also { eventStore.appendToStream(it, AccountEvent::class) }
 
-      it("should fail when password does not match") {
-        //arrange
-        val password = aRawPassword()
-        val invalidPassword = aRawPassword("${password.value}-invalid")
-        val accountCreatedEvent = anAccountCreatedEvent(password = password, status = AccountStatus.Active)
-          .also { eventStore.appendToStream(it, AccountEvent::class) }
+				val command = aLogInAccountCommand(email = accountCreatedEvent.emailAddress, password = invalidPassword)
 
-        val command = aLogInAccountCommand(email = accountCreatedEvent.emailAddress, password = invalidPassword)
+				// act
+				val result = handler.handle(command)
 
-        //act
-        val result = handler.handle(command)
+				// assert
+				result.shouldBeLeft(nonEmptyListOf(LogInAccountError.InvalidPassword))
+			}
 
-        //assert
-        result.shouldBeLeft(nonEmptyListOf(LogInAccountError.InvalidPassword))
-      }
+			it("should fail when account is not active") {
+				// arrange
+				val password = aRawPassword()
+				val accountCreatedEvent =
+					anAccountCreatedEvent(password = password, status = AccountStatus.Staged)
+						.also { eventStore.appendToStream(it, AccountEvent::class) }
 
-      it("should fail when account is not active") {
-        //arrange
-        val password = aRawPassword()
-        val accountCreatedEvent = anAccountCreatedEvent(password = password, status = AccountStatus.Staged)
-          .also { eventStore.appendToStream(it, AccountEvent::class) }
+				val command = aLogInAccountCommand(email = accountCreatedEvent.emailAddress, password = password)
 
-        val command = aLogInAccountCommand(email = accountCreatedEvent.emailAddress, password = password)
+				// act
+				val result = handler.handle(command)
 
-        //act
-        val result = handler.handle(command)
+				// assert
+				result.shouldBeLeft(nonEmptyListOf(LogInAccountError.AccountNotActive))
+			}
 
-        //assert
-        result.shouldBeLeft(nonEmptyListOf(LogInAccountError.AccountNotActive))
-      }
+			it("should accumulate errors") {
+				// arrange
+				val password = aRawPassword()
+				val invalidPassword = aRawPassword("${password.value}-invalid")
+				val accountCreatedEvent =
+					anAccountCreatedEvent(password = password, status = AccountStatus.Staged)
+						.also { eventStore.appendToStream(it, AccountEvent::class) }
 
-      it("should accumulate errors") {
-        //arrange
-        val password = aRawPassword()
-        val invalidPassword = aRawPassword("${password.value}-invalid")
-        val accountCreatedEvent = anAccountCreatedEvent(password = password, status = AccountStatus.Staged)
-          .also { eventStore.appendToStream(it, AccountEvent::class) }
+				val command = aLogInAccountCommand(email = accountCreatedEvent.emailAddress, password = invalidPassword)
 
-        val command = aLogInAccountCommand(email = accountCreatedEvent.emailAddress, password = invalidPassword)
+				// act
+				val result = handler.handle(command)
 
-        //act
-        val result = handler.handle(command)
+				// assert
+				result.shouldBeLeft(nonEmptyListOf(LogInAccountError.InvalidPassword, LogInAccountError.AccountNotActive))
+			}
 
-        //assert
-        result.shouldBeLeft(nonEmptyListOf(LogInAccountError.InvalidPassword, LogInAccountError.AccountNotActive))
-      }
+			it("should log it") {
+				// arrange
+				val password = aRawPassword()
+				val accountCreatedEvent =
+					anAccountCreatedEvent(password = password, status = AccountStatus.Active)
+						.also { eventStore.appendToStream(it, AccountEvent::class) }
 
-      it("should log it") {
-        //arrange
-        val password = aRawPassword()
-        val accountCreatedEvent = anAccountCreatedEvent(password = password, status = AccountStatus.Active)
-          .also { eventStore.appendToStream(it, AccountEvent::class) }
+				// act
+				val result = handler.handle(aLogInAccountCommand(email = accountCreatedEvent.emailAddress, password = password))
 
-        //act
-        val result = handler.handle(aLogInAccountCommand(email = accountCreatedEvent.emailAddress, password = password))
-
-        //assert
-        result.shouldBeRight()
-      }
-    }
-
-  }
-
+				// assert
+				result.shouldBeRight()
+			}
+		}
+	}
 }

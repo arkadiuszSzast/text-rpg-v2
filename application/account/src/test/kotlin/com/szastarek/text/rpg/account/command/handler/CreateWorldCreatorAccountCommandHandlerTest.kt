@@ -33,99 +33,103 @@ import org.litote.kmongo.Id
 import kotlin.time.Duration.Companion.minutes
 
 class CreateWorldCreatorAccountCommandHandlerTest : DescribeSpec() {
+	private val clock = FixedClock(Clock.System.now())
+	private val eventStore = InMemoryEventStore()
+	private val accountAggregateRepository = AccountAggregateEventStoreRepository(eventStore)
+	private val worldCreatorRegisterProperties =
+		WorldCreatorRegisterProperties(
+			registerUrl = Url("http://test-host:3000/account/world-creator"),
+			jwtConfig =
+				JwtProperties(
+					JwtSecret("world-creator-register-jwt-test-secret"),
+					JwtIssuer("world-creator-register-jwt-test-issuer"),
+					15.minutes,
+				),
+		)
+	private val worldCreatorRegisterUrlProvider = WorldCreatorRegisterUrlProvider(worldCreatorRegisterProperties, clock)
+	private val registerWorldCreatorTokenVerifier = RegisterWorldCreatorTokenVerifier(worldCreatorRegisterProperties)
+	private val handler =
+		CreateWorldCreatorAccountCommandHandler(
+			registerWorldCreatorTokenVerifier,
+			accountAggregateRepository,
+			eventStore,
+			clock,
+		)
 
-  private val clock = FixedClock(Clock.System.now())
-  private val eventStore = InMemoryEventStore()
-  private val accountAggregateRepository = AccountAggregateEventStoreRepository(eventStore)
-  private val worldCreatorRegisterProperties = WorldCreatorRegisterProperties(
-    registerUrl = Url("http://test-host:3000/account/world-creator"),
-    jwtConfig = JwtProperties(
-      JwtSecret("world-creator-register-jwt-test-secret"),
-      JwtIssuer("world-creator-register-jwt-test-issuer"),
-      15.minutes
-    )
-  )
-  private val worldCreatorRegisterUrlProvider = WorldCreatorRegisterUrlProvider(worldCreatorRegisterProperties, clock)
-  private val registerWorldCreatorTokenVerifier = RegisterWorldCreatorTokenVerifier(worldCreatorRegisterProperties)
-  private val handler = CreateWorldCreatorAccountCommandHandler(
-    registerWorldCreatorTokenVerifier,
-    accountAggregateRepository,
-    eventStore,
-    clock
-  )
+	init {
 
-  init {
+		describe("CreateWorldCreatorAccountCommandHandlerTest") {
 
-    describe("CreateWorldCreatorAccountCommandHandlerTest") {
+			beforeTest { eventStore.clear() }
 
-      beforeTest { eventStore.clear() }
+			it("should create world creator account") {
+				// arrange
+				val email = anEmail()
+				val token = JwtToken(worldCreatorRegisterUrlProvider.provide(email).parameters["token"]!!)
+				val command = CreateWorldCreatorAccountCommand(email, aRawPassword().hashpw(), TimeZone.UTC, token)
 
-      it("should create world creator account") {
-        //arrange
-        val email = anEmail()
-        val token = JwtToken(worldCreatorRegisterUrlProvider.provide(email).parameters["token"]!!)
-        val command = CreateWorldCreatorAccountCommand(email, aRawPassword().hashpw(), TimeZone.UTC, token)
+				// act
+				val result = handler.handle(command)
 
-        //act
-        val result = handler.handle(command)
+				// assert
+				val appendedEvent = eventStore.readStreamByEventType(AccountCreatedEvent.eventType, AccountCreatedEvent::class).single()
+				result.shouldBeRight().should {
+					val expectedEvent = command.toExpectedEvent(it.accountId)
+					appendedEvent shouldBe expectedEvent
+				}
+			}
 
-        //assert
-        val appendedEvent = eventStore.readStreamByEventType(AccountCreatedEvent.eventType, AccountCreatedEvent::class).single()
-        result.shouldBeRight().should {
-          val expectedEvent = command.toExpectedEvent(it.accountId)
-          appendedEvent shouldBe expectedEvent
-        }
-      }
+			it("cannot register world creator account on different email than from subject") {
+				// arrange
+				val email = anEmail()
+				val differentEmail = anEmail()
+				val token = JwtToken(worldCreatorRegisterUrlProvider.provide(email).parameters["token"]!!)
+				val command = CreateWorldCreatorAccountCommand(differentEmail, aRawPassword().hashpw(), TimeZone.UTC, token)
 
-      it("cannot register world creator account on different email than from subject") {
-        //arrange
-        val email = anEmail()
-        val differentEmail = anEmail()
-        val token = JwtToken(worldCreatorRegisterUrlProvider.provide(email).parameters["token"]!!)
-        val command = CreateWorldCreatorAccountCommand(differentEmail, aRawPassword().hashpw(), TimeZone.UTC, token)
+				// act
+				val result = handler.handle(command)
 
-        //act
-        val result = handler.handle(command)
+				// assert
+				eventStore.readStreamByEventType(AccountCreatedEvent.eventType, AccountCreatedEvent::class).shouldBeEmpty()
+				result.shouldBeLeft(listOf(CreateWorldCreatorAccountError.InvalidToken))
+			}
 
-        //assert
-        eventStore.readStreamByEventType(AccountCreatedEvent.eventType, AccountCreatedEvent::class).shouldBeEmpty()
-        result.shouldBeLeft(listOf(CreateWorldCreatorAccountError.InvalidToken))
-      }
+			it("should not create world creator account when email is already taken") {
+				// arrange
+				val email = anEmail()
+				val alreadyExistingAccount =
+					anAccountCreatedEvent(email = email, role = Roles.RegularUser.role)
+						.also { eventStore.appendToStream(it, AccountEvent::class) }
+				val token = JwtToken(worldCreatorRegisterUrlProvider.provide(email).parameters["token"]!!)
+				val command =
+					CreateWorldCreatorAccountCommand(
+						alreadyExistingAccount.emailAddress,
+						aRawPassword().hashpw(),
+						TimeZone.UTC,
+						token,
+					)
 
-      it("should not create world creator account when email is already taken") {
-        //arrange
-        val email = anEmail()
-        val alreadyExistingAccount = anAccountCreatedEvent(email = email, role = Roles.RegularUser.role)
-          .also { eventStore.appendToStream(it, AccountEvent::class) }
-        val token = JwtToken(worldCreatorRegisterUrlProvider.provide(email).parameters["token"]!!)
-        val command = CreateWorldCreatorAccountCommand(
-          alreadyExistingAccount.emailAddress,
-          aRawPassword().hashpw(),
-          TimeZone.UTC,
-          token
-        )
+				// act
+				val result = handler.handle(command)
 
-        //act
-        val result = handler.handle(command)
+				// assert
+				eventStore.readStreamByEventType(AccountCreatedEvent.eventType, AccountCreatedEvent::class).single().should {
+					it.role shouldBe alreadyExistingAccount.role
+				}
+				result.shouldBeLeft(listOf(CreateWorldCreatorAccountError.EmailAlreadyTaken))
+			}
+		}
+	}
 
-        //assert
-        eventStore.readStreamByEventType(AccountCreatedEvent.eventType, AccountCreatedEvent::class).single().should {
-          it.role shouldBe alreadyExistingAccount.role
-        }
-        result.shouldBeLeft(listOf(CreateWorldCreatorAccountError.EmailAlreadyTaken))
-      }
-    }
-
-  }
-
-  private fun CreateWorldCreatorAccountCommand.toExpectedEvent(id: Id<Account>) = AccountCreatedEvent(
-    id,
-    email,
-    AccountStatus.Staged,
-    Roles.WorldCreator.role,
-    emptyList(),
-    password,
-    clock.now(),
-    timeZoneId
-  )
+	private fun CreateWorldCreatorAccountCommand.toExpectedEvent(id: Id<Account>) =
+		AccountCreatedEvent(
+			id,
+			email,
+			AccountStatus.Staged,
+			Roles.WorldCreator.role,
+			emptyList(),
+			password,
+			clock.now(),
+			timeZoneId,
+		)
 }

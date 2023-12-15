@@ -12,34 +12,35 @@ import kotlinx.datetime.TimeZone
 
 class CreateWorldCreatorAccountCommandTest : DescribeSpec({
 
-  describe("CreateWorldCreatorAccountCommandTest") {
+	describe("CreateWorldCreatorAccountCommandTest") {
 
-    it("should aggregate errors") {
-      //arrange & act
-      val command = CreateWorldCreatorAccountCommand("invalid-mail", "short", "invalid-timezone", "invalid-token")
-      val expectedMessages = listOf(
-        "validation.invalid_email",
-        "validation.password_too_short",
-        "validation.invalid_invite_world_creator_token",
-        "validation.invalid_timezone"
-      )
+		it("should aggregate errors") {
+			// arrange & act
+			val command = CreateWorldCreatorAccountCommand("invalid-mail", "short", "invalid-timezone", "invalid-token")
+			val expectedMessages =
+				listOf(
+					"validation.invalid_email",
+					"validation.password_too_short",
+					"validation.invalid_invite_world_creator_token",
+					"validation.invalid_timezone",
+				)
 
-      //assert
-      command.shouldBeLeft().map { it.message } shouldBe expectedMessages
-    }
+			// assert
+			command.shouldBeLeft().map { it.message } shouldBe expectedMessages
+		}
 
-    it("should create command") {
-      //arrange & act
-      val command = CreateWorldCreatorAccountCommand(
-        anEmail().value,
-        aRawPassword().value,
-        TimeZone.availableZoneIds.random(),
-        JWT.create().sign(Algorithm.HMAC256("secret"))
-      )
+		it("should create command") {
+			// arrange & act
+			val command =
+				CreateWorldCreatorAccountCommand(
+					anEmail().value,
+					aRawPassword().value,
+					TimeZone.availableZoneIds.random(),
+					JWT.create().sign(Algorithm.HMAC256("secret")),
+				)
 
-      //assert
-      command.shouldBeRight()
-    }
-  }
-
+			// assert
+			command.shouldBeRight()
+		}
+	}
 })

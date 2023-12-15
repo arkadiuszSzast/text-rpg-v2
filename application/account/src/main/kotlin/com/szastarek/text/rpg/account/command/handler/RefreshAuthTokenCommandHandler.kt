@@ -16,29 +16,33 @@ import com.szastarek.text.rpg.security.AuthTokenProvider
 import com.trendyol.kediatr.CommandWithResultHandler
 
 class RefreshAuthTokenCommandHandler(
-  private val refreshTokenRepository: RefreshTokenRepository,
-  private val accountAggregateRepository: AccountAggregateRepository,
-  private val authTokenProvider: AuthTokenProvider
+	private val refreshTokenRepository: RefreshTokenRepository,
+	private val accountAggregateRepository: AccountAggregateRepository,
+	private val authTokenProvider: AuthTokenProvider,
 ) : CommandWithResultHandler<RefreshAuthTokenCommand, RefreshAuthTokenCommandResult> {
-  override suspend fun handle(command: RefreshAuthTokenCommand): RefreshAuthTokenCommandResult = either {
-    val (accountEmail, refreshToken) = command
-    val foundRefreshToken = ensureNotNull(refreshTokenRepository.getAndDelete(accountEmail).getOrNull()) {
-      RefreshAuthTokenError.RefreshTokenNotFound.nel()
-    }
-    ensure(foundRefreshToken == refreshToken) { RefreshAuthTokenError.InvalidRefreshToken.nel() }
+	override suspend fun handle(command: RefreshAuthTokenCommand): RefreshAuthTokenCommandResult =
+		either {
+			val (accountEmail, refreshToken) = command
+			val foundRefreshToken =
+				ensureNotNull(refreshTokenRepository.getAndDelete(accountEmail).getOrNull()) {
+					RefreshAuthTokenError.RefreshTokenNotFound.nel()
+				}
+			ensure(foundRefreshToken == refreshToken) { RefreshAuthTokenError.InvalidRefreshToken.nel() }
 
-    val accountAggregate = ensureNotNull(accountAggregateRepository.findByEmail(accountEmail).getOrNull()) {
-      RefreshAuthTokenError.AccountNotFound.nel()
-    }
-    ensure(accountAggregate.status == AccountStatus.Active) { RefreshAuthTokenError.AccountInInvalidStatus.nel() }
+			val accountAggregate =
+				ensureNotNull(accountAggregateRepository.findByEmail(accountEmail).getOrNull()) {
+					RefreshAuthTokenError.AccountNotFound.nel()
+				}
+			ensure(accountAggregate.status == AccountStatus.Active) { RefreshAuthTokenError.AccountInInvalidStatus.nel() }
 
-    val newRefreshToken = refreshTokenRepository.replace(accountEmail, RefreshToken.generate())
-    val newAuthToken = authTokenProvider.createAuthToken(
-      accountAggregate.accountId,
-      accountAggregate.emailAddress,
-      accountAggregate.role,
-      accountAggregate.customAuthorities
-    )
-    RefreshAuthTokenCommandSuccessResult(newAuthToken, newRefreshToken)
-  }
+			val newRefreshToken = refreshTokenRepository.replace(accountEmail, RefreshToken.generate())
+			val newAuthToken =
+				authTokenProvider.createAuthToken(
+					accountAggregate.accountId,
+					accountAggregate.emailAddress,
+					accountAggregate.role,
+					accountAggregate.customAuthorities,
+				)
+			RefreshAuthTokenCommandSuccessResult(newAuthToken, newRefreshToken)
+		}
 }

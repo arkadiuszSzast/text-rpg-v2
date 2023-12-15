@@ -18,24 +18,28 @@ import com.szastarek.text.rpg.shared.email.EmailAddress
 import com.trendyol.kediatr.CommandWithResultHandler
 
 class ResetPasswordCommandHandler(
-  private val accountAggregateRepository: AccountAggregateRepository,
-  private val resetPasswordProperties: AccountResetPasswordProperties,
-  private val eventStoreWriteClient: EventStoreWriteClient
-) : CommandWithResultHandler<ResetPasswordCommand, ResetPasswordCommandResult>{
-  override suspend fun handle(command: ResetPasswordCommand): ResetPasswordCommandResult = either {
-    val (token, newPassword) = command
-    val issuer = resetPasswordProperties.jwtIssuer
-    val decodedJwt = Either.catch { JWT.decode(token.value) }.mapLeft { ResetPasswordError.InvalidToken }
-      .toEitherNel().bind()
-    val email = EmailAddress(decodedJwt.subject).mapLeft { ResetPasswordError.InvalidSubject }
-      .toEitherNel().bind()
-    val account = accountAggregateRepository.findByEmail(email).toEither { ResetPasswordError.AccountNotFound }
-      .toEitherNel().bind()
+	private val accountAggregateRepository: AccountAggregateRepository,
+	private val resetPasswordProperties: AccountResetPasswordProperties,
+	private val eventStoreWriteClient: EventStoreWriteClient,
+) : CommandWithResultHandler<ResetPasswordCommand, ResetPasswordCommandResult> {
+	override suspend fun handle(command: ResetPasswordCommand): ResetPasswordCommandResult =
+		either {
+			val (token, newPassword) = command
+			val issuer = resetPasswordProperties.jwtIssuer
+			val decodedJwt =
+				Either.catch { JWT.decode(token.value) }.mapLeft { ResetPasswordError.InvalidToken }
+					.toEitherNel().bind()
+			val email =
+				EmailAddress(decodedJwt.subject).mapLeft { ResetPasswordError.InvalidSubject }
+					.toEitherNel().bind()
+			val account =
+				accountAggregateRepository.findByEmail(email).toEither { ResetPasswordError.AccountNotFound }
+					.toEitherNel().bind()
 
-    val event = account.resetPassword(token, issuer, newPassword).toEitherNel().bind()
+			val event = account.resetPassword(token, issuer, newPassword).toEitherNel().bind()
 
-    eventStoreWriteClient.appendToStream<AccountEvent>(event, event.revision())
+			eventStoreWriteClient.appendToStream<AccountEvent>(event, event.revision())
 
-    ResetPasswordCommandSuccessResult
-  }
+			ResetPasswordCommandSuccessResult
+		}
 }

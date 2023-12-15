@@ -2,9 +2,8 @@ package com.szastarek.text.rpg.acl
 
 import kotlinx.serialization.Serializable
 
-
 interface AclResource {
-   val aclResourceIdentifier: AclResourceIdentifier
+	val aclResourceIdentifier: AclResourceIdentifier
 }
 
 @JvmInline

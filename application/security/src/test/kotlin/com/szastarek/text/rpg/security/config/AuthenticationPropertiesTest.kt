@@ -9,28 +9,28 @@ import org.koin.test.inject
 import kotlin.time.Duration.Companion.milliseconds
 
 class AuthenticationPropertiesTest : KoinTest, DescribeSpec() {
+	private val authenticationProperties by inject<AuthenticationProperties>()
 
-    private val authenticationProperties by inject<AuthenticationProperties>()
+	init {
 
-    init {
+		extensions(KoinExtension(securityModule))
 
-        extensions(KoinExtension(securityModule))
+		describe("AuthenticationPropertiesTest") {
 
-        describe("AuthenticationPropertiesTest") {
+			it("should pick correct values from application.conf") {
+				// arrange
+				val expected =
+					AuthenticationProperties(
+						jwtAudience = "test-audience",
+						jwtIssuer = "test-issuer",
+						jwtRealm = "test-realm",
+						jwtSecret = "test-secret",
+						authTokenExpiration = 10000.milliseconds,
+					)
 
-            it("should pick correct values from application.conf") {
-                //arrange
-                val expected = AuthenticationProperties(
-                    jwtAudience = "test-audience",
-                    jwtIssuer = "test-issuer",
-                    jwtRealm = "test-realm",
-                    jwtSecret = "test-secret",
-                    authTokenExpiration = 10000.milliseconds
-                )
-
-                //act & assert
-                authenticationProperties shouldBe expected
-            }
-        }
-    }
+				// act & assert
+				authenticationProperties shouldBe expected
+			}
+		}
+	}
 }

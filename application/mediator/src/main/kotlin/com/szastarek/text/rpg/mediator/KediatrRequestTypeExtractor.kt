@@ -6,12 +6,12 @@ import com.trendyol.kediatr.Notification
 import com.trendyol.kediatr.Query
 
 object KediatrRequestTypeExtractor {
-    fun <TRequest> extract(request: TRequest) =
-        when (request) {
-            is Command -> KediatrRequestType.Command
-            is CommandWithResult<*> -> KediatrRequestType.CommandWithResult
-            is Query<*> -> KediatrRequestType.Query
-            is Notification -> KediatrRequestType.Notification
-            else -> KediatrRequestType.Unknown
-        }
+	fun <TRequest> extract(request: TRequest) =
+		when (request) {
+			is Command -> KediatrRequestType.Command
+			is CommandWithResult<*> -> KediatrRequestType.CommandWithResult
+			is Query<*> -> KediatrRequestType.Query
+			is Notification -> KediatrRequestType.Notification
+			else -> KediatrRequestType.Unknown
+		}
 }

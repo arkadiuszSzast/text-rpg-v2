@@ -13,14 +13,14 @@ import com.szastarek.text.rpg.shared.sharedModule
 import io.ktor.server.application.Application
 
 fun Application.accountModule() {
-    configureKoin()
-    sharedModule()
-    monitoringModule()
-    securityModule()
-    documentationModule()
-    eventStoreModule()
-    mediatorModule()
-    mailModule()
-    redisModule()
-    configureAccountRouting()
+	configureKoin()
+	sharedModule()
+	monitoringModule()
+	securityModule()
+	documentationModule()
+	eventStoreModule()
+	mediatorModule()
+	mailModule()
+	redisModule()
+	configureAccountRouting()
 }

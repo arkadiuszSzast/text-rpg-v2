@@ -4,10 +4,9 @@ import com.szastarek.text.rpg.mail.MailVariables
 import io.ktor.http.Url
 
 data class ResetPasswordMailVariables(val resetPasswordUrl: Url) {
+	companion object Keys {
+		const val RESET_PASSWORD_URL = "reset_password_url"
+	}
 
-  companion object Keys {
-    const val resetPasswordUrl = "reset_password_url"
-  }
-
-  fun toMailVariables() = MailVariables(mapOf(Keys.resetPasswordUrl to resetPasswordUrl.toString()))
+	fun toMailVariables() = MailVariables(mapOf(RESET_PASSWORD_URL to resetPasswordUrl.toString()))
 }

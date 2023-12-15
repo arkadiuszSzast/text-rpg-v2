@@ -10,20 +10,26 @@ import com.trendyol.kediatr.CommandWithResult
 
 typealias RefreshAuthTokenCommandResult = Either<Nel<RefreshAuthTokenError>, RefreshAuthTokenCommandSuccessResult>
 
-data class RefreshAuthTokenCommand(val accountEmail: EmailAddress, val refreshToken: RefreshToken): CommandWithResult<RefreshAuthTokenCommandResult> {
-  companion object {
-    operator fun invoke(accountEmail: String, refreshToken: String) = either {
-      val mail = EmailAddress(accountEmail).bind()
-      RefreshAuthTokenCommand(mail, RefreshToken(refreshToken))
-    }
-  }
+data class RefreshAuthTokenCommand(
+	val accountEmail: EmailAddress,
+	val refreshToken: RefreshToken,
+) : CommandWithResult<RefreshAuthTokenCommandResult> {
+	companion object {
+		operator fun invoke(
+			accountEmail: String,
+			refreshToken: String,
+		) = either {
+			val mail = EmailAddress(accountEmail).bind()
+			RefreshAuthTokenCommand(mail, RefreshToken(refreshToken))
+		}
+	}
 }
 
 data class RefreshAuthTokenCommandSuccessResult(val authToken: JwtToken, val refreshToken: RefreshToken)
 
 enum class RefreshAuthTokenError {
-  RefreshTokenNotFound,
-  InvalidRefreshToken,
-  AccountNotFound,
-  AccountInInvalidStatus
+	RefreshTokenNotFound,
+	InvalidRefreshToken,
+	AccountNotFound,
+	AccountInInvalidStatus,
 }

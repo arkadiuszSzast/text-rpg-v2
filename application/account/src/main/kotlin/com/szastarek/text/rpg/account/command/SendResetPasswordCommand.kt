@@ -9,18 +9,18 @@ import com.trendyol.kediatr.CommandWithResult
 typealias SendResetPasswordCommandResult = Either<Nel<SendResetPasswordError>, SendResetPasswordSuccessResult>
 
 data class SendResetPasswordCommand(val emailAddress: EmailAddress) :
-  CommandWithResult<SendResetPasswordCommandResult> {
-  companion object {
-    operator fun invoke(email: String) = either {
-      val emailAddress = EmailAddress(email).bind()
-      SendResetPasswordCommand(emailAddress)
-    }
-  }
+	CommandWithResult<SendResetPasswordCommandResult> {
+	companion object {
+		operator fun invoke(email: String) =
+			either {
+				val emailAddress = EmailAddress(email).bind()
+				SendResetPasswordCommand(emailAddress)
+			}
+	}
 }
 
 data object SendResetPasswordSuccessResult
 
 enum class SendResetPasswordError {
-  AccountNotFound
+	AccountNotFound,
 }
-

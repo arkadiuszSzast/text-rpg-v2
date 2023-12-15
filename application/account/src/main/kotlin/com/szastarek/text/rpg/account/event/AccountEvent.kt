@@ -12,17 +12,17 @@ import org.litote.kmongo.Id
 
 @Serializable
 sealed interface AccountEvent : DomainEvent {
-  val accountId: Id<Account>
-  val emailAddress: EmailAddress
+	val accountId: Id<Account>
+	val emailAddress: EmailAddress
 
-  companion object {
-    val eventCategory: EventCategory
-      get() = EventCategory("account")
-    fun aggregateStreamName(emailAddress: EmailAddress): StreamName =
-      StreamName("${eventCategory.value}-${emailAddress.value}")
-  }
+	companion object {
+		val eventCategory: EventCategory
+			get() = EventCategory("account")
+
+		fun aggregateStreamName(emailAddress: EmailAddress): StreamName = StreamName("${eventCategory.value}-${emailAddress.value}")
+	}
 }
 
 @Transient
 val AccountEvent.aggregateId: AggregateId
-  get() = AggregateId(emailAddress.value)
+	get() = AggregateId(emailAddress.value)

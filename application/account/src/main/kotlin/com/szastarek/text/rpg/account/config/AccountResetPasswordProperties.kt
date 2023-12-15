@@ -5,7 +5,7 @@ import io.ktor.http.Url
 import kotlin.time.Duration
 
 data class AccountResetPasswordProperties(
-  val accountResetPasswordUrl: Url,
-  val jwtIssuer: JwtIssuer,
-  val jwtExpiration: Duration
+	val accountResetPasswordUrl: Url,
+	val jwtIssuer: JwtIssuer,
+	val jwtExpiration: Duration,
 )

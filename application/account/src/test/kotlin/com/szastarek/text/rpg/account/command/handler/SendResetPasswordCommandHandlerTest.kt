@@ -25,64 +25,66 @@ import io.ktor.http.Url
 import kotlin.time.Duration.Companion.minutes
 
 class SendResetPasswordCommandHandlerTest : DescribeSpec() {
+	private val clock = FixedClock()
+	private val eventStore = InMemoryEventStore()
+	private val accountAggregateRepository = AccountAggregateEventStoreRepository(eventStore)
+	private val resetPasswordProperties =
+		AccountResetPasswordProperties(
+			Url("http://test-host:3000/account/reset/password"),
+			JwtIssuer("test-issuer"),
+			15.minutes,
+		)
+	private val mailProperties =
+		ResetPasswordMailProperties(
+			MailTemplateId("reset-password-template-id"),
+			EmailAddress("test-reset-password@mail.com").getOrThrow(),
+			MailSubject("test-reset-password-subject"),
+		)
+	private val mailSender = RecordingMailSender()
+	private val handler =
+		SendResetPasswordCommandHandler(
+			accountAggregateRepository,
+			resetPasswordProperties,
+			mailProperties,
+			mailSender,
+			clock,
+		)
 
-  private val clock = FixedClock()
-  private val eventStore = InMemoryEventStore()
-  private val accountAggregateRepository = AccountAggregateEventStoreRepository(eventStore)
-  private val resetPasswordProperties = AccountResetPasswordProperties(
-    Url("http://test-host:3000/account/reset/password"),
-    JwtIssuer("test-issuer"),
-    15.minutes
-  )
-  private val mailProperties = ResetPasswordMailProperties(
-    MailTemplateId("reset-password-template-id"),
-    EmailAddress("test-reset-password@mail.com").getOrThrow(),
-    MailSubject("test-reset-password-subject")
-  )
-  private val mailSender = RecordingMailSender()
-  private val handler = SendResetPasswordCommandHandler(
-    accountAggregateRepository,
-    resetPasswordProperties,
-    mailProperties,
-    mailSender,
-    clock
-  )
+	init {
 
-  init {
+		describe("SendResetPasswordCommandHandlerTest") {
 
-    describe("SendResetPasswordCommandHandlerTest") {
+			beforeTest {
+				mailSender.clear()
+				eventStore.clear()
+			}
 
-      beforeTest {
-        mailSender.clear()
-        eventStore.clear()
-      }
+			it("should sent reset password mail") {
+				// arrange
+				val accountCreatedEvent = anAccountCreatedEvent().also { eventStore.appendToStream(it, AccountEvent::class) }
+				val command = SendResetPasswordCommand(accountCreatedEvent.emailAddress)
 
-      it("should sent reset password mail") {
-        //arrange
-        val accountCreatedEvent = anAccountCreatedEvent().also { eventStore.appendToStream(it, AccountEvent::class) }
-        val command = SendResetPasswordCommand(accountCreatedEvent.emailAddress)
+				// act
+				val result = handler.handle(command)
 
-        //act
-        val result = handler.handle(command)
+				// assert
+				result.shouldBeRight()
+				mailSender.hasBeenSent {
+					it.to == accountCreatedEvent.emailAddress && it.templateId == mailProperties.templateId
+				}.shouldBeTrue()
+			}
 
-        //assert
-        result.shouldBeRight()
-        mailSender.hasBeenSent {
-          it.to == accountCreatedEvent.emailAddress && it.templateId == mailProperties.templateId
-        }.shouldBeTrue()
-      }
+			it("should not send reset password mail when account not found") {
+				// arrange
+				val command = SendResetPasswordCommand(anEmail())
 
-      it("should not send reset password mail when account not found") {
-        //arrange
-        val command = SendResetPasswordCommand(anEmail())
+				// act
+				val result = handler.handle(command)
 
-        //act
-        val result = handler.handle(command)
-
-        //assert
-        result.shouldBeLeft(listOf(SendResetPasswordError.AccountNotFound))
-        mailSender.getAll().shouldBeEmpty()
-      }
-    }
-  }
+				// assert
+				result.shouldBeLeft(listOf(SendResetPasswordError.AccountNotFound))
+				mailSender.getAll().shouldBeEmpty()
+			}
+		}
+	}
 }

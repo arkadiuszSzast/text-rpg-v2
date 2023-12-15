@@ -12,27 +12,28 @@ import kotlinx.datetime.Clock
 import kotlinx.datetime.toJavaInstant
 
 class WorldCreatorRegisterUrlProvider(
-  private val worldCreatorRegisterProperties: WorldCreatorRegisterProperties,
-  private val clock: Clock
+	private val worldCreatorRegisterProperties: WorldCreatorRegisterProperties,
+	private val clock: Clock,
 ) {
+	fun provide(emailAddress: EmailAddress): Url {
+		val baseUrl = worldCreatorRegisterProperties.registerUrl
+		val token = generateToken(emailAddress, worldCreatorRegisterProperties.jwtConfig)
 
-  fun provide(emailAddress: EmailAddress): Url {
-    val baseUrl = worldCreatorRegisterProperties.registerUrl
-    val token = generateToken(emailAddress, worldCreatorRegisterProperties.jwtConfig)
+		return URLBuilder(baseUrl).apply {
+			parameters.append("token", token.value)
+		}.build()
+	}
 
-    return URLBuilder(baseUrl).apply {
-      parameters.append("token", token.value)
-    }.build()
-  }
-
-  private fun generateToken(emailAddress: EmailAddress, jwtConfig: JwtProperties): JwtToken {
-
-    return JwtToken(
-      JWT.create()
-        .withIssuer(jwtConfig.issuer.value)
-        .withSubject(emailAddress.value)
-        .withExpiresAt(clock.now().plus(jwtConfig.expiration).toJavaInstant())
-        .sign(Algorithm.HMAC256(jwtConfig.secret.value))
-    )
-  }
+	private fun generateToken(
+		emailAddress: EmailAddress,
+		jwtConfig: JwtProperties,
+	): JwtToken {
+		return JwtToken(
+			JWT.create()
+				.withIssuer(jwtConfig.issuer.value)
+				.withSubject(emailAddress.value)
+				.withExpiresAt(clock.now().plus(jwtConfig.expiration).toJavaInstant())
+				.sign(Algorithm.HMAC256(jwtConfig.secret.value)),
+		)
+	}
 }

@@ -21,38 +21,41 @@ import org.litote.kmongo.Id
 typealias CreateWorldCreatorAccountCommandResult = Either<Nel<CreateWorldCreatorAccountError>, CreateWorldCreatorAccountCommandSuccessResult>
 
 data class CreateWorldCreatorAccountCommand(
-  val email: EmailAddress,
-  val password: HashedPassword,
-  val timeZoneId: TimeZone,
-  val token: JwtToken
+	val email: EmailAddress,
+	val password: HashedPassword,
+	val timeZoneId: TimeZone,
+	val token: JwtToken,
 ) : CommandWithResult<CreateWorldCreatorAccountCommandResult> {
-  companion object {
-    operator fun invoke(email: String, password: String, timeZoneId: String, token: String) =
-      either<ValidationErrors, CreateWorldCreatorAccountCommand> {
-        zipOrAccumulate(
-          { e1, e2 -> e1 + e2 },
-          { EmailAddress(email).bind() },
-          { RawPassword(password).bind() },
-          {
-            ensure(runCatching { JWT.decode(token) }.isSuccess) {
-              ValidationError(".token", "validation.invalid_invite_world_creator_token").nel()
-            }
-          },
-          {
-            ensure(TimeZone.availableZoneIds.contains(timeZoneId)) {
-              ValidationError(".timeZoneId", "validation.invalid_timezone").nel()
-            }
-          },
-          { e, p, _, _ -> CreateWorldCreatorAccountCommand(e, p.hashpw(), TimeZone.of(timeZoneId), JwtToken(token)) }
-        )
-      }
-  }
+	companion object {
+		operator fun invoke(
+			email: String,
+			password: String,
+			timeZoneId: String,
+			token: String,
+		) = either<ValidationErrors, CreateWorldCreatorAccountCommand> {
+			zipOrAccumulate(
+				{ e1, e2 -> e1 + e2 },
+				{ EmailAddress(email).bind() },
+				{ RawPassword(password).bind() },
+				{
+					ensure(runCatching { JWT.decode(token) }.isSuccess) {
+						ValidationError(".token", "validation.invalid_invite_world_creator_token").nel()
+					}
+				},
+				{
+					ensure(TimeZone.availableZoneIds.contains(timeZoneId)) {
+						ValidationError(".timeZoneId", "validation.invalid_timezone").nel()
+					}
+				},
+				{ e, p, _, _ -> CreateWorldCreatorAccountCommand(e, p.hashpw(), TimeZone.of(timeZoneId), JwtToken(token)) },
+			)
+		}
+	}
 }
 
 data class CreateWorldCreatorAccountCommandSuccessResult(val accountId: Id<Account>)
 
 enum class CreateWorldCreatorAccountError {
-  EmailAlreadyTaken,
-  InvalidToken
+	EmailAlreadyTaken,
+	InvalidToken,
 }
-

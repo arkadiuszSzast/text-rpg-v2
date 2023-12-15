@@ -33,121 +33,126 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.http.append
 import io.ktor.http.headers
 import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromStream
 import org.litote.kmongo.newId
 import java.util.UUID
-import kotlinx.serialization.encodeToString
 
 @OptIn(ExperimentalSerializationApi::class)
 class SendGridMailSenderTest : DescribeSpec() {
+	private val clock = FixedClock()
 
-  private val clock = FixedClock()
+	private val json = Json
 
-  private val json = Json
+	private val openTelemetry = InMemoryOpenTelemetry()
 
-  private val openTelemetry = InMemoryOpenTelemetry()
+	private val sendGridProperties = SendGridProperties("sendgrid-api-key", "sendgrid.test.com")
 
-  private val sendGridProperties = SendGridProperties("sendgrid-api-key", "sendgrid.test.com")
+	private val mockEngine =
+		MockEngine { request ->
+			val decodedRequest = json.decodeFromStream<SendgridSendMailRequest>(request.body.toByteArray().inputStream())
+			when {
+				decodedRequest.getSubject() == "invalid-mail" ->
+					respond(
+						json.encodeToString(SendgridErrorResponse(listOf(SendgridError("subject", "Invalid subject")))),
+						HttpStatusCode.BadRequest,
+						headers { append(HttpHeaders.ContentType, ContentType.Application.Json) },
+					)
+				else -> respondOk()
+			}
+		}
 
-  private val mockEngine = MockEngine { request ->
-    val decodedRequest = json.decodeFromStream<SendgridSendMailRequest>(request.body.toByteArray().inputStream())
-    when {
-      decodedRequest.getSubject() == "invalid-mail" -> respond(
-        json.encodeToString(SendgridErrorResponse(listOf(SendgridError("subject", "Invalid subject")))),
-        HttpStatusCode.BadRequest,
-        headers { append(HttpHeaders.ContentType, ContentType.Application.Json) }
-      )
-      else -> respondOk()
-    }
-  }
+	private val sendgridClient = SendgridClient(mockEngine, sendGridProperties)
 
-  private val sendgridClient = SendgridClient(mockEngine, sendGridProperties)
+	private val eventStore = InMemoryEventStore()
 
-  private val eventStore = InMemoryEventStore()
+	private val sendgridMailSender = SendGridMailSender(sendgridClient, eventStore, openTelemetry.get(), clock)
 
-  private val sendgridMailSender = SendGridMailSender(sendgridClient, eventStore, openTelemetry.get(), clock)
+	init {
 
-  init {
+		describe("SendGridMailSenderTest") {
 
-    describe("SendGridMailSenderTest") {
+			beforeTest {
+				openTelemetry.reset()
+				eventStore.clear()
+			}
 
-      beforeTest {
-        openTelemetry.reset()
-        eventStore.clear()
-      }
+			it("should send email in new span") {
+				// arrange
+				val mail =
+					Mail(
+						id = newId(),
+						subject = MailSubject("test-mail-subject"),
+						from = anEmail(),
+						to = anEmail(),
+						templateId = MailTemplateId("test-template"),
+						variables = MailVariables(emptyMap()),
+					)
+				val expectedEvents = listOf(MailSentEvent(mail, clock.now()))
 
-      it("should send email in new span") {
-        //arrange
-        val mail = Mail(
-          id = newId(),
-          subject = MailSubject("test-mail-subject"),
-          from = anEmail(),
-          to = anEmail(),
-          templateId = MailTemplateId("test-template"),
-          variables = MailVariables(emptyMap())
-        )
-        val expectedEvents = listOf(MailSentEvent(mail, clock.now()))
+				// act
+				val result = sendgridMailSender.send(mail)
 
-        //act
-        val result = sendgridMailSender.send(mail)
+				// assert
+				result.shouldBeRight(mail)
+				eventStore.readStreamByEventType(MailSentEvent.eventType, MailSentEvent::class) shouldBe expectedEvents
 
-        //assert
-        result.shouldBeRight(mail)
-        eventStore.readStreamByEventType(MailSentEvent.eventType, MailSentEvent::class) shouldBe expectedEvents
+				openTelemetry.getFinishedSpans().single().name shouldBe "send-mail"
+			}
 
-        openTelemetry.getFinishedSpans().single().name shouldBe "send-mail"
-      }
+			it("should append event about error") {
+				// arrange
+				val mail =
+					Mail(
+						id = newId(),
+						subject = MailSubject("invalid-mail"),
+						from = anEmail(),
+						to = anEmail(),
+						templateId = MailTemplateId("test-template"),
+						variables = MailVariables(emptyMap()),
+					)
+				val expectedEvents = listOf(MailSendingErrorEvent(mail, clock.now(), listOf(MailSendingError("Invalid subject"))))
 
-      it("should append event about error") {
-        //arrange
-        val mail = Mail(
-          id = newId(),
-          subject = MailSubject("invalid-mail"),
-          from = anEmail(),
-          to = anEmail(),
-          templateId = MailTemplateId("test-template"),
-          variables = MailVariables(emptyMap())
-        )
-        val expectedEvents = listOf(MailSendingErrorEvent(mail, clock.now(), listOf(MailSendingError("Invalid subject"))))
+				// act
+				val result = sendgridMailSender.send(mail)
 
-        //act
-        val result = sendgridMailSender.send(mail)
+				// assert
+				result.shouldBeLeft(listOf(MailSendingError("Invalid subject")))
+				eventStore.readStreamByEventType(MailSendingErrorEvent.eventType, MailSendingErrorEvent::class) shouldBe expectedEvents
+			}
 
-        //assert
-        result.shouldBeLeft(listOf(MailSendingError("Invalid subject")))
-        eventStore.readStreamByEventType(MailSendingErrorEvent.eventType, MailSendingErrorEvent::class) shouldBe expectedEvents
-      }
+			it("should add caused by to the event") {
+				// arrange
+				val mail =
+					Mail(
+						id = newId(),
+						subject = MailSubject("test-mail-subject"),
+						from = anEmail(),
+						to = anEmail(),
+						templateId = MailTemplateId("test-template"),
+						variables = MailVariables(emptyMap()),
+					)
+				val causedBy =
+					EventMetadataBuilder(
+						AggregateId(UUID.randomUUID().toString()),
+						EventCategory("causing-category"),
+						EventType("causing-type"),
+					).build()
+				val expectedEvent = MailSentEvent(mail, clock.now())
 
-      it("should add caused by to the event") {
-        //arrange
-        val mail = Mail(
-          id = newId(),
-          subject = MailSubject("test-mail-subject"),
-          from = anEmail(),
-          to = anEmail(),
-          templateId = MailTemplateId("test-template"),
-          variables = MailVariables(emptyMap())
-        )
-        val causedBy = EventMetadataBuilder(
-          AggregateId(UUID.randomUUID().toString()),
-          EventCategory("causing-category"),
-          EventType("causing-type")
-        ).build()
-        val expectedEvent = MailSentEvent(mail, clock.now())
+				// act
+				val result = sendgridMailSender.send(mail, causedBy)
 
-        //act
-        val result = sendgridMailSender.send(mail, causedBy)
+				// assert
+				result.shouldBeRight(mail)
+				eventStore.getMetadata(expectedEvent).shouldNotBeNull() should {
+					it.correlationId shouldBe causedBy.correlationId
+					it.causationId shouldBe CausationId(causedBy.eventId.value)
+				}
+			}
+		}
+	}
 
-        //assert
-        result.shouldBeRight(mail)
-        eventStore.getMetadata(expectedEvent).shouldNotBeNull() should {
-          it.correlationId shouldBe causedBy.correlationId
-          it.causationId shouldBe CausationId(causedBy.eventId.value)
-        }
-      }
-    }
-  }
-
-  private fun SendgridSendMailRequest.getSubject() = this.personalization.first().dynamicTemplateData["subject"]!!
+	private fun SendgridSendMailRequest.getSubject() = this.personalization.first().dynamicTemplateData["subject"]!!
 }

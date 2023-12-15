@@ -12,39 +12,41 @@ import org.koin.test.KoinTest
 import org.koin.test.inject
 
 class MailTemplatesPropertiesTest : KoinTest, DescribeSpec() {
+	private val activateAccountTemplatesProperties by inject<ActivateAccountMailProperties>()
+	private val resetPasswordTemplatesProperties by inject<ResetPasswordMailProperties>()
+	private val inviteWorldCreatorMailProperties by inject<InviteWorldCreatorMailProperties>()
 
-  private val activateAccountTemplatesProperties by inject<ActivateAccountMailProperties>()
-  private val resetPasswordTemplatesProperties by inject<ResetPasswordMailProperties>()
-  private val inviteWorldCreatorMailProperties by inject<InviteWorldCreatorMailProperties>()
+	init {
+		extensions(KoinExtension(accountConfigModule))
 
-  init {
-    extensions(KoinExtension(accountConfigModule))
+		describe("MailTemplatesPropertiesTest") {
 
-    describe("MailTemplatesPropertiesTest") {
+			it("should pick correct values from application.conf") {
+				// arrange
+				val expectedActivateAccountMailProperties =
+					ActivateAccountMailProperties(
+						templateId = MailTemplateId("activate-account-test-templateId"),
+						sender = EmailAddress("activate-account-test-sender@mail.com").getOrThrow(),
+						subject = MailSubject("activate-account-test-subject"),
+					)
+				val expectResetPasswordMailProperties =
+					ResetPasswordMailProperties(
+						templateId = MailTemplateId("reset-password-test-templateId"),
+						sender = EmailAddress("reset-password-test-sender@mail.com").getOrThrow(),
+						subject = MailSubject("reset-password-test-subject"),
+					)
+				val expectInviteWorldCreatorMailProperties =
+					InviteWorldCreatorMailProperties(
+						templateId = MailTemplateId("invite-world-creator-test-templateId"),
+						sender = EmailAddress("invite-world-creator-test-sender@mail.com").getOrThrow(),
+						subject = MailSubject("invite-world-creator-test-subject"),
+					)
 
-      it("should pick correct values from application.conf") {
-        //arrange
-        val expectedActivateAccountMailProperties = ActivateAccountMailProperties(
-          templateId = MailTemplateId("activate-account-test-templateId"),
-          sender = EmailAddress("activate-account-test-sender@mail.com").getOrThrow(),
-          subject = MailSubject("activate-account-test-subject")
-        )
-        val expectResetPasswordMailProperties = ResetPasswordMailProperties(
-          templateId = MailTemplateId("reset-password-test-templateId"),
-          sender = EmailAddress("reset-password-test-sender@mail.com").getOrThrow(),
-          subject = MailSubject("reset-password-test-subject")
-        )
-        val expectInviteWorldCreatorMailProperties = InviteWorldCreatorMailProperties(
-          templateId = MailTemplateId("invite-world-creator-test-templateId"),
-          sender = EmailAddress("invite-world-creator-test-sender@mail.com").getOrThrow(),
-          subject = MailSubject("invite-world-creator-test-subject")
-        )
-
-        //act & assert
-        activateAccountTemplatesProperties shouldBe expectedActivateAccountMailProperties
-        resetPasswordTemplatesProperties shouldBe expectResetPasswordMailProperties
-        inviteWorldCreatorMailProperties shouldBe expectInviteWorldCreatorMailProperties
-      }
-    }
-  }
+				// act & assert
+				activateAccountTemplatesProperties shouldBe expectedActivateAccountMailProperties
+				resetPasswordTemplatesProperties shouldBe expectResetPasswordMailProperties
+				inviteWorldCreatorMailProperties shouldBe expectInviteWorldCreatorMailProperties
+			}
+		}
+	}
 }

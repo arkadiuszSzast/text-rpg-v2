@@ -14,19 +14,21 @@ import com.szastarek.text.rpg.event.store.appendToStream
 import com.trendyol.kediatr.CommandWithResultHandler
 
 class ChangePasswordCommandHandler(
-  private val accountAggregateRepository: AccountAggregateRepository,
-  private val eventStoreWriteClient: EventStoreWriteClient,
-  private val acl: AuthorizedAccountAbilityProvider
-) : CommandWithResultHandler<ChangePasswordCommand, ChangePasswordCommandResult>{
-  override suspend fun handle(command: ChangePasswordCommand): ChangePasswordCommandResult = either {
-    val (currentPassword, newPassword, accountContext) = command
-    val account = accountAggregateRepository.findByEmail(accountContext.email)
-      .toEither { ChangePasswordError.AccountNotFound }.toEitherNel().bind()
-    acl.ensuring().ensureCanUpdate(account)
+	private val accountAggregateRepository: AccountAggregateRepository,
+	private val eventStoreWriteClient: EventStoreWriteClient,
+	private val acl: AuthorizedAccountAbilityProvider,
+) : CommandWithResultHandler<ChangePasswordCommand, ChangePasswordCommandResult> {
+	override suspend fun handle(command: ChangePasswordCommand): ChangePasswordCommandResult =
+		either {
+			val (currentPassword, newPassword, accountContext) = command
+			val account =
+				accountAggregateRepository.findByEmail(accountContext.email)
+					.toEither { ChangePasswordError.AccountNotFound }.toEitherNel().bind()
+			acl.ensuring().ensureCanUpdate(account)
 
-    val event = account.changePassword(currentPassword, newPassword).toEitherNel().bind()
-    eventStoreWriteClient.appendToStream<AccountEvent>(event)
+			val event = account.changePassword(currentPassword, newPassword).toEitherNel().bind()
+			eventStoreWriteClient.appendToStream<AccountEvent>(event)
 
-    ChangePasswordCommandSuccessResult
-  }
+			ChangePasswordCommandSuccessResult
+		}
 }

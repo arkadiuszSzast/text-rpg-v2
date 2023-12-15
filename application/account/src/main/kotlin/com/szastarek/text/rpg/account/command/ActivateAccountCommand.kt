@@ -14,25 +14,26 @@ import org.litote.kmongo.Id
 
 typealias ActivateAccountCommandResult = Either<Nel<ActivateAccountError>, ActivateAccountCommandSuccessResult>
 
-data class ActivateAccountCommand private constructor(val token: JwtToken): CommandWithResult<ActivateAccountCommandResult> {
-  companion object {
-    operator fun invoke(token: String) = either {
-      ensure(runCatching { JWT.decode(token) }.isSuccess) {
-        ValidationError(
-          ".token",
-          ".validation.invalid_account_activation_token"
-        ).nel()
-      }
-      ActivateAccountCommand(JwtToken(token))
-    }
-  }
+data class ActivateAccountCommand private constructor(val token: JwtToken) : CommandWithResult<ActivateAccountCommandResult> {
+	companion object {
+		operator fun invoke(token: String) =
+			either {
+				ensure(runCatching { JWT.decode(token) }.isSuccess) {
+					ValidationError(
+						".token",
+						".validation.invalid_account_activation_token",
+					).nel()
+				}
+				ActivateAccountCommand(JwtToken(token))
+			}
+	}
 }
 
 data class ActivateAccountCommandSuccessResult(val accountId: Id<Account>)
 
 enum class ActivateAccountError {
-  AccountNotFound,
-  InvalidJwt,
-  InvalidSubject,
-  InvalidAccountStatus
+	AccountNotFound,
+	InvalidJwt,
+	InvalidSubject,
+	InvalidAccountStatus,
 }

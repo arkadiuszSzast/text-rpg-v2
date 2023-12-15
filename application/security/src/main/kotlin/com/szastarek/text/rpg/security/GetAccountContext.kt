@@ -8,11 +8,11 @@ import io.ktor.server.application.ApplicationCall
 import kotlin.coroutines.coroutineContext
 
 suspend fun ApplicationCall.getAccountContext(): AccountContext {
-  return coroutineContext[CoroutineAccountContext]?.accountContext ?: throw NotAuthenticatedException()
+	return coroutineContext[CoroutineAccountContext]?.accountContext ?: throw NotAuthenticatedException()
 }
 
 suspend fun ApplicationCall.getAuthenticatedAccountContext(): AuthenticatedAccountContext =
-  when (val context = getAccountContext()) {
-    is AuthenticatedAccountContext -> context
-    is AnonymousAccountContext -> throw NotAuthenticatedException()
-  }
+	when (val context = getAccountContext()) {
+		is AuthenticatedAccountContext -> context
+		is AnonymousAccountContext -> throw NotAuthenticatedException()
+	}

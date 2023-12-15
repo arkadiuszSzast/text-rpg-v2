@@ -9,16 +9,17 @@ import io.opentelemetry.api.GlobalOpenTelemetry
 import org.koin.core.context.loadKoinModules
 import org.koin.dsl.module
 
-internal val monitoringModule = module {
-    single {
-        MonitoringProperties(
-            enabled = getBooleanProperty(ConfigKey("monitoring.enabled")),
-            otelMetricsUrl = getStringProperty(ConfigKey("monitoring.otel.metrics.url")),
-        )
-    }
-    single { GlobalOpenTelemetry.get() }
-}
+internal val monitoringModule =
+	module {
+		single {
+			MonitoringProperties(
+				enabled = getBooleanProperty(ConfigKey("monitoring.enabled")),
+				otelMetricsUrl = getStringProperty(ConfigKey("monitoring.otel.metrics.url")),
+			)
+		}
+		single { GlobalOpenTelemetry.get() }
+	}
 
 internal fun Application.configureKoin() {
-    loadKoinModules(monitoringModule)
+	loadKoinModules(monitoringModule)
 }

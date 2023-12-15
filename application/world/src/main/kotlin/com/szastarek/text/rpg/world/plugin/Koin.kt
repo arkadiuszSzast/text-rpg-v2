@@ -7,13 +7,14 @@ import org.koin.core.context.loadKoinModules
 import org.koin.dsl.module
 import org.koin.ktor.plugin.Koin
 
-internal val worldModule = module {
-}
+internal val worldModule =
+	module {
+	}
 
 internal fun Application.configureKoin() {
-    install(Koin) {
-        //TODO remove when Koin 3.5.2 would be released
-        GlobalContext.startKoin(this)
-    }
-    loadKoinModules(worldModule)
+	install(Koin) {
+		// TODO remove when Koin 3.5.2 would be released
+		GlobalContext.startKoin(this)
+	}
+	loadKoinModules(worldModule)
 }

@@ -15,54 +15,55 @@ import org.litote.kmongo.id.serialization.IdKotlinXSerializationModule
 import org.litote.kmongo.newId
 
 class EventStoreDbReadClientTest : DescribeSpec() {
+	private val eventStoreContainer: EventStoreContainer = EventStoreContainerFactory.spawn()
 
-    private val eventStoreContainer: EventStoreContainer = EventStoreContainerFactory.spawn()
+	private val openTelemetry = InMemoryOpenTelemetry()
 
-    private val openTelemetry = InMemoryOpenTelemetry()
+	private val json = Json { serializersModule = IdKotlinXSerializationModule }
 
-    private val json = Json { serializersModule = IdKotlinXSerializationModule }
+	private val eventStoreDbClient = EventStoreDBClient.create(parseOrThrow(eventStoreContainer.connectionString))
 
-    private val eventStoreDbClient = EventStoreDBClient.create(parseOrThrow(eventStoreContainer.connectionString))
+	private val eventStoreDbReadClient =
+		EventStoreDbReadClient(
+			eventStoreDbClient,
+			json,
+			openTelemetry.get(),
+		)
 
-    private val eventStoreDbReadClient = EventStoreDbReadClient(
-        eventStoreDbClient,
-        json,
-        openTelemetry.get()
-    )
+	init {
 
-    init {
+		listener(EventStoreLifecycleListener(eventStoreContainer))
 
-        listener(EventStoreLifecycleListener(eventStoreContainer))
+		describe("EventStoreDbReadClientTest") {
 
-        describe("EventStoreDbReadClientTest") {
+			beforeTest {
+				openTelemetry.reset()
+			}
 
-            beforeTest {
-                openTelemetry.reset()
-            }
+			it("should read stream in new span") {
+				// arrange
+				val emailSentEvent = EmailSent(newId())
+				val eventMetadata = emailSentEvent.getMetadata()
+				val eventData =
+					EventDataBuilder.json(
+						eventMetadata.eventId.value,
+						eventMetadata.eventType.value,
+						json.encodeToString(emailSentEvent).encodeToByteArray(),
+					).build()
+				eventStoreDbClient.appendToStream(eventMetadata.streamName.value, eventData)
 
-            it("should read stream in new span") {
-                //arrange
-                val emailSentEvent = EmailSent(newId())
-                val eventMetadata = emailSentEvent.getMetadata()
-                val eventData = EventDataBuilder.json(
-                    eventMetadata.eventId.value,
-                    eventMetadata.eventType.value,
-                    json.encodeToString(emailSentEvent).encodeToByteArray()
-                ).build()
-                eventStoreDbClient.appendToStream(eventMetadata.streamName.value, eventData)
+				// act
+				val result = eventStoreDbReadClient.readStream<EmailSent>(eventMetadata.streamName)
 
-                //act
-                val result = eventStoreDbReadClient.readStream<EmailSent>(eventMetadata.streamName)
+				// assert
+				result shouldHaveSize 1
+				openTelemetry.getFinishedSpans().single().name shouldBe "event_store read ${eventMetadata.streamName.value}"
+			}
 
-                //assert
-                result shouldHaveSize 1
-                openTelemetry.getFinishedSpans().single().name shouldBe "event_store read ${eventMetadata.streamName.value}"
-            }
-
-            it("should return empty list when stream does not exist") {
-                //arrange & act & assert
-                eventStoreDbReadClient.readStream<EmailSent>(StreamName("not-existing")).shouldBeEmpty()
-            }
-        }
-    }
+			it("should return empty list when stream does not exist") {
+				// arrange & act & assert
+				eventStoreDbReadClient.readStream<EmailSent>(StreamName("not-existing")).shouldBeEmpty()
+			}
+		}
+	}
 }

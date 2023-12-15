@@ -8,25 +8,25 @@ import org.koin.test.KoinTest
 import org.koin.test.inject
 
 class SendGridPropertiesTest : KoinTest, DescribeSpec() {
+	private val sendgridProperties by inject<SendGridProperties>()
 
-  private val sendgridProperties by inject<SendGridProperties>()
+	init {
 
-  init {
+		extension(KoinExtension(mailModule))
 
-    extension(KoinExtension(mailModule))
+		describe("SendgridPropertiesTest") {
 
-    describe("SendgridPropertiesTest") {
+			it("should pick correct values from application.conf") {
+				// arrange
+				val expected =
+					SendGridProperties(
+						apiKey = "sendgrid-test-api-key",
+						host = "test-api.sendgrid.com",
+					)
 
-      it("should pick correct values from application.conf") {
-        //arrange
-        val expected = SendGridProperties(
-          apiKey = "sendgrid-test-api-key",
-          host = "test-api.sendgrid.com"
-        )
-
-        //act & assert
-        sendgridProperties shouldBe expected
-      }
-    }
-  }
+				// act & assert
+				sendgridProperties shouldBe expected
+			}
+		}
+	}
 }

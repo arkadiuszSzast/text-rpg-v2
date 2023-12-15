@@ -6,17 +6,16 @@ import org.koin.test.KoinTest
 import org.koin.test.check.checkModules
 
 class KoinModulesTest : KoinTest, DescribeSpec() {
+	init {
 
-    init {
+		extensions(KoinExtension(sharedKoinModule))
 
-        extensions(KoinExtension(sharedKoinModule))
+		describe("Shared Koin module test") {
 
-        describe("Shared Koin module test") {
-
-            it("verify shared module") {
-                //arrange & act & assert
-                getKoin().checkModules()
-            }
-        }
-    }
+			it("verify shared module") {
+				// arrange & act & assert
+				getKoin().checkModules()
+			}
+		}
+	}
 }

@@ -22,41 +22,43 @@ import kotlinx.serialization.json.Json
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation.Plugin as ClientContentNegotiation
 
 class SendgridClient(
-  engine: HttpClientEngine,
-  private val sendGridProperties: SendGridProperties
+	engine: HttpClientEngine,
+	private val sendGridProperties: SendGridProperties,
 ) {
-  private val logger = KotlinLogging.logger {}
+	private val logger = KotlinLogging.logger {}
 
-  private val httpClient = HttpClient(engine) {
-    install(ClientContentNegotiation) {
-      json(Json { ignoreUnknownKeys = true })
-    }
-    install(Logging) {
-      logger = object : Logger {
-        override fun log(message: String) {
-          this@SendgridClient.logger.debug { message }
-        }
-      }
-      level = LogLevel.ALL
-      sanitizeHeader { it == HttpHeaders.Authorization }
-    }
-    install(HttpRequestRetry) {
-      retryOnServerErrors(5)
-      exponentialDelay()
-    }
-  }
+	private val httpClient =
+		HttpClient(engine) {
+			install(ClientContentNegotiation) {
+				json(Json { ignoreUnknownKeys = true })
+			}
+			install(Logging) {
+				logger =
+					object : Logger {
+						override fun log(message: String) {
+							this@SendgridClient.logger.debug { message }
+						}
+					}
+				level = LogLevel.ALL
+				sanitizeHeader { it == HttpHeaders.Authorization }
+			}
+			install(HttpRequestRetry) {
+				retryOnServerErrors(5)
+				exponentialDelay()
+			}
+		}
 
-  internal suspend fun sendMail(request: SendgridSendMailRequest) =
-    httpClient.post {
-      url {
-        protocol = HTTPS
-        host = sendGridProperties.host
-        path("v3", "mail", "send")
-      }
-      headers {
-        bearerAuth(sendGridProperties.apiKey)
-        contentType(ContentType.Application.Json)
-      }
-      setBody(request)
-    }
+	internal suspend fun sendMail(request: SendgridSendMailRequest) =
+		httpClient.post {
+			url {
+				protocol = HTTPS
+				host = sendGridProperties.host
+				path("v3", "mail", "send")
+			}
+			headers {
+				bearerAuth(sendGridProperties.apiKey)
+				contentType(ContentType.Application.Json)
+			}
+			setBody(request)
+		}
 }

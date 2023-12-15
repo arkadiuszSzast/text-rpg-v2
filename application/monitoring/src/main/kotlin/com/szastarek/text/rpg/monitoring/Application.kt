@@ -6,6 +6,6 @@ import io.ktor.server.application.Application
 import org.koin.ktor.ext.get
 
 fun Application.monitoringModule() {
-    configureKoin()
-    configureMonitoring(get(), get())
+	configureKoin()
+	configureMonitoring(get(), get())
 }

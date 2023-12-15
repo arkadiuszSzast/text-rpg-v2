@@ -18,118 +18,121 @@ import com.szastarek.text.rpg.shared.email.EmailAddress
 import com.szastarek.text.rpg.shared.validate.getOrThrow
 
 data class StaticAccountContextProvider(private val accountContext: AccountContext) : AccountContextProvider {
-    override suspend fun currentContext(): AccountContext {
-        return accountContext
-    }
+	override suspend fun currentContext(): AccountContext {
+		return accountContext
+	}
 }
 
-val superUserAccount = object : AuthenticatedAccountContext {
+val superUserAccount =
+	object : AuthenticatedAccountContext {
+		override val accountId: AccountId = AccountId("super-user-account")
 
-    override val accountId: AccountId = AccountId("super-user-account")
+		override val email: EmailAddress = EmailAddress("super-user@mail.com").getOrThrow()
 
-    override val email: EmailAddress = EmailAddress("super-user@mail.com").getOrThrow()
+		override suspend fun getAuthorities(): List<Authority> = emptyList()
 
-    override suspend fun getAuthorities(): List<Authority> = emptyList()
+		override val role: Role = SuperUserRole
+	}
 
-    override val role: Role = SuperUserRole
-}
+val accountWithoutAuthorities =
+	object : AuthenticatedAccountContext {
+		override val accountId: AccountId = AccountId("no-authorities-account")
 
-val accountWithoutAuthorities = object : AuthenticatedAccountContext {
+		override val email: EmailAddress = EmailAddress("no-authorities@mail.com").getOrThrow()
 
-    override val accountId: AccountId = AccountId("no-authorities-account")
+		override suspend fun getAuthorities(): List<Authority> = emptyList()
 
-    override val email: EmailAddress = EmailAddress("no-authorities@mail.com").getOrThrow()
+		override val role: Role = RegularRole("regular-user", emptyList())
+	}
 
-    override suspend fun getAuthorities(): List<Authority> = emptyList()
+val accountWithAllAuthorities =
+	object : AuthenticatedAccountContext {
+		override val accountId: AccountId = AccountId("all-authorities-account")
 
-    override val role: Role = RegularRole("regular-user", emptyList())
-}
+		override val email: EmailAddress = EmailAddress("all-authorities@mail.com").getOrThrow()
 
-val accountWithAllAuthorities = object : AuthenticatedAccountContext {
+		override suspend fun getAuthorities(): List<Authority> =
+			authorities {
+				featureAccess(sendEmailFeature)
+				entityAccess<Dog>(Dog.aclResourceIdentifier) {
+					createScope()
+					viewScope()
+					updateScope()
+					deleteScope()
+				}
+			}
 
-    override val accountId: AccountId = AccountId("all-authorities-account")
+		override val role: Role = RegularRole("regular-user", emptyList())
+	}
 
-    override val email: EmailAddress = EmailAddress("all-authorities@mail.com").getOrThrow()
+val accountWithManageAuthority =
+	object : AuthenticatedAccountContext {
+		override val accountId: AccountId = AccountId("manage-authority-account")
 
-    override suspend fun getAuthorities(): List<Authority> = authorities {
-        featureAccess(sendEmailFeature)
-        entityAccess<Dog>(Dog.aclResourceIdentifier) {
-            createScope()
-            viewScope()
-            updateScope()
-            deleteScope()
-        }
-    }
+		override val email: EmailAddress = EmailAddress("managed-authorities@mail.com").getOrThrow()
 
-    override val role: Role = RegularRole("regular-user", emptyList())
-}
+		override suspend fun getAuthorities(): List<Authority> =
+			authorities {
+				featureAccess(sendEmailFeature)
+				entityAccess<Dog>(Dog.aclResourceIdentifier) {
+					manageScope()
+				}
+			}
 
-val accountWithManageAuthority = object : AuthenticatedAccountContext {
+		override val role: Role = RegularRole("regular-user", emptyList())
+	}
 
-    override val accountId: AccountId = AccountId("manage-authority-account")
+val accountWithAllSpecialAuthorities =
+	object : AuthenticatedAccountContext {
+		override val accountId: AccountId = AccountId("all-special-authorities-account")
 
-    override val email: EmailAddress = EmailAddress("managed-authorities@mail.com").getOrThrow()
+		override val email: EmailAddress = EmailAddress("special-authorities@mail.com").getOrThrow()
 
-    override suspend fun getAuthorities(): List<Authority> = authorities {
-        featureAccess(sendEmailFeature)
-        entityAccess<Dog>(Dog.aclResourceIdentifier) {
-            manageScope()
-        }
-    }
+		override suspend fun getAuthorities(): List<Authority> =
+			authorities {
+				featureAccess(sendEmailFeature)
+				viewAllEntitiesAuthority()
+				createAllEntitiesAuthority()
+				updateAllEntitiesAuthority()
+				deleteAllEntitiesAuthority()
+				manageAllEntitiesAuthority()
+				allFeaturesAuthority()
+			}
 
-    override val role: Role = RegularRole("regular-user", emptyList())
-}
+		override val role: Role = RegularRole("regular-user", emptyList())
+	}
 
-val accountWithAllSpecialAuthorities = object : AuthenticatedAccountContext {
+val accountAllowedToModifyOnlyOwnedEntities =
+	object : AuthenticatedAccountContext {
+		override val accountId: AccountId = AccountId("modify-only-owned-entities-account")
 
-    override val accountId: AccountId = AccountId("all-special-authorities-account")
+		override val email: EmailAddress = EmailAddress("owned-authorities@mail.com").getOrThrow()
 
-    override val email: EmailAddress = EmailAddress("special-authorities@mail.com").getOrThrow()
+		override suspend fun getAuthorities(): List<Authority> =
+			authorities {
+				featureAccess(sendEmailFeature)
+				entityAccess<Dog>(Dog.aclResourceIdentifier) {
+					createScope(AclResourceBelongsToAccountPredicate())
+					viewScope(AclResourceBelongsToAccountPredicate())
+					updateScope(AclResourceBelongsToAccountPredicate())
+					deleteScope(AclResourceBelongsToAccountPredicate())
+				}
+			}
 
-    override suspend fun getAuthorities(): List<Authority> = authorities {
-        featureAccess(sendEmailFeature)
-        viewAllEntitiesAuthority()
-        createAllEntitiesAuthority()
-        updateAllEntitiesAuthority()
-        deleteAllEntitiesAuthority()
-        manageAllEntitiesAuthority()
-        allFeaturesAuthority()
-    }
-
-    override val role: Role = RegularRole("regular-user", emptyList())
-}
-
-val accountAllowedToModifyOnlyOwnedEntities = object : AuthenticatedAccountContext {
-
-    override val accountId: AccountId = AccountId("modify-only-owned-entities-account")
-
-    override val email: EmailAddress = EmailAddress("owned-authorities@mail.com").getOrThrow()
-
-    override suspend fun getAuthorities(): List<Authority> = authorities {
-        featureAccess(sendEmailFeature)
-        entityAccess<Dog>(Dog.aclResourceIdentifier) {
-            createScope(AclResourceBelongsToAccountPredicate())
-            viewScope(AclResourceBelongsToAccountPredicate())
-            updateScope(AclResourceBelongsToAccountPredicate())
-            deleteScope(AclResourceBelongsToAccountPredicate())
-        }
-    }
-
-    override val role: Role = RegularRole("regular-user", emptyList())
-}
+		override val role: Role = RegularRole("regular-user", emptyList())
+	}
 
 data class Dog(val name: String, val age: Int, override val accountId: AccountId) : AclResource, BelongsToAccount {
+	companion object {
+		val aclResourceIdentifier = AclResourceIdentifier("Dog")
 
-    companion object {
-        val aclResourceIdentifier = AclResourceIdentifier("Dog")
+		fun default() = Dog("Burek", 5, AccountId("account-1"))
 
-        fun default() = Dog("Burek", 5, AccountId("account-1"))
+		fun ofAccount(accountId: AccountId) = Dog("Burek", 5, accountId)
+	}
 
-        fun ofAccount(accountId: AccountId) = Dog("Burek", 5, accountId)
-    }
-
-    override val aclResourceIdentifier: AclResourceIdentifier
-        get() = Companion.aclResourceIdentifier
+	override val aclResourceIdentifier: AclResourceIdentifier
+		get() = Companion.aclResourceIdentifier
 }
 
 val sendEmailFeature = Feature("some-feature")

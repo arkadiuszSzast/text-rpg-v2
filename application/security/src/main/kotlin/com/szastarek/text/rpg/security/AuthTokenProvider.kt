@@ -14,15 +14,21 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
 class AuthTokenProvider(private val authenticationProperties: AuthenticationProperties, private val clock: Clock) {
-
-    fun createAuthToken(accountId: AccountId, emailAddress: EmailAddress, role: Role, customAuthorities: List<Authority>): JwtToken =
-        JwtToken(JWT.create()
-            .withAudience(authenticationProperties.jwtAudience)
-            .withIssuer(authenticationProperties.jwtIssuer)
-            .withSubject(accountId.value)
-            .withClaim("email", emailAddress.value)
-            .withClaim("role", Roles.getByRole(role))
-            .withClaim("custom_authorities", Json.encodeToString(customAuthorities))
-            .withExpiresAt(clock.now().plus(authenticationProperties.authTokenExpiration).toJavaInstant())
-            .sign(Algorithm.HMAC256(authenticationProperties.jwtSecret)))
+	fun createAuthToken(
+		accountId: AccountId,
+		emailAddress: EmailAddress,
+		role: Role,
+		customAuthorities: List<Authority>,
+	): JwtToken =
+		JwtToken(
+			JWT.create()
+				.withAudience(authenticationProperties.jwtAudience)
+				.withIssuer(authenticationProperties.jwtIssuer)
+				.withSubject(accountId.value)
+				.withClaim("email", emailAddress.value)
+				.withClaim("role", Roles.getByRole(role))
+				.withClaim("custom_authorities", Json.encodeToString(customAuthorities))
+				.withExpiresAt(clock.now().plus(authenticationProperties.authTokenExpiration).toJavaInstant())
+				.sign(Algorithm.HMAC256(authenticationProperties.jwtSecret)),
+		)
 }

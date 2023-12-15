@@ -7,10 +7,10 @@ import org.litote.kmongo.Id
 
 @Serializable
 data class Mail(
-  @Contextual val id: Id<Mail>,
-  val subject: MailSubject,
-  val from: EmailAddress,
-  val to: EmailAddress,
-  val templateId: MailTemplateId,
-  val variables: MailVariables
+	@Contextual val id: Id<Mail>,
+	val subject: MailSubject,
+	val from: EmailAddress,
+	val to: EmailAddress,
+	val templateId: MailTemplateId,
+	val variables: MailVariables,
 )

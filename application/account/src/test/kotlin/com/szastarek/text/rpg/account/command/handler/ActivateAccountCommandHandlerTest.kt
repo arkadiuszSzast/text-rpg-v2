@@ -34,104 +34,108 @@ import kotlinx.datetime.toJavaInstant
 import kotlin.time.Duration.Companion.milliseconds
 
 class ActivateAccountCommandHandlerTest : DescribeSpec() {
+	private val clock = FixedClock(Clock.System.now())
+	private val eventStore = InMemoryEventStore()
+	private val accountAggregateRepository = AccountAggregateEventStoreRepository(eventStore)
+	private val accountActivationProperties =
+		AccountActivationProperties(
+			activateAccountUrl = Url("http://test-host:3000/account/activate"),
+			jwtConfig =
+				JwtProperties(
+					JwtSecret("activate-account-jwt-test-secret"),
+					JwtIssuer("activate-account-jwt-test-issuer"),
+					3600000.milliseconds,
+				),
+		)
+	private val accountActivationTokenVerifier = AccountActivationTokenVerifier(accountActivationProperties)
+	private val accountActivationUrlProvider = AccountActivationUrlProvider(accountActivationProperties, clock)
+	private val handler =
+		ActivateAccountCommandHandler(accountAggregateRepository, accountActivationTokenVerifier, eventStore)
 
-  private val clock = FixedClock(Clock.System.now())
-  private val eventStore = InMemoryEventStore()
-  private val accountAggregateRepository = AccountAggregateEventStoreRepository(eventStore)
-  private val accountActivationProperties = AccountActivationProperties(
-    activateAccountUrl = Url("http://test-host:3000/account/activate"),
-    jwtConfig = JwtProperties(
-      JwtSecret("activate-account-jwt-test-secret"),
-      JwtIssuer("activate-account-jwt-test-issuer"),
-      3600000.milliseconds
-    )
-  )
-  private val accountActivationTokenVerifier = AccountActivationTokenVerifier(accountActivationProperties)
-  private val accountActivationUrlProvider = AccountActivationUrlProvider(accountActivationProperties, clock)
-  private val handler =
-    ActivateAccountCommandHandler(accountAggregateRepository, accountActivationTokenVerifier, eventStore)
+	init {
 
-  init {
+		describe("ActivateAccountCommandHandlerTest") {
 
-    describe("ActivateAccountCommandHandlerTest") {
+			it("should activate account") {
+				// arrange
+				val accountCreatedEvent =
+					anAccountCreatedEvent(status = AccountStatus.Staged)
+						.also { eventStore.appendToStream(it, AccountEvent::class) }
+				val token = accountActivationUrlProvider.provide(accountCreatedEvent.emailAddress).parameters["token"]!!
+				val command = ActivateAccountCommand(token).getOrThrow()
 
-      it("should activate account") {
-        //arrange
-        val accountCreatedEvent = anAccountCreatedEvent(status = AccountStatus.Staged)
-          .also { eventStore.appendToStream(it, AccountEvent::class) }
-        val token = accountActivationUrlProvider.provide(accountCreatedEvent.emailAddress).parameters["token"]!!
-        val command = ActivateAccountCommand(token).getOrThrow()
+				// act
+				val result = handler.handle(command)
 
-        //act
-        val result = handler.handle(command)
+				// assert
+				result.shouldBeRight(ActivateAccountCommandSuccessResult(accountCreatedEvent.accountId))
+				accountAggregateRepository.findByEmail(accountCreatedEvent.emailAddress).shouldBeSome() should {
+					it.status shouldBe AccountStatus.Active
+					it.version shouldBe Version(1L)
+				}
+			}
 
-        //assert
-        result.shouldBeRight(ActivateAccountCommandSuccessResult(accountCreatedEvent.accountId))
-        accountAggregateRepository.findByEmail(accountCreatedEvent.emailAddress).shouldBeSome() should {
-          it.status shouldBe AccountStatus.Active
-          it.version shouldBe Version(1L)
-        }
-      }
+			it("should return left when token is incorrect") {
+				// arrange
+				val token = JWT.create().sign(Algorithm.HMAC256("invalid-secret"))
+				val command = ActivateAccountCommand(token).getOrThrow()
 
-      it("should return left when token is incorrect") {
-        //arrange
-        val token = JWT.create().sign(Algorithm.HMAC256("invalid-secret"))
-        val command = ActivateAccountCommand(token).getOrThrow()
+				// act
+				val result = handler.handle(command)
 
-        //act
-        val result = handler.handle(command)
+				// assert
+				result.shouldBeLeft(listOf(ActivateAccountError.InvalidJwt))
+			}
 
-        //assert
-        result.shouldBeLeft(listOf(ActivateAccountError.InvalidJwt))
-      }
+			it("should return left when subject is not valid email") {
+				// arrange
+				val jwtConfig = accountActivationProperties.jwtConfig
+				val token =
+					JWT.create()
+						.withIssuer(jwtConfig.issuer.value)
+						.withSubject("invalid-email")
+						.withExpiresAt(clock.now().plus(jwtConfig.expiration).toJavaInstant())
+						.sign(Algorithm.HMAC256(jwtConfig.secret.value))
+				val command = ActivateAccountCommand(token).getOrThrow()
 
-      it("should return left when subject is not valid email") {
-        //arrange
-        val jwtConfig = accountActivationProperties.jwtConfig
-        val token = JWT.create()
-          .withIssuer(jwtConfig.issuer.value)
-          .withSubject("invalid-email")
-          .withExpiresAt(clock.now().plus(jwtConfig.expiration).toJavaInstant())
-          .sign(Algorithm.HMAC256(jwtConfig.secret.value))
-        val command = ActivateAccountCommand(token).getOrThrow()
+				// act
+				val result = handler.handle(command)
 
-        //act
-        val result = handler.handle(command)
+				// assert
+				result.shouldBeLeft(listOf(ActivateAccountError.InvalidSubject))
+			}
 
-        //assert
-        result.shouldBeLeft(listOf(ActivateAccountError.InvalidSubject))
-      }
+			it("should return left when account not found") {
+				// arrange
+				val token = accountActivationUrlProvider.provide(anEmail()).parameters["token"]!!
+				val command = ActivateAccountCommand(token).getOrThrow()
 
-      it("should return left when account not found") {
-        //arrange
-        val token = accountActivationUrlProvider.provide(anEmail()).parameters["token"]!!
-        val command = ActivateAccountCommand(token).getOrThrow()
+				// act
+				val result = handler.handle(command)
 
-        //act
-        val result = handler.handle(command)
+				// assert
+				result.shouldBeLeft(listOf(ActivateAccountError.AccountNotFound))
+			}
 
-        //assert
-        result.shouldBeLeft(listOf(ActivateAccountError.AccountNotFound))
-      }
+			it("should return left when account is already active") {
+				// arrange
+				val accountCreatedEvent =
+					anAccountCreatedEvent(status = AccountStatus.Staged)
+						.also {
+							eventStore.appendToStream(it, AccountEvent::class)
+							eventStore.appendToStream(it.accountActivated(), AccountEvent::class)
+						}
+				val token = accountActivationUrlProvider.provide(accountCreatedEvent.emailAddress).parameters["token"]!!
+				val command = ActivateAccountCommand(token).getOrThrow()
 
-      it("should return left when account is already active") {
-        //arrange
-        val accountCreatedEvent = anAccountCreatedEvent(status = AccountStatus.Staged)
-          .also {
-            eventStore.appendToStream(it, AccountEvent::class)
-            eventStore.appendToStream(it.accountActivated(), AccountEvent::class)
-          }
-        val token = accountActivationUrlProvider.provide(accountCreatedEvent.emailAddress).parameters["token"]!!
-        val command = ActivateAccountCommand(token).getOrThrow()
+				// act
+				val result = handler.handle(command)
 
-        //act
-        val result = handler.handle(command)
+				// assert
+				result.shouldBeLeft(listOf(ActivateAccountError.InvalidAccountStatus))
+			}
+		}
+	}
 
-        //assert
-        result.shouldBeLeft(listOf(ActivateAccountError.InvalidAccountStatus))
-      }
-    }
-  }
-
-  private fun AccountCreatedEvent.accountActivated() = AccountActivatedEvent(accountId, emailAddress, version.next())
+	private fun AccountCreatedEvent.accountActivated() = AccountActivatedEvent(accountId, emailAddress, version.next())
 }

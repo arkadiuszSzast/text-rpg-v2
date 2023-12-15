@@ -1,5 +1,3 @@
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-
 plugins {
     alias(libs.plugins.kotlin.jvm)
     alias(libs.plugins.ktor)
@@ -41,7 +39,7 @@ sonar {
         property("sonar.projectKey", "arkadiuszSzast_text-rpg-v2")
         property("sonar.organization", "arkadiuszszast")
         property("sonar.host.url", "https://sonarcloud.io")
-        property("sonar.coverage.jacoco.xmlReportPaths", "${project.buildDir}/reports/kover/report.xml")
+        property("sonar.coverage.jacoco.xmlReportPaths", "${project.layout.buildDirectory}/reports/kover/report.xml")
         property("sonar.coverage.exclusions", "**/Application.kt,**/plugin/**")
     }
 }
@@ -49,7 +47,7 @@ sonar {
 spotless {
     kotlin {
         target("/application/**/*.kt")
-        ktlint()
+        ktlint().setEditorConfigPath("${project.rootDir}/spotless/.editorconfig")
     }
 }
 

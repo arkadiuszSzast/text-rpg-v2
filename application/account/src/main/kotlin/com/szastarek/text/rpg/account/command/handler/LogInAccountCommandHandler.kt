@@ -13,28 +13,28 @@ import com.szastarek.text.rpg.security.AuthTokenProvider
 import com.trendyol.kediatr.CommandWithResultHandler
 
 class LogInAccountCommandHandler(
-  private val accountAggregateRepository: AccountAggregateRepository,
-  private val authTokenProvider: AuthTokenProvider,
-  private val refreshTokenRedisRepository: RefreshTokenRepository
+	private val accountAggregateRepository: AccountAggregateRepository,
+	private val authTokenProvider: AuthTokenProvider,
+	private val refreshTokenRedisRepository: RefreshTokenRepository,
 ) : CommandWithResultHandler<LogInAccountCommand, LogInAccountCommandResult> {
+	override suspend fun handle(command: LogInAccountCommand): LogInAccountCommandResult {
+		val account = accountAggregateRepository.findByEmail(command.emailAddress).getOrNull()
+		if (account == null) {
+			return LogInAccountError.AccountNotFound.nel().left()
+		}
 
-  override suspend fun handle(command: LogInAccountCommand): LogInAccountCommandResult {
-    val account = accountAggregateRepository.findByEmail(command.emailAddress).getOrNull()
-    if (account == null) {
-      return LogInAccountError.AccountNotFound.nel().left()
-    }
+		val loginResult = account.logIn(command.password)
 
-    val loginResult = account.logIn(command.password)
-
-    return loginResult.map {
-      val authToken = authTokenProvider.createAuthToken(
-        account.accountId,
-        account.emailAddress,
-        account.role,
-        account.customAuthorities
-      )
-      val refreshToken = refreshTokenRedisRepository.replace(account.emailAddress, RefreshToken.generate())
-      LogInAccountCommandSuccessResult(authToken, refreshToken)
-    }
-  }
+		return loginResult.map {
+			val authToken =
+				authTokenProvider.createAuthToken(
+					account.accountId,
+					account.emailAddress,
+					account.role,
+					account.customAuthorities,
+				)
+			val refreshToken = refreshTokenRedisRepository.replace(account.emailAddress, RefreshToken.generate())
+			LogInAccountCommandSuccessResult(authToken, refreshToken)
+		}
+	}
 }

@@ -7,10 +7,9 @@ import io.ktor.server.routing.get
 import io.ktor.server.routing.routing
 
 fun Application.configureWorldRouting() {
-
-    routing {
-        get(WorldApi.v1) {
-            call.respondText("Hello, world!")
-        }
-    }
+	routing {
+		get(WorldApi.V1) {
+			call.respondText("Hello, world!")
+		}
+	}
 }

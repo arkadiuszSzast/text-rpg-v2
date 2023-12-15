@@ -6,18 +6,16 @@ import org.koin.test.KoinTest
 import org.koin.test.check.checkModules
 
 class KoinModulesTest : KoinTest, DescribeSpec() {
+	init {
 
-    init {
+		extensions(KoinExtension(monitoringModule))
 
-        extensions(KoinExtension(monitoringModule))
+		describe("Monitoring Koin module test") {
 
-        describe("Monitoring Koin module test") {
-
-            it("verify monitoring module") {
-                //arrange & act & assert
-                getKoin().checkModules()
-            }
-        }
-    }
+			it("verify monitoring module") {
+				// arrange & act & assert
+				getKoin().checkModules()
+			}
+		}
+	}
 }
-

@@ -19,30 +19,31 @@ import org.litote.kmongo.Id
 typealias CreateRegularAccountCommandResult = Either<Nel<CreateAccountError>, CreateRegularAccountCommandSuccessResult>
 
 data class CreateRegularAccountCommand(
-    val email: EmailAddress,
-    val password: HashedPassword,
-    val timeZoneId: TimeZone
+	val email: EmailAddress,
+	val password: HashedPassword,
+	val timeZoneId: TimeZone,
 ) : CommandWithResult<CreateRegularAccountCommandResult> {
-
-    companion object {
-        operator fun invoke(email: String, password: String, timeZoneId: String) =
-            either<ValidationErrors, CreateRegularAccountCommand> {
-                zipOrAccumulate(
-                    { e1, e2 -> e1 + e2 },
-                    { EmailAddress(email).bind() },
-                    { RawPassword(password).bind() },
-                    {
-                        ensure(TimeZone.availableZoneIds.contains(timeZoneId))
-                        { ValidationError(".timeZoneId", "validation.invalid_timezone").nel() }
-                    },
-                    { e, p, _ -> CreateRegularAccountCommand(e, p.hashpw(), TimeZone.of(timeZoneId)) }
-                )
-            }
-    }
+	companion object {
+		operator fun invoke(
+			email: String,
+			password: String,
+			timeZoneId: String,
+		) = either<ValidationErrors, CreateRegularAccountCommand> {
+			zipOrAccumulate(
+				{ e1, e2 -> e1 + e2 },
+				{ EmailAddress(email).bind() },
+				{ RawPassword(password).bind() },
+				{
+					ensure(TimeZone.availableZoneIds.contains(timeZoneId)) { ValidationError(".timeZoneId", "validation.invalid_timezone").nel() }
+				},
+				{ e, p, _ -> CreateRegularAccountCommand(e, p.hashpw(), TimeZone.of(timeZoneId)) },
+			)
+		}
+	}
 }
 
 data class CreateRegularAccountCommandSuccessResult(val accountId: Id<Account>)
 
 enum class CreateAccountError {
-    EmailAlreadyTaken
+	EmailAlreadyTaken,
 }

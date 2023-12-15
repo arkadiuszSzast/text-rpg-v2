@@ -11,25 +11,25 @@ import org.koin.test.inject
 import kotlin.time.Duration.Companion.milliseconds
 
 class AccountResetPasswordPropertiesTest : KoinTest, DescribeSpec() {
+	private val resetPasswordProperties by inject<AccountResetPasswordProperties>()
 
-  private val resetPasswordProperties by inject<AccountResetPasswordProperties>()
+	init {
+		extensions(KoinExtension(accountConfigModule))
 
-  init {
-    extensions(KoinExtension(accountConfigModule))
+		describe("AccountResetPasswordPropertiesTest") {
 
-    describe("AccountResetPasswordPropertiesTest") {
+			it("should pick correct values from application.conf") {
+				// arrange
+				val expected =
+					AccountResetPasswordProperties(
+						accountResetPasswordUrl = Url("http://test-host:3000/account/reset-password"),
+						jwtIssuer = JwtIssuer("reset-password-jwt-test-issuer"),
+						jwtExpiration = 300000.milliseconds,
+					)
 
-      it("should pick correct values from application.conf") {
-        //arrange
-        val expected = AccountResetPasswordProperties(
-          accountResetPasswordUrl = Url("http://test-host:3000/account/reset-password"),
-          jwtIssuer = JwtIssuer("reset-password-jwt-test-issuer"),
-          jwtExpiration = 300000.milliseconds
-        )
-
-        //act & assert
-        resetPasswordProperties shouldBe expected
-      }
-    }
-  }
+				// act & assert
+				resetPasswordProperties shouldBe expected
+			}
+		}
+	}
 }

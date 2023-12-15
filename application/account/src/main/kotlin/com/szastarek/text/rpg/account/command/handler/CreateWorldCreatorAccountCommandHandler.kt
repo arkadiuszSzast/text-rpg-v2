@@ -20,23 +20,24 @@ import com.trendyol.kediatr.CommandWithResultHandler
 import kotlinx.datetime.Clock
 
 class CreateWorldCreatorAccountCommandHandler(
-  private val registerWorldCreatorTokenVerifier: RegisterWorldCreatorTokenVerifier,
-  private val accountAggregateRepository: AccountAggregateRepository,
-  private val eventStoreWriteClient: EventStoreWriteClient,
-  private val clock: Clock
+	private val registerWorldCreatorTokenVerifier: RegisterWorldCreatorTokenVerifier,
+	private val accountAggregateRepository: AccountAggregateRepository,
+	private val eventStoreWriteClient: EventStoreWriteClient,
+	private val clock: Clock,
 ) : CommandWithResultHandler<CreateWorldCreatorAccountCommand, CreateWorldCreatorAccountCommandResult> {
-  override suspend fun handle(command: CreateWorldCreatorAccountCommand) = either {
-    val token = command.token
-    registerWorldCreatorTokenVerifier.verify(token, command.email).mapLeft { CreateWorldCreatorAccountError.InvalidToken }
-      .toEitherNel().bind()
-    ensure(accountAggregateRepository.findByEmail(command.email).isNone()) {
-      CreateWorldCreatorAccountError.EmailAlreadyTaken.nel()
-    }
+	override suspend fun handle(command: CreateWorldCreatorAccountCommand) =
+		either {
+			val token = command.token
+			registerWorldCreatorTokenVerifier.verify(token, command.email).mapLeft { CreateWorldCreatorAccountError.InvalidToken }
+				.toEitherNel().bind()
+			ensure(accountAggregateRepository.findByEmail(command.email).isNone()) {
+				CreateWorldCreatorAccountError.EmailAlreadyTaken.nel()
+			}
 
-    val event = AccountAggregate.create(command.email, Roles.WorldCreator.role, command.password, command.timeZoneId, clock)
+			val event = AccountAggregate.create(command.email, Roles.WorldCreator.role, command.password, command.timeZoneId, clock)
 
-    eventStoreWriteClient.appendToStream<AccountEvent>(event, event.revision())
+			eventStoreWriteClient.appendToStream<AccountEvent>(event, event.revision())
 
-    CreateWorldCreatorAccountCommandSuccessResult(event.accountId)
-  }
+			CreateWorldCreatorAccountCommandSuccessResult(event.accountId)
+		}
 }
