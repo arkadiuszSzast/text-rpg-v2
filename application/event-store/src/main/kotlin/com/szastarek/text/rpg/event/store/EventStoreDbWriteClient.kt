@@ -48,51 +48,44 @@ class EventStoreDbWriteClient(
 		val tracer = openTelemetry.getTracer("event-store-db")
 		val eventMetadata = event.getMetadata(causedBy)
 
-		return tracer.spanBuilder("event_store publish ${eventMetadata.eventType.value}")
-			.startSpan()
-			.execute {
-				val eventMetadataWithTrace =
-					EventMetadataBuilder.fromPrototype(eventMetadata).apply {
-						openTelemetry.propagators.textMapPropagator.inject(
-							Context.current(),
-							this,
-							EventStoreDbTracingContextSetter,
-						)
-					}.build()
+		return tracer.spanBuilder("event_store publish ${eventMetadata.eventType.value}").startSpan().execute {
+			val eventMetadataWithTrace =
+				EventMetadataBuilder.fromPrototype(eventMetadata).apply {
+					openTelemetry.propagators.textMapPropagator.inject(
+						Context.current(),
+						this,
+						eventStoreDbTracingContextSetter,
+					)
+				}.build()
 
-				val eventBytes = json.encodeToString(serializer(clazz.createType()), event).encodeToByteArray()
-				val metadataBytes = json.encodeToString(EventMetadata.serializer(), eventMetadataWithTrace).encodeToByteArray()
+			val eventBytes = json.encodeToString(serializer(clazz.createType()), event).encodeToByteArray()
+			val metadataBytes =
+				json.encodeToString(EventMetadata.serializer(), eventMetadataWithTrace).encodeToByteArray()
 
-				val eventData =
-					EventDataBuilder.json(eventMetadata.eventId.value, eventMetadata.eventType.value, eventBytes)
-						.metadataAsBytes(metadataBytes)
-						.build()
+			val eventData =
+				EventDataBuilder.json(eventMetadata.eventId.value, eventMetadata.eventType.value, eventBytes)
+					.metadataAsBytes(metadataBytes).build()
 
-				try {
-					eventStoreDBClient.appendToStream(
-						eventMetadataWithTrace.streamName.value,
-						appendToStreamOptions,
-						eventData,
-					).await().let { EventStoreWriteResult(it.logPosition, it.nextExpectedRevision) }
-				} catch (ex: WrongExpectedVersionException) {
-					throw InvalidExpectedRevisionException(ex.streamName, ex.nextExpectedRevision, ex.actualVersion)
-				}
+			try {
+				eventStoreDBClient.appendToStream(
+					eventMetadataWithTrace.streamName.value,
+					appendToStreamOptions,
+					eventData,
+				).await().let { EventStoreWriteResult(it.logPosition, it.nextExpectedRevision) }
+			} catch (ex: WrongExpectedVersionException) {
+				throw InvalidExpectedRevisionException(ex.streamName, ex.nextExpectedRevision, ex.actualVersion)
 			}
+		}
 	}
 }
 
-object EventStoreDbTracingContextSetter : TextMapSetter<EventMetadataBuilder> {
-	override fun set(
-		carrier: EventMetadataBuilder?,
-		key: String,
-		value: String,
-	) {
+val eventStoreDbTracingContextSetter =
+	TextMapSetter<EventMetadataBuilder> { carrier, key, value ->
 		if (carrier == null) {
-			return
+			return@TextMapSetter
 		}
 		carrier.withTracingProperty(key, value)
 	}
-}
 
 fun Versioned.revision(): ExpectedRevision {
 	return when (this.version) {

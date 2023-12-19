@@ -6,6 +6,7 @@ import io.opentelemetry.context.propagation.ContextPropagators
 import io.opentelemetry.sdk.OpenTelemetrySdk
 import io.opentelemetry.sdk.testing.exporter.InMemorySpanExporter
 import io.opentelemetry.sdk.trace.SdkTracerProvider
+import io.opentelemetry.sdk.trace.data.SpanData
 import io.opentelemetry.sdk.trace.export.SimpleSpanProcessor
 
 class InMemoryOpenTelemetry {
@@ -22,7 +23,7 @@ class InMemoryOpenTelemetry {
 			.setPropagators(ContextPropagators.create(W3CTraceContextPropagator.getInstance()))
 			.build()
 
-	fun getFinishedSpans() = spanExporter.finishedSpanItems
+	fun getFinishedSpans(): List<SpanData> = spanExporter.finishedSpanItems
 
 	fun get(): OpenTelemetry = openTelemetry
 

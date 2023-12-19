@@ -31,7 +31,7 @@ class RefreshTokenRedisRepository(
 		return tracer.spanBuilder("redis-replace-refresh-token")
 			.startSpan()
 			.execute {
-				redisClient.getBucket<String>(getKey(accountEmail)).set(token.value, refresh_token_ttl)
+				redisClient.getBucket<String>(getKey(accountEmail))[token.value] = refresh_token_ttl
 				token
 			}
 	}
