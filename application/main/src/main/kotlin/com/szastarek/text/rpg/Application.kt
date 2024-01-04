@@ -1,6 +1,5 @@
 package com.szastarek.text.rpg
 
-import com.szastarek.text.rpg.account.accountModule
 import com.szastarek.text.rpg.world.worldModule
 import io.ktor.server.application.Application
 import org.koin.ktor.ext.getKoin
@@ -10,7 +9,7 @@ fun main(args: Array<String>) {
 }
 
 fun Application.main() {
-	accountModule()
+// 	accountModule()
 	worldModule()
 	getKoin().createEagerInstances()
 }

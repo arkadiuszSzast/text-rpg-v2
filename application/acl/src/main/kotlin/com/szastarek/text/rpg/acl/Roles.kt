@@ -19,8 +19,11 @@ enum class Roles(val code: String, val role: Role) {
 	WorldCreator(
 		"WORLD_CREATOR",
 		RegularRole(
-			"WORDL_CREATOR",
+			"WORLD_CREATOR",
 			authorities {
+				entityAccess(AclResourceIdentifier("world-draft-aggregate")) {
+					manageScope(AclResourceBelongsToAccountPredicate())
+				}
 				entityAccess(AclResourceIdentifier("account-aggregate")) {
 					manageScope(AclResourceBelongsToAccountPredicate())
 				}

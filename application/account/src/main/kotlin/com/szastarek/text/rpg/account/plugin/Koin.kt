@@ -34,10 +34,10 @@ import com.szastarek.text.rpg.shared.config.ConfigKey
 import com.szastarek.text.rpg.shared.config.getLongProperty
 import com.szastarek.text.rpg.shared.config.getStringProperty
 import com.szastarek.text.rpg.shared.email.EmailAddress
+import com.szastarek.text.rpg.shared.plugin.installIfNotRegistered
 import com.szastarek.text.rpg.shared.validate.getOrThrow
 import io.ktor.http.Url
 import io.ktor.server.application.Application
-import io.ktor.server.application.install
 import org.koin.core.context.GlobalContext
 import org.koin.core.context.loadKoinModules
 import org.koin.core.module.dsl.createdAtStart
@@ -122,7 +122,7 @@ internal val accountModule =
 
 internal fun Application.configureKoin() {
 	if (GlobalContext.getOrNull() == null) {
-		install(Koin) {
+		installIfNotRegistered(Koin) {
 			// TODO remove when Koin 3.5.2 would be released
 			GlobalContext.startKoin(this)
 		}

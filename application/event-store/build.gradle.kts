@@ -4,6 +4,7 @@ dependencies {
 
     api(libs.eventstore)
     implementation(libs.grpc.all)
+    implementation(libs.jackson.core)
 
     testImplementation(testFixtures(project(":application:test-utils")))
 
