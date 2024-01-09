@@ -1,14 +1,14 @@
 package com.szastarek.text.rpg.world.adapter.rest
 
-import com.szastarek.text.rpg.acl.AccountId
-import com.szastarek.text.rpg.acl.AccountIdProvider
 import com.szastarek.text.rpg.acl.authority.AuthorityCheckException
 import com.szastarek.text.rpg.security.NotAuthenticatedException
+import com.szastarek.text.rpg.security.authenticated
+import com.szastarek.text.rpg.security.getAuthenticatedAccountContext
 import com.szastarek.text.rpg.shared.ValidationErrorHttpMessage
 import com.szastarek.text.rpg.shared.plugin.HttpCallsExceptionHandler
 import com.szastarek.text.rpg.shared.validate.ValidationException
 import com.szastarek.text.rpg.shared.validate.getOrThrow
-import com.szastarek.text.rpg.world.adapter.rest.request.CreateWorldDraftRequest
+import com.szastarek.text.rpg.world.adapter.rest.request.InitializeWorldDraftCreationRequest
 import com.szastarek.text.rpg.world.draft.command.WorldDraftCreationRequestCommand
 import com.trendyol.kediatr.Mediator
 import io.ktor.http.HttpStatusCode
@@ -56,25 +56,19 @@ fun Application.configureWorldRouting() {
 	}
 
 	routing {
+		authenticated {
+			post("${WorldApi.V1}/draft") {
+				val request = call.receive<InitializeWorldDraftCreationRequest>()
+				val accountContext = call.getAuthenticatedAccountContext()
+				val command = WorldDraftCreationRequestCommand(request.name, accountContext).getOrThrow()
 
-// 		authenticated {
-		post("${WorldApi.V1}/draft") {
-			val accountIdProvider =
-				object : AccountIdProvider {
-					override val accountId: AccountId
-						get() = AccountId("444")
-				}
-// 				val accountContext = call.getAuthenticatedAccountContext()
-			val request = call.receive<CreateWorldDraftRequest>()
-			val command = WorldDraftCreationRequestCommand(request.name, request.description, accountIdProvider).getOrThrow()
+				val result = mediator.send(command)
 
-			val result = mediator.send(command)
-
-			result.fold(
-				{ call.respond(HttpStatusCode.BadRequest) },
-				{ call.respond(HttpStatusCode.Accepted) }, //TODO add location header
-			)
+				result.fold(
+					{ call.respond(HttpStatusCode.BadRequest) },
+					{ call.respond(HttpStatusCode.Accepted) },
+				)
+			}
 		}
-// 		}
 	}
 }

@@ -1,27 +1,26 @@
 package com.szastarek.text.rpg.world.draft.event
 
-import com.szastarek.text.rpg.acl.SerializableAuthenticatedAccountContext
 import com.szastarek.text.rpg.event.store.EventMetadata
 import com.szastarek.text.rpg.event.store.EventMetadataBuilder
 import com.szastarek.text.rpg.event.store.EventType
 import com.szastarek.text.rpg.shared.Version
 import com.szastarek.text.rpg.shared.Versioned
-import com.szastarek.text.rpg.world.WorldName
 import com.szastarek.text.rpg.world.draft.WorldDraft
+import com.szastarek.text.rpg.world.draft.command.WorldDraftCreationRequestError
 import kotlinx.serialization.Contextual
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import org.litote.kmongo.Id
 
 @Serializable
-@SerialName("WorldDraftCreationRequestedEvent")
-data class WorldDraftCreationRequestedEvent(
+@SerialName("WorldDraftCreationRejectedEvent")
+data class WorldDraftCreationRejectedEvent(
 	@Contextual override val draftId: Id<WorldDraft>,
-	val name: WorldName,
-	val creatorAccountContext: SerializableAuthenticatedAccountContext,
+	val reasons: List<WorldDraftCreationRequestError>,
+	override val version: Version,
 ) : WorldDraftEvent, Versioned {
 	companion object {
-		val eventType = EventType(WorldDraftEvent.eventCategory, "CreationRequested")
+		val eventType = EventType(WorldDraftEvent.eventCategory, "CreationRejected")
 	}
 
 	override fun getMetadata(causedBy: EventMetadata?): EventMetadata {
@@ -31,6 +30,4 @@ data class WorldDraftCreationRequestedEvent(
 			eventType,
 		).optionalCausedBy(causedBy).build()
 	}
-
-	override val version: Version = Version.initial
 }

@@ -1,38 +1,63 @@
 package com.szastarek.text.rpg.world.draft
 
-import arrow.core.nel
 import arrow.core.raise.either
-import arrow.core.raise.ensure
 import com.szastarek.text.rpg.acl.AccountId
-import com.szastarek.text.rpg.acl.AccountIdProvider
+import com.szastarek.text.rpg.acl.AclResource
+import com.szastarek.text.rpg.acl.AclResourceIdentifier
+import com.szastarek.text.rpg.acl.AuthenticatedAccountContext
+import com.szastarek.text.rpg.acl.BelongsToAccount
+import com.szastarek.text.rpg.acl.serializable
 import com.szastarek.text.rpg.world.WorldDescription
 import com.szastarek.text.rpg.world.WorldName
-import com.szastarek.text.rpg.world.draft.command.WorldDraftCreationRequestError
-import com.szastarek.text.rpg.world.draft.event.WorldDraftCreatedEvent
+import com.szastarek.text.rpg.world.draft.event.WorldDraftCreationApprovedEvent
+import com.szastarek.text.rpg.world.draft.event.WorldDraftCreationRejectedEvent
 import com.szastarek.text.rpg.world.draft.event.WorldDraftCreationRequestedEvent
 import org.litote.kmongo.Id
 import org.litote.kmongo.newId
 
 data class WorldDraftAggregate(
-    val id: Id<WorldDraft>,
-    val ownerId: AccountId,
-    val name: WorldName,
-    val description: WorldDescription? = null,
-) {
-    companion object {
-        fun initializeCreation(
-            accountIdProvider: AccountIdProvider,
-            name: WorldName,
-            existingDrafts: List<WorldDraftListItem>,
-        ) = either {
-            ensure(existingDrafts.size <= 3) { WorldDraftCreationRequestError.MaximumNumberOfDraftsReached.nel() }
-            WorldDraftCreationRequestedEvent(newId(), name, accountIdProvider.accountId)
-        }
+	val id: Id<WorldDraft>,
+	val ownerId: AccountId,
+	val name: WorldName,
+	val description: WorldDescription? = null,
+) : AclResource, BelongsToAccount {
+	override val aclResourceIdentifier: AclResourceIdentifier
+		get() = WorldDraftAggregate.aclResourceIdentifier
 
-        fun create(
-            accountIdProvider: AccountIdProvider,
-            name: WorldName,
-            description: WorldDescription?,
-        ) = WorldDraftCreatedEvent(newId(), name, description, accountIdProvider.accountId)
-    }
+	override val accountId: AccountId
+		get() = ownerId
+
+	companion object {
+		val aclResourceIdentifier = AclResourceIdentifier("world-draft-aggregate")
+
+		suspend fun initializeCreation(
+			creatorAccountContext: AuthenticatedAccountContext,
+			name: WorldName,
+			existingDrafts: List<WorldDraftListItem>,
+		) = either {
+			WorldDraftCreatePolicy.get().isAllowed(creatorAccountContext, existingDrafts).bind()
+
+			WorldDraftCreationRequestedEvent(newId(), name, creatorAccountContext.serializable())
+		}
+
+		fun create(
+			worldDraftCreationRequestedEvent: WorldDraftCreationRequestedEvent,
+			existingDrafts: List<WorldDraftListItem>,
+		) = either {
+			WorldDraftCreatePolicy.get()
+				.isAllowed(worldDraftCreationRequestedEvent.creatorAccountContext, existingDrafts)
+				.mapLeft {
+					WorldDraftCreationRejectedEvent(
+						worldDraftCreationRequestedEvent.draftId,
+						it,
+						worldDraftCreationRequestedEvent.version.next(),
+					)
+				}.bind()
+
+			WorldDraftCreationApprovedEvent(
+				worldDraftCreationRequestedEvent.draftId,
+				worldDraftCreationRequestedEvent.version.next(),
+			)
+		}
+	}
 }

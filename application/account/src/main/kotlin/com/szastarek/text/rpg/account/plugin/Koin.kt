@@ -19,6 +19,7 @@ import com.szastarek.text.rpg.account.command.handler.SendResetPasswordCommandHa
 import com.szastarek.text.rpg.account.config.AccountActivationProperties
 import com.szastarek.text.rpg.account.config.AccountResetPasswordProperties
 import com.szastarek.text.rpg.account.config.ActivateAccountMailProperties
+import com.szastarek.text.rpg.account.config.DocumentationProperties
 import com.szastarek.text.rpg.account.config.InviteWorldCreatorMailProperties
 import com.szastarek.text.rpg.account.config.ResetPasswordMailProperties
 import com.szastarek.text.rpg.account.config.WorldCreatorRegisterProperties
@@ -31,6 +32,7 @@ import com.szastarek.text.rpg.security.JwtIssuer
 import com.szastarek.text.rpg.security.JwtProperties
 import com.szastarek.text.rpg.security.JwtSecret
 import com.szastarek.text.rpg.shared.config.ConfigKey
+import com.szastarek.text.rpg.shared.config.getBooleanProperty
 import com.szastarek.text.rpg.shared.config.getLongProperty
 import com.szastarek.text.rpg.shared.config.getStringProperty
 import com.szastarek.text.rpg.shared.email.EmailAddress
@@ -97,6 +99,11 @@ internal val accountConfigModule =
 				),
 			)
 		}
+		single {
+			DocumentationProperties(
+				enabled = getBooleanProperty(ConfigKey("documentation.enabled")),
+			)
+		}
 	}
 
 internal val accountModule =
@@ -122,10 +129,7 @@ internal val accountModule =
 
 internal fun Application.configureKoin() {
 	if (GlobalContext.getOrNull() == null) {
-		installIfNotRegistered(Koin) {
-			// TODO remove when Koin 3.5.2 would be released
-			GlobalContext.startKoin(this)
-		}
+		installIfNotRegistered(Koin)
 	}
 	loadKoinModules(listOf(accountModule, accountConfigModule))
 }

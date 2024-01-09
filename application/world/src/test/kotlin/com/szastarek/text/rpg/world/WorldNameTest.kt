@@ -1,5 +1,6 @@
 package com.szastarek.text.rpg.world
 
+import arrow.core.nel
 import com.szastarek.text.rpg.shared.validate.ValidationError
 import io.kotest.assertions.arrow.core.shouldBeLeft
 import io.kotest.assertions.arrow.core.shouldBeRight
@@ -20,10 +21,15 @@ class WorldNameTest : StringSpec({
 	}
 
 	"should not create world name when it is too short" {
-		WorldName("te").shouldBeLeft(ValidationError(".world_name", "validation.world_name_too_short"))
+		WorldName("te").shouldBeLeft(
+			ValidationError(".world_name", "validation.world_name_too_short").nel(),
+		)
 	}
 
 	"should not create world name when it is too long" {
-		WorldName(Random.azstring(31)).shouldBeLeft(ValidationError(".world_name", "validation.world_name_too_long"))
+		WorldName(Random.azstring(31))
+			.shouldBeLeft(
+				ValidationError(".world_name", "validation.world_name_too_long").nel(),
+			)
 	}
 })

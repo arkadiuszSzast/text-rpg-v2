@@ -3,10 +3,7 @@ package com.szastarek.text.rpg.world.draft.command
 import arrow.core.Either
 import arrow.core.Nel
 import arrow.core.raise.either
-import arrow.core.raise.zipOrAccumulate
-import com.szastarek.text.rpg.acl.AccountIdProvider
-import com.szastarek.text.rpg.shared.validate.ValidationErrors
-import com.szastarek.text.rpg.world.WorldDescription
+import com.szastarek.text.rpg.acl.AuthenticatedAccountContext
 import com.szastarek.text.rpg.world.WorldName
 import com.szastarek.text.rpg.world.draft.WorldDraft
 import com.trendyol.kediatr.CommandWithResult
@@ -16,27 +13,15 @@ typealias WorldDraftCreationRequestCommandResult = Either<Nel<WorldDraftCreation
 
 data class WorldDraftCreationRequestCommand(
 	val name: WorldName,
-	val description: WorldDescription?,
-	val accountIdProvider: AccountIdProvider,
+	val authenticatedAccountContext: AuthenticatedAccountContext,
 ) : CommandWithResult<WorldDraftCreationRequestCommandResult> {
 	companion object {
 		operator fun invoke(
 			name: String,
-			description: String?,
-			accountIdProvider: AccountIdProvider,
-		) = either<ValidationErrors, WorldDraftCreationRequestCommand> {
-			zipOrAccumulate(
-				{ e1, e2 -> e1 + e2 },
-				{ WorldName(name).bind() },
-				{ description?.let { WorldDescription(it).bind() } },
-				{ worldName, worldDescription ->
-					WorldDraftCreationRequestCommand(
-						worldName,
-						worldDescription,
-						accountIdProvider,
-					)
-				},
-			)
+			authenticatedAccountContext: AuthenticatedAccountContext,
+		) = either {
+			val worldName = WorldName(name).bind()
+			WorldDraftCreationRequestCommand(worldName, authenticatedAccountContext)
 		}
 	}
 }
@@ -44,5 +29,6 @@ data class WorldDraftCreationRequestCommand(
 data class WorldDraftCreationRequestCommandSuccessResult(val draftId: Id<WorldDraft>)
 
 enum class WorldDraftCreationRequestError {
+	AccountNotAllowedToCreateDraft,
 	MaximumNumberOfDraftsReached,
 }

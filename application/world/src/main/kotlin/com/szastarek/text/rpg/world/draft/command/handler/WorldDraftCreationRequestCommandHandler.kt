@@ -20,12 +20,12 @@ class WorldDraftCreationRequestCommandHandler(
 ) : CommandWithResultHandler<WorldDraftCreationRequestCommand, WorldDraftCreationRequestCommandResult> {
 	override suspend fun handle(command: WorldDraftCreationRequestCommand): WorldDraftCreationRequestCommandResult =
 		either {
-//        acl.ensuring().ensureCanCreateInstanceOf(WorldDraftAggregate.aclResourceIdentifier)
+			acl.ensuring().ensureCanCreateInstanceOf(WorldDraftAggregate.aclResourceIdentifier)
 
-			val (name, description, accountIdProvider) = command
+			val (name, accountContext) = command
 
-			val existingDrafts = worldDraftListingRepository.findAllByAccountId(accountIdProvider.accountId)
-			val event = WorldDraftAggregate.initializeCreation(accountIdProvider, name, existingDrafts.drafts).bind()
+			val existingDrafts = worldDraftListingRepository.findAllByAccountId(accountContext.accountId)
+			val event = WorldDraftAggregate.initializeCreation(accountContext, name, existingDrafts.drafts).bind()
 
 			eventStoreWriteClient.appendToStream<WorldDraftEvent>(event, event.revision())
 

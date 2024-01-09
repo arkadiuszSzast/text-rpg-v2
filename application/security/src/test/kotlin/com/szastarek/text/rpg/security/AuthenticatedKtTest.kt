@@ -30,7 +30,6 @@ import io.ktor.server.routing.routing
 import io.ktor.server.testing.TestApplication
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
-import org.koin.core.context.GlobalContext
 import org.koin.ktor.plugin.Koin
 import org.koin.test.KoinTest
 import org.koin.test.inject
@@ -40,10 +39,7 @@ class AuthenticatedKtTest : KoinTest, DescribeSpec() {
 	private val testApplication =
 		TestApplication {
 			application {
-				install(Koin) {
-					// TODO remove when Koin 3.5.2 would be released
-					GlobalContext.startKoin(this)
-				}
+				install(Koin)
 				install(StatusPages) {
 					exception<NotAuthenticatedException> { call, _ ->
 						call.respond(HttpStatusCode.Unauthorized)

@@ -12,9 +12,10 @@ value class WorldDescription private constructor(val value: String) {
 	companion object {
 		operator fun invoke(value: String) =
 			either {
-				ensure(value.length >= 10) { ValidationError(".world_description", "validation.world_description_too_short").nel() }
-				ensure(value.length <= 5000) { ValidationError(".world_description", "validation.world_description_too_long").nel() }
-				WorldDescription(value.trim())
+				val trimmed = value.trim()
+				ensure(trimmed.length >= 10) { ValidationError(".world_description", "validation.world_description_too_short").nel() }
+				ensure(trimmed.length <= 5000) { ValidationError(".world_description", "validation.world_description_too_long").nel() }
+				WorldDescription(trimmed)
 			}
 	}
 }
