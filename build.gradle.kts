@@ -19,11 +19,9 @@ kotlin {
 }
 
 dependencies {
-    kover(project(":application:main"))
     kover(project(":application:shared"))
     kover(project(":application:monitoring"))
     kover(project(":application:security"))
-    kover(project(":application:documentation"))
     kover(project(":application:mediator"))
     kover(project(":application:acl"))
     kover(project(":application:mail"))
@@ -91,7 +89,6 @@ subprojects {
         implementation(rootProject.libs.koin.ktor)
         implementation(rootProject.libs.kmongo.id.serialization)
         implementation(rootProject.libs.kotlin.logging.jvm)
-
 
         testImplementation(rootProject.libs.koin.test)
         testImplementation(rootProject.libs.kotest.extensions.koin)

@@ -145,7 +145,7 @@ class EventStoreDbSubscribeClient(
 			val tracingData =
 				json.runCatching {
 					decodeFromString<EventMetadata>(event.event.userMetadata.toString(Charsets.UTF_8))
-				}.getOrNull()
+				}.onFailure { logger.error(it) { "Error when decoding tracing data" } }.getOrNull()
 			val textMapPropagator = openTelemetry.propagators.textMapPropagator
 			val extractedContext = textMapPropagator.extract(Context.current(), tracingData, EventStoreDbGetter)
 			extractedContext.makeCurrent().use {

@@ -189,8 +189,8 @@ services:
         aliases:
           - text-rpg-eventstore-db
 
-  text-rpg:
-    image: text-rpg-ktor:0.0.1
+  text-rpg-account-service:
+    image: text-rpg-ktor-account-service:0.0.1
     ports:
       - "8080:8080"
     environment:
@@ -199,6 +199,7 @@ services:
       - OTEL_METRICS_EXPORTER=otlp
       - OTEL_RESOURCE_ATTRIBUTES=service.name=text-rpg,service.version=0.0.1
       - OTEL_METRICS_URL=http://otel-collector:4318/v1/metrics
+      - EVENT_STORE_CONNECTION_STRING=esdb://text-rpg-eventstore-db:2113?tls=false
       - MONITORING_ENABLED=true
       - DEPLOY_ENV=dev
       - VCS_VERSION=0.0.1
@@ -208,7 +209,29 @@ services:
     networks:
       text-rpg-net:
         aliases:
-          - text-rpg
+          - text-rpg-account-service
+
+  text-rpg-world-service:
+    image: text-rpg-ktor-world-service:0.0.1
+    ports:
+      - "8081:8080"
+    environment:
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+      - OTEL_LOGS_EXPORTER=otlp
+      - OTEL_METRICS_EXPORTER=otlp
+      - OTEL_RESOURCE_ATTRIBUTES=service.name=text-rpg,service.version=0.0.1
+      - OTEL_METRICS_URL=http://otel-collector:4318/v1/metrics
+      - EVENT_STORE_CONNECTION_STRING=esdb://text-rpg-eventstore-db:2113?tls=false
+      - MONITORING_ENABLED=true
+      - DEPLOY_ENV=dev
+      - VCS_VERSION=0.0.1
+    depends_on:
+      otel-collector:
+        condition: service_started
+    networks:
+      text-rpg-net:
+        aliases:
+          - text-rpg-world-service
 
 volumes:
   eventstore-db-text-rpg-volume-data:

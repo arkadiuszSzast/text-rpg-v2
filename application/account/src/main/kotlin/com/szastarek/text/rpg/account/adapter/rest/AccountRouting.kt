@@ -25,6 +25,7 @@ import com.szastarek.text.rpg.account.command.ResetPasswordCommand
 import com.szastarek.text.rpg.account.command.SendResetPasswordCommand
 import com.szastarek.text.rpg.acl.AnonymousAccountContext
 import com.szastarek.text.rpg.acl.AuthenticatedAccountContext
+import com.szastarek.text.rpg.acl.authority.AuthorityCheckException
 import com.szastarek.text.rpg.security.NotAuthenticatedException
 import com.szastarek.text.rpg.security.authenticated
 import com.szastarek.text.rpg.security.getAccountContext
@@ -38,6 +39,7 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.Application
 import io.ktor.server.application.call
 import io.ktor.server.application.install
+import io.ktor.server.plugins.BadRequestException
 import io.ktor.server.request.receive
 import io.ktor.server.request.uri
 import io.ktor.server.response.respond
@@ -54,11 +56,24 @@ fun Application.configureAccountRouting() {
 		exception<NotAuthenticatedException> { call, _ ->
 			call.respond(HttpStatusCode.Unauthorized)
 		}
+		exception<AuthorityCheckException> { call, _ ->
+			call.respond(HttpStatusCode.Unauthorized)
+		}
 		exception<ValidationException> { call, ex ->
 			call.respond(
 				HttpStatusCode.BadRequest,
 				ValidationErrorHttpMessage(
 					ex.validationErrors,
+					ex::class.java.simpleName,
+					call.request.uri,
+				),
+			)
+		}
+		exception<BadRequestException> { call, ex ->
+			call.respond(
+				HttpStatusCode.BadRequest,
+				ValidationErrorHttpMessage(
+					emptyList(),
 					ex::class.java.simpleName,
 					call.request.uri,
 				),

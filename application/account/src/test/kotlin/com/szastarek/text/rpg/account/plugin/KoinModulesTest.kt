@@ -1,6 +1,6 @@
 package com.szastarek.text.rpg.account.plugin
 
-import com.szastarek.text.rpg.account.accountModule
+import com.szastarek.text.rpg.account.main
 import com.szastarek.text.rpg.event.store.EventStoreContainer
 import com.szastarek.text.rpg.event.store.EventStoreContainerFactory
 import com.szastarek.text.rpg.event.store.EventStoreLifecycleListener
@@ -32,7 +32,7 @@ class KoinModulesTest : KoinTest, DescribeSpec() {
 				) {
 					TestApplication {
 						application {
-							accountModule()
+							main()
 						}
 					}.also { it.start() }
 				}

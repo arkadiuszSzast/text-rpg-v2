@@ -1,6 +1,8 @@
 package com.szastarek.text.rpg.shared
 
 import com.szastarek.text.rpg.shared.validate.ValidationError
+import kotlinx.serialization.EncodeDefault
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 
 sealed interface HttpErrorResponse {
@@ -10,12 +12,14 @@ sealed interface HttpErrorResponse {
 	val detail: String?
 }
 
+@OptIn(ExperimentalSerializationApi::class)
 @Serializable
 data class ProblemHttpErrorResponse(
 	override val type: String,
 	override val title: String,
 	override val instance: String,
-	override val detail: String? = null,
+	@EncodeDefault(EncodeDefault.Mode.NEVER) override val detail: String? = null,
+	@EncodeDefault(EncodeDefault.Mode.NEVER) val errors: List<String> = emptyList(),
 ) : HttpErrorResponse
 
 @Serializable

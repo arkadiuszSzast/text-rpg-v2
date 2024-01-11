@@ -8,7 +8,7 @@ import io.ktor.server.routing.routing
 internal fun Application.configureDocumentation(documentationProperties: DocumentationProperties) {
 	if (documentationProperties.enabled) {
 		routing {
-			swaggerUI(path = "account-openapi", "openapi/account-documentation.yaml")
+			swaggerUI(path = "/documentation", "openapi/documentation.yaml")
 		}
 	}
 }

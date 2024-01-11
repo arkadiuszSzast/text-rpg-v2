@@ -1,13 +1,13 @@
 package com.szastarek.text.rpg.world.plugin
 
-import com.szastarek.text.rpg.documentation.config.DocumentationProperties
 import com.szastarek.text.rpg.shared.config.ConfigKey
 import com.szastarek.text.rpg.shared.config.getBooleanProperty
 import com.szastarek.text.rpg.shared.plugin.installIfNotRegistered
 import com.szastarek.text.rpg.world.adapter.event.store.WorldDraftListingEventStoreRepository
+import com.szastarek.text.rpg.world.config.DocumentationProperties
 import com.szastarek.text.rpg.world.draft.WorldDraftListingRepository
 import com.szastarek.text.rpg.world.draft.command.handler.WorldDraftCreationRequestCommandHandler
-import com.szastarek.text.rpg.world.draft.projection.WorldDraftListingByAccountIdProjection
+import com.szastarek.text.rpg.world.draft.projection.WorldDraftListingByAccountIdProjectionCreator
 import com.szastarek.text.rpg.world.draft.subscriber.WorldDraftCreationApprovingSubscriber
 import io.ktor.server.application.Application
 import org.koin.core.context.loadKoinModules
@@ -30,11 +30,11 @@ internal val worldModule =
 	module {
 		singleOf(::WorldDraftCreationRequestCommandHandler)
 		singleOf(::WorldDraftListingEventStoreRepository) bind WorldDraftListingRepository::class
-		singleOf(::WorldDraftListingByAccountIdProjection) { createdAtStart() }
+		singleOf(::WorldDraftListingByAccountIdProjectionCreator) { createdAtStart() }
 		singleOf(::WorldDraftCreationApprovingSubscriber) { createdAtStart() }
 	}
 
 internal fun Application.configureKoin() {
 	installIfNotRegistered(Koin)
-	loadKoinModules(worldModule)
+	loadKoinModules(listOf(worldModule, worldConfigModule))
 }

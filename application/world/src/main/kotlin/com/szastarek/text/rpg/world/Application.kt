@@ -1,6 +1,5 @@
 package com.szastarek.text.rpg.world
 
-import com.szastarek.text.rpg.documentation.documentationModule
 import com.szastarek.text.rpg.event.store.eventStoreModule
 import com.szastarek.text.rpg.mediator.mediatorModule
 import com.szastarek.text.rpg.monitoring.monitoringModule
@@ -18,14 +17,17 @@ fun main(args: Array<String>) {
 }
 
 fun Application.main() {
+	worldModule()
+	getKoin().createEagerInstances()
+}
+
+fun Application.worldModule() {
 	configureKoin()
 	configureDocumentation(get())
 	sharedModule()
 	monitoringModule()
 	securityModule()
-	documentationModule()
 	eventStoreModule()
 	mediatorModule()
 	configureWorldRouting()
-	getKoin().createEagerInstances()
 }

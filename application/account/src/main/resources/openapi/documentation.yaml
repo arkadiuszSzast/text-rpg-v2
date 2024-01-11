@@ -1,0 +1,361 @@
+openapi: "3.0.3"
+info:
+  title: "text_rpg API"
+  description: "text_rpg API"
+  version: "1.0.0"
+servers:
+- url: "https://text_rpg"
+paths:
+  /v1/account:
+    post:
+      description: ""
+      requestBody:
+        content:
+          '*/*':
+            schema:
+              $ref: "#/components/schemas/CreateAccountRequest"
+        required: true
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                type: "object"
+  /v1/account/activate:
+    post:
+      description: ""
+      requestBody:
+        content:
+          '*/*':
+            schema:
+              $ref: "#/components/schemas/ActivateAccountRequest"
+        required: true
+      responses:
+        "401":
+          description: "Unauthorized"
+          content:
+            '*/*':
+              schema:
+                type: "object"
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                type: "object"
+  /v1/account/login:
+    post:
+      description: ""
+      requestBody:
+        content:
+          '*/*':
+            schema:
+              $ref: "#/components/schemas/LogInAccountRequest"
+        required: true
+      responses:
+        "401":
+          description: "Unauthorized"
+          content:
+            '*/*':
+              schema:
+                type: "object"
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/LogInAccountResponse"
+  /v1/account/me:
+    get:
+      description: ""
+      responses:
+        "401":
+          description: "Unauthorized"
+          content:
+            '*/*':
+              schema:
+                type: "object"
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/AccountDetailsResponse"
+  /v1/account/password:
+    patch:
+      description: ""
+      requestBody:
+        content:
+          '*/*':
+            schema:
+              $ref: "#/components/schemas/ChangePasswordRequest"
+        required: true
+      responses:
+        "401":
+          description: "Unauthorized"
+          content:
+            '*/*':
+              schema:
+                type: "object"
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                type: "object"
+  /v1/account/password/forgot:
+    post:
+      description: ""
+      requestBody:
+        content:
+          '*/*':
+            schema:
+              $ref: "#/components/schemas/ForgotPasswordRequest"
+        required: true
+      responses:
+        "400":
+          description: "Bad Request"
+          content:
+            '*/*':
+              schema:
+                type: "object"
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                type: "object"
+  /v1/account/password/reset:
+    post:
+      description: ""
+      requestBody:
+        content:
+          '*/*':
+            schema:
+              $ref: "#/components/schemas/ResetPasswordRequest"
+        required: true
+      responses:
+        "401":
+          description: "Unauthorized"
+          content:
+            '*/*':
+              schema:
+                type: "object"
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                type: "object"
+  /v1/account/refresh-token:
+    post:
+      description: ""
+      requestBody:
+        content:
+          '*/*':
+            schema:
+              $ref: "#/components/schemas/RefreshTokenRequest"
+        required: true
+      responses:
+        "401":
+          description: "Unauthorized"
+          content:
+            '*/*':
+              schema:
+                type: "object"
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/RefreshTokenResponse"
+  /v1/account/resend-activation-mail:
+    post:
+      description: ""
+      requestBody:
+        content:
+          '*/*':
+            schema:
+              $ref: "#/components/schemas/ResendActivationMailRequest"
+        required: true
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                type: "object"
+  /v1/account/world-creator:
+    post:
+      description: ""
+      requestBody:
+        content:
+          '*/*':
+            schema:
+              $ref: "#/components/schemas/CreateWorldCreatorAccountRequest"
+        required: true
+      responses:
+        "400":
+          description: "Bad Request"
+          content:
+            '*/*':
+              schema:
+                type: "object"
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                type: "object"
+  /v1/account/world-creator/invite:
+    post:
+      description: ""
+      requestBody:
+        content:
+          '*/*':
+            schema:
+              $ref: "#/components/schemas/InviteWorldCreatorRequest"
+        required: true
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                type: "object"
+components:
+  schemas:
+    CreateAccountRequest:
+      type: "object"
+      properties:
+        email:
+          type: "string"
+        password:
+          type: "string"
+        timeZoneId:
+          type: "string"
+      required:
+      - "email"
+      - "password"
+      - "timeZoneId"
+    ActivateAccountRequest:
+      type: "object"
+      properties:
+        token:
+          type: "string"
+      required:
+      - "token"
+    LogInAccountRequest:
+      type: "object"
+      properties:
+        email:
+          type: "string"
+        password:
+          type: "string"
+      required:
+      - "email"
+      - "password"
+    LogInAccountResponse:
+      type: "object"
+      properties:
+        authToken:
+          type: "string"
+        refreshToken:
+          type: "string"
+      required:
+      - "authToken"
+      - "refreshToken"
+    Role:
+      type: "object"
+      properties: {}
+    AccountDetailsResponse:
+      type: "object"
+      properties:
+        accountId:
+          type: "string"
+        email:
+          type: "string"
+        role:
+          $ref: "#/components/schemas/Role"
+      required:
+      - "accountId"
+      - "email"
+      - "role"
+    ChangePasswordRequest:
+      type: "object"
+      properties:
+        currentPassword:
+          type: "string"
+        newPassword:
+          type: "string"
+      required:
+      - "currentPassword"
+      - "newPassword"
+    ForgotPasswordRequest:
+      type: "object"
+      properties:
+        email:
+          type: "string"
+      required:
+      - "email"
+    ResetPasswordRequest:
+      type: "object"
+      properties:
+        token:
+          type: "string"
+        newPassword:
+          type: "string"
+      required:
+      - "token"
+      - "newPassword"
+    RefreshTokenRequest:
+      type: "object"
+      properties:
+        refreshToken:
+          type: "string"
+        accountEmail:
+          type: "string"
+      required:
+      - "refreshToken"
+      - "accountEmail"
+    RefreshTokenResponse:
+      type: "object"
+      properties:
+        authToken:
+          type: "string"
+        refreshToken:
+          type: "string"
+      required:
+      - "authToken"
+      - "refreshToken"
+    ResendActivationMailRequest:
+      type: "object"
+      properties:
+        email:
+          type: "string"
+      required:
+      - "email"
+    CreateWorldCreatorAccountRequest:
+      type: "object"
+      properties:
+        email:
+          type: "string"
+        password:
+          type: "string"
+        timeZoneId:
+          type: "string"
+        token:
+          type: "string"
+      required:
+      - "email"
+      - "password"
+      - "timeZoneId"
+      - "token"
+    InviteWorldCreatorRequest:
+      type: "object"
+      properties:
+        email:
+          type: "string"
+      required:
+      - "email"

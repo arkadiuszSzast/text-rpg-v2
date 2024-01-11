@@ -50,12 +50,14 @@ data class WorldDraftAggregate(
 					WorldDraftCreationRejectedEvent(
 						worldDraftCreationRequestedEvent.draftId,
 						it,
+						worldDraftCreationRequestedEvent.ownerId,
 						worldDraftCreationRequestedEvent.version.next(),
 					)
 				}.bind()
 
 			WorldDraftCreationApprovedEvent(
 				worldDraftCreationRequestedEvent.draftId,
+				worldDraftCreationRequestedEvent.ownerId,
 				worldDraftCreationRequestedEvent.version.next(),
 			)
 		}

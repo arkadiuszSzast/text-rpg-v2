@@ -1,5 +1,6 @@
 package com.szastarek.text.rpg.world.draft.event
 
+import com.szastarek.text.rpg.acl.AccountId
 import com.szastarek.text.rpg.acl.SerializableAuthenticatedAccountContext
 import com.szastarek.text.rpg.event.store.EventMetadata
 import com.szastarek.text.rpg.event.store.EventMetadataBuilder
@@ -23,6 +24,8 @@ data class WorldDraftCreationRequestedEvent(
 	companion object {
 		val eventType = EventType(WorldDraftEvent.eventCategory, "CreationRequested")
 	}
+
+	override val ownerId: AccountId = creatorAccountContext.accountId
 
 	override fun getMetadata(causedBy: EventMetadata?): EventMetadata {
 		return EventMetadataBuilder(

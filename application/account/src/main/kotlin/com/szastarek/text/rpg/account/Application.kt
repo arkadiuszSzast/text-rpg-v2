@@ -12,9 +12,15 @@ import com.szastarek.text.rpg.security.securityModule
 import com.szastarek.text.rpg.shared.sharedModule
 import io.ktor.server.application.Application
 import org.koin.ktor.ext.get
+import org.koin.ktor.ext.getKoin
 
 fun main(args: Array<String>) {
 	io.ktor.server.netty.EngineMain.main(args)
+}
+
+fun Application.main() {
+	accountModule()
+	getKoin().createEagerInstances()
 }
 
 fun Application.accountModule() {

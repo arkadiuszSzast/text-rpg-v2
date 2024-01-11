@@ -65,7 +65,7 @@ class WorldDraftCreationApprovingSubscriberTest : StringSpec({
 		// assert
 		await untilAsserted {
 			runBlocking {
-				val expectedEvent = WorldDraftCreationApprovedEvent(event.draftId, event.version.next())
+				val expectedEvent = WorldDraftCreationApprovedEvent(event.draftId, event.ownerId, event.version.next())
 				val result =
 					eventStoreReadClient.readStreamByEventType<WorldDraftCreationApprovedEvent>(
 						WorldDraftCreationApprovedEvent.eventType,
@@ -93,6 +93,7 @@ class WorldDraftCreationApprovingSubscriberTest : StringSpec({
 					WorldDraftCreationRejectedEvent(
 						event.draftId,
 						WorldDraftCreationRequestError.MaximumNumberOfDraftsReached.nel(),
+						event.ownerId,
 						event.version.next(),
 					)
 				val result =

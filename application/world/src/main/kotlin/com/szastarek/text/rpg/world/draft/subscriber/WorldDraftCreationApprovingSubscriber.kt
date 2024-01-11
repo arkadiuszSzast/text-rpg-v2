@@ -4,6 +4,7 @@ import com.szastarek.text.rpg.event.store.ConsumerGroup
 import com.szastarek.text.rpg.event.store.EventMetadata
 import com.szastarek.text.rpg.event.store.EventStoreSubscribeClient
 import com.szastarek.text.rpg.event.store.EventStoreWriteClient
+import com.szastarek.text.rpg.event.store.PersistentSubscriptionOptions
 import com.szastarek.text.rpg.event.store.appendToStream
 import com.szastarek.text.rpg.event.store.revision
 import com.szastarek.text.rpg.world.draft.WorldDraftAggregate
@@ -37,12 +38,13 @@ class WorldDraftCreationApprovingSubscriber(
 			eventStoreSubscribeClient.subscribePersistentByEventType(
 				WorldDraftCreationRequestedEvent.eventType,
 				ConsumerGroup("world-draft-creation-approver"),
-			) { _, resolvedEvent ->
-				val event = json.decodeFromStream<WorldDraftCreationRequestedEvent>(resolvedEvent.event.eventData.inputStream())
+				PersistentSubscriptionOptions().bufferSize(1),
+			) { subscription, resolvedEvent ->
+				val event =
+					json.decodeFromStream<WorldDraftCreationRequestedEvent>(resolvedEvent.event.eventData.inputStream())
 				val metadata = json.decodeFromStream<EventMetadata>(resolvedEvent.event.userMetadata.inputStream())
 
-				val existingDrafts =
-					worldDraftListingRepository.findAllByAccountId(event.creatorAccountContext.accountId)
+				val existingDrafts = worldDraftListingRepository.findAllByAccountId(event.creatorAccountContext.accountId)
 
 				WorldDraftAggregate.create(event, existingDrafts.drafts).fold(
 					{ eventStoreWriteClient.appendToStream<WorldDraftEvent>(it, it.revision(), metadata) },

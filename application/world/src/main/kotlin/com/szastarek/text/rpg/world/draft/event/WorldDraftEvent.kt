@@ -1,5 +1,6 @@
 package com.szastarek.text.rpg.world.draft.event
 
+import com.szastarek.text.rpg.acl.AccountId
 import com.szastarek.text.rpg.event.store.AggregateId
 import com.szastarek.text.rpg.event.store.DomainEvent
 import com.szastarek.text.rpg.event.store.EventCategory
@@ -12,6 +13,7 @@ import org.litote.kmongo.Id
 @Serializable
 sealed interface WorldDraftEvent : DomainEvent {
 	val draftId: Id<WorldDraft>
+	val ownerId: AccountId
 
 	companion object {
 		val eventCategory: EventCategory

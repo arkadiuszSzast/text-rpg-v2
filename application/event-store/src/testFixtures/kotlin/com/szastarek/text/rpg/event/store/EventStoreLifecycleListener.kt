@@ -7,9 +7,11 @@ import io.kotest.core.test.TestCase
 class EventStoreLifecycleListener(private val container: EventStoreContainer) : TestListener {
 	override suspend fun beforeEach(testCase: TestCase) {
 		container.restart()
+		super.beforeEach(testCase)
 	}
 
 	override suspend fun afterSpec(spec: Spec) {
 		container.stop()
+		super.afterSpec(spec)
 	}
 }

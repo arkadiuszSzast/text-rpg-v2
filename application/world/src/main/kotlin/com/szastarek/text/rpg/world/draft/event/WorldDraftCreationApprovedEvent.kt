@@ -1,5 +1,6 @@
 package com.szastarek.text.rpg.world.draft.event
 
+import com.szastarek.text.rpg.acl.AccountId
 import com.szastarek.text.rpg.event.store.EventMetadata
 import com.szastarek.text.rpg.event.store.EventMetadataBuilder
 import com.szastarek.text.rpg.event.store.EventType
@@ -15,6 +16,7 @@ import org.litote.kmongo.Id
 @SerialName("WorldDraftCreationApprovedEvent")
 data class WorldDraftCreationApprovedEvent(
 	@Contextual override val draftId: Id<WorldDraft>,
+	override val ownerId: AccountId,
 	override val version: Version,
 ) : WorldDraftEvent, Versioned {
 	companion object {

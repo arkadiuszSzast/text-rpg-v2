@@ -1,0 +1,39 @@
+openapi: "3.0.3"
+info:
+  title: "text_rpg API"
+  description: "text_rpg API"
+  version: "1.0.0"
+servers:
+- url: "https://text_rpg"
+paths:
+  /v1/world/draft:
+    post:
+      description: ""
+      requestBody:
+        content:
+          '*/*':
+            schema:
+              $ref: "#/components/schemas/InitializeWorldDraftCreationRequest"
+        required: true
+      responses:
+        "400":
+          description: "Bad Request"
+          content:
+            '*/*':
+              schema:
+                type: "object"
+        "202":
+          description: "Accepted"
+          content:
+            '*/*':
+              schema:
+                type: "object"
+components:
+  schemas:
+    InitializeWorldDraftCreationRequest:
+      type: "object"
+      properties:
+        name:
+          type: "string"
+      required:
+      - "name"
