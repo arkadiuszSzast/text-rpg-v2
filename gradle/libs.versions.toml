@@ -25,7 +25,7 @@ kover = "0.7.5"
 opentelemetry = "1.34.0"
 opentelemetry-ktor = "1.32.0-alpha"
 micrometer-otlp-registry = "1.12.1"
-spotless = "6.23.3"
+spotless = "6.24.0"
 kotest-testcontainers = "2.0.2"
 jackson = "2.16.1"
 
