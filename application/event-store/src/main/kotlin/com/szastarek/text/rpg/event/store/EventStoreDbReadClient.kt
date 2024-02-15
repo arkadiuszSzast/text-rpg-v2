@@ -36,6 +36,7 @@ class EventStoreDbReadClient(
 		val tracer = openTelemetry.getTracer("event-store-db")
 
 		return tracer.spanBuilder("event_store read ${streamName.value}")
+			.setAttribute("db.system", "eventstore-db")
 			.startSpan()
 			.execute {
 				val rawEvents =

@@ -1,0 +1,6 @@
+apiVersion: v2
+name: eventstore
+description: A Helm chart for Eventstore
+type: application
+version: 0.1.0
+appVersion: 1.16.0

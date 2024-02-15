@@ -10,7 +10,7 @@ plugins {
 ktor {
     docker {
         localImageName.set("text-rpg-ktor-account-service")
-        imageTag.set("0.0.1")
+        imageTag.set("0.0.3")
         jreVersion = JavaVersion.VERSION_21
         jib {
             extraDirectories {

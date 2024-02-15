@@ -1,0 +1,59 @@
+repositories:
+  - name: k8s-dashboard
+    url: https://kubernetes.github.io/dashboard
+  - name: signoz
+    url: https://charts.signoz.io
+  - name: redis
+    url: https://redis-stack.github.io/helm-redis-stack/
+
+releases:
+  - name: dashboard-user
+    namespace: kubernetes-dashboard
+    chart: ./charts/dashboard-user
+    values:
+      - ./values/dashboard-user.yaml
+
+  - name: dashboard
+    namespace: dashboard
+    chart: k8s-dashboard/kubernetes-dashboard
+    values:
+      - ./values/dashboard.yaml
+
+  - name: redis
+    namespace: text-rpg
+    chart: redis/redis-stack
+    values:
+      - ./values/redis.yaml
+
+  - name: signoz
+    namespace: observability
+    chart: signoz/signoz
+    values:
+      - ./values/signoz.yaml
+
+  - name: storage-class
+    namespace: storage
+    chart: ./charts/storage-class
+    values:
+      - ./values/storage-class.yaml
+
+  - name: eventstore
+    namespace: text-rpg
+    chart: ./charts/eventstore
+    values:
+      - ./values/eventstore.yaml
+
+  - name: account-service
+    namespace: text-rpg
+    chart: ./charts/ktor-service
+    values:
+      - ./values/account-service.yaml
+    set:
+      - name: env[7].value
+        value: {{ requiredEnv "SENDGRID_API_KEY" }}
+
+  - name: world-service
+    namespace: text-rpg
+    chart: ./charts/ktor-service
+    values:
+      - ./values/world-service.yaml

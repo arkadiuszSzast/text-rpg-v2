@@ -2,6 +2,7 @@ package com.szastarek.text.rpg.account
 
 import com.szastarek.text.rpg.account.adapter.rest.configureAccountRouting
 import com.szastarek.text.rpg.account.plugin.configureDocumentation
+import com.szastarek.text.rpg.account.plugin.configureHealthz
 import com.szastarek.text.rpg.account.plugin.configureKoin
 import com.szastarek.text.rpg.event.store.eventStoreModule
 import com.szastarek.text.rpg.mail.mailModule
@@ -34,4 +35,5 @@ fun Application.accountModule() {
 	mailModule()
 	redisModule()
 	configureAccountRouting()
+	configureHealthz()
 }

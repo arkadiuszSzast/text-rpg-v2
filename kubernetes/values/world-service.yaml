@@ -1,0 +1,24 @@
+appName: text-rpg-world-service
+image: text-rpg-ktor-world-service:0.0.2
+
+env:
+  - name: EVENT_STORE_CONNECTION_STRING
+    value: "esdb://text-rpg-eventstore.text-rpg:2113?tls=false"
+  - name: OTEL_METRICS_URL
+    value: "http://signoz-otel-collector.observability:4318/v1/metrics"
+  - name: OTEL_EXPORTER_OTLP_ENDPOINT
+    value: "http://signoz-otel-collector.observability:4317"
+  - name: OTEL_RESOURCE_ATTRIBUTES
+    value: "service.name=world-service,service.version=0.0.1"
+  - name: OTEL_METRICS_EXPORTER
+    value: "otlp"
+  - name: OTEL_LOGS_EXPORTER
+    value: "otlp"
+
+resources:
+  limit:
+    cpu: 1000m
+    memory: 1Bi
+  requested:
+    cpu: 100m
+    memory: 512Mi

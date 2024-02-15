@@ -7,6 +7,7 @@ import com.szastarek.text.rpg.security.securityModule
 import com.szastarek.text.rpg.shared.sharedModule
 import com.szastarek.text.rpg.world.adapter.rest.configureWorldRouting
 import com.szastarek.text.rpg.world.plugin.configureDocumentation
+import com.szastarek.text.rpg.world.plugin.configureHealthz
 import com.szastarek.text.rpg.world.plugin.configureKoin
 import io.ktor.server.application.Application
 import org.koin.ktor.ext.get
@@ -30,4 +31,5 @@ fun Application.worldModule() {
 	eventStoreModule()
 	mediatorModule()
 	configureWorldRouting()
+	configureHealthz()
 }

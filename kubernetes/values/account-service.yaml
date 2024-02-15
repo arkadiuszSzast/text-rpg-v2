@@ -1,0 +1,29 @@
+appName: text-rpg-account-service
+image: text-rpg-ktor-account-service:0.0.3
+
+env:
+  - name: EVENT_STORE_CONNECTION_STRING
+    value: "esdb://text-rpg-eventstore.text-rpg:2113?tls=false"
+  - name: REDIS_CONNECTION_STRING
+    value: "redis://redis-stack.text-rpg:6379"
+  - name: OTEL_METRICS_URL
+    value: "http://signoz-otel-collector.observability:4318/v1/metrics"
+  - name: OTEL_EXPORTER_OTLP_ENDPOINT
+    value: "http://signoz-otel-collector.observability:4317"
+  - name: OTEL_RESOURCE_ATTRIBUTES
+    value: "service.name=account-service,service.version=0.0.1"
+  - name: OTEL_METRICS_EXPORTER
+    value: "otlp"
+  - name: OTEL_LOGS_EXPORTER
+    value: "otlp"
+  - name: SENDGRID_API_KEY
+    value: "SECRET"
+
+resources:
+  limit:
+    cpu: 1000m
+    memory: 1Bi
+  requested:
+    cpu: 100m
+    memory: 512Mi
+

@@ -1,0 +1,94 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: eventstore-config
+  namespace: text-rpg
+data:
+  EVENTSTORE_CLUSTER_SIZE: "1"
+  EVENTSTORE_RUN_PROJECTIONS: "All"
+  EVENTSTORE_START_STANDARD_PROJECTIONS: "True"
+  EVENTSTORE_EXT_TCP_PORT: "1113"
+  EVENTSTORE_HTTP_PORT: "2113"
+  EVENTSTORE_INSECURE: "True"
+  EVENTSTORE_ENABLE_EXTERNAL_TCP: "True"
+  EVENTSTORE_ENABLE_ATOM_PUB_OVER_HTTP: "True"
+  EVENTSTORE_MEM_DB: "True"
+
+---
+
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: text-rpg-eventstore
+  namespace: text-rpg
+spec:
+  serviceName: text-rpg-eventstore
+  replicas: 1
+  selector:
+    matchLabels:
+      app: text-rpg-eventstore
+  template:
+    metadata:
+      labels:
+        app: text-rpg-eventstore
+    spec:
+      securityContext:
+        fsGroup: 1000
+      containers:
+        - name: eventstore
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+          image: eventstore/eventstore:23.6.0-buster-slim
+          ports:
+            - containerPort: 2113
+              name: eventstore-web
+            - containerPort: 1113
+              name: eventstore-tcp
+            - containerPort: 2112
+              name: gossip
+          envFrom:
+            - configMapRef:
+                name: eventstore-config
+          volumeMounts:
+            - mountPath: /var/lib/eventstore
+              name: eventstore-volume
+            - mountPath: /var/log/eventstore
+              name: eventstore-logs-volume
+  volumeClaimTemplates:
+    - metadata:
+        name: eventstore-volume
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 1Gi
+    - metadata:
+        name: eventstore-logs-volume
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 1Gi
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: text-rpg-eventstore
+  namespace: text-rpg
+  labels:
+    app: text-rpg-eventstore
+spec:
+  type: NodePort
+  ports:
+    - port: 2113
+      name: eventstore-web
+    - port: 1113
+      name: eventstore-tcp
+  selector:
+    app: text-rpg-eventstore

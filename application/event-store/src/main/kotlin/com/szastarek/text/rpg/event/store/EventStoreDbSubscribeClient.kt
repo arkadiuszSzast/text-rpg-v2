@@ -151,6 +151,7 @@ class EventStoreDbSubscribeClient(
 			extractedContext.makeCurrent().use {
 				openTelemetry.getTracer("persistent-event-listener")
 					.spanBuilder(consumerGroup.value)
+					.setAttribute("db.system", "eventstore-db")
 					.setAttribute("eventType", event.event.eventType)
 					.setSpanKind(SpanKind.SERVER)
 					.startSpan()

@@ -26,23 +26,25 @@ class EventStoreDbProjectionsClient(
 		query: ProjectionQuery,
 	) {
 		val tracer = openTelemetry.getTracer("event-store-db")
-		return tracer.spanBuilder("event_store create or update projection ${name.value}").startSpan().execute {
-			val exists = client.list().await().any { it.name == name.value }
-			if (exists) {
-				logger.debug { "Projection ${name.value} already exists. Updating query." }
-				client.update(
-					name.value,
-					query.value,
-				).await()
-			} else {
-				logger.debug { "Creating projection ${name.value}." }
-				client.create(
-					name.value,
-					query.value,
-				).await()
+		return tracer.spanBuilder("event_store create or update projection ${name.value}")
+			.setAttribute("db.system", "eventstore-db")
+			.startSpan().execute {
+				val exists = client.list().await().any { it.name == name.value }
+				if (exists) {
+					logger.debug { "Projection ${name.value} already exists. Updating query." }
+					client.update(
+						name.value,
+						query.value,
+					).await()
+				} else {
+					logger.debug { "Creating projection ${name.value}." }
+					client.create(
+						name.value,
+						query.value,
+					).await()
+				}
+				client.enable(name.value)
 			}
-			client.enable(name.value)
-		}
 	}
 
 	@Suppress("UNCHECKED_CAST")

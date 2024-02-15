@@ -11,7 +11,7 @@ ktor {
     docker {
         jreVersion = JavaVersion.VERSION_21
         localImageName.set("text-rpg-ktor-world-service")
-        imageTag.set("0.0.1")
+        imageTag.set("0.0.2")
         jib {
             from {
                 image = "eclipse-temurin:21-jre"
