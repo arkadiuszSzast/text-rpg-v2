@@ -1,12 +1,13 @@
 package com.szastarek.text.rpg.event.store
 
+import kotlinx.coroutines.delay
 import org.testcontainers.containers.GenericContainer
 import org.testcontainers.containers.wait.strategy.Wait
 
 private const val EVENT_STORE_DB_PORT = 2113
 
 class EventStoreContainer {
-	private val instance = startEventStoreContainer()
+	val instance = startEventStoreContainer()
 	private val host: String
 		get() = instance.host
 	private val port: Int
@@ -15,14 +16,16 @@ class EventStoreContainer {
 	val connectionString: String
 		get() = "esdb://$host:$port?tls=false&discoveryInterval=150&maxDiscoverAttempts=100"
 
-	fun restart() {
+	suspend fun restart() {
 		instance.portBindings = listOf("${instance.getMappedPort(EVENT_STORE_DB_PORT)}:$EVENT_STORE_DB_PORT")
 		instance.stop()
 		instance.start()
+		delay(50)
 	}
 
-	fun stop() {
+	suspend fun stop() {
 		instance.stop()
+		delay(50)
 	}
 
 	private fun startEventStoreContainer() =

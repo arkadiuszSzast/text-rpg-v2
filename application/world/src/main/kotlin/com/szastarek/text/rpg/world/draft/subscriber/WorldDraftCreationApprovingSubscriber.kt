@@ -1,5 +1,6 @@
 package com.szastarek.text.rpg.world.draft.subscriber
 
+import com.eventstore.dbclient.NackAction
 import com.szastarek.text.rpg.event.store.ConsumerGroup
 import com.szastarek.text.rpg.event.store.EventMetadata
 import com.szastarek.text.rpg.event.store.EventStoreSubscribeClient
@@ -45,11 +46,14 @@ class WorldDraftCreationApprovingSubscriber(
 				val metadata = json.decodeFromStream<EventMetadata>(resolvedEvent.event.userMetadata.inputStream())
 
 				val existingDrafts = worldDraftListingRepository.findAllByAccountId(event.creatorAccountContext.accountId)
-
-				WorldDraftAggregate.create(event, existingDrafts.drafts).fold(
-					{ eventStoreWriteClient.appendToStream<WorldDraftEvent>(it, it.revision(), metadata) },
-					{ eventStoreWriteClient.appendToStream<WorldDraftEvent>(it, it.revision(), metadata) },
-				)
+				existingDrafts.onLeft {
+					subscription.nack(NackAction.Retry, "List of drafts of account ${event.ownerId} is not up to date.", resolvedEvent)
+				}.map { drafts ->
+					WorldDraftAggregate.create(event, drafts.drafts).fold(
+						{ eventStoreWriteClient.appendToStream<WorldDraftEvent>(it, it.revision(), metadata) },
+						{ eventStoreWriteClient.appendToStream<WorldDraftEvent>(it, it.revision(), metadata) },
+					)
+				}
 			}
 		}
 }

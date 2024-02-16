@@ -66,7 +66,7 @@ abstract class IntegrationTest : StringSpec(), KoinTest {
 	}
 
 	override suspend fun beforeEach(testCase: TestCase) {
-		WorldDraftListingByAccountIdProjectionCreator(projectionsClient)
+		WorldDraftListingByAccountIdProjectionCreator(projectionsClient).createOrUpdateAndEnable()
 		super.beforeTest(testCase)
 	}
 

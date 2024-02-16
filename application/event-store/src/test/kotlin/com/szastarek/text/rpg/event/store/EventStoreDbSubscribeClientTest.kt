@@ -63,22 +63,24 @@ class EventStoreDbSubscribeClientTest : DescribeSpec() {
 				eventStoreDbWriteClient.appendToStream(event)
 
 				// act
-				runBlocking {
-					eventStoreDbSubscribeClient.subscribePersistentByEventCategory(
-						eventMetadata.eventCategory,
-						ConsumerGroup(UUID.randomUUID().toString()),
-					) { _, resolvedEvent ->
-						val result = json.decodeFromStream<EmailSent>(resolvedEvent.event.eventData.inputStream())
-						if (result == event) {
-							processedEventsCount.incrementAndGet()
+				val subscription =
+					runBlocking {
+						eventStoreDbSubscribeClient.subscribePersistentByEventCategory(
+							eventMetadata.eventCategory,
+							ConsumerGroup(UUID.randomUUID().toString()),
+						) { _, resolvedEvent ->
+							val result = json.decodeFromStream<EmailSent>(resolvedEvent.event.eventData.inputStream())
+							if (result == event) {
+								processedEventsCount.incrementAndGet()
+							}
 						}
 					}
-				}
 
 				// assert
 				await untilAsserted {
 					processedEventsCount.get() shouldBe 1
 				}
+				subscription.stop()
 			}
 
 			it("should subscribe by event type and process event") {
@@ -90,22 +92,24 @@ class EventStoreDbSubscribeClientTest : DescribeSpec() {
 				eventStoreDbWriteClient.appendToStream(event)
 
 				// act
-				runBlocking {
-					eventStoreDbSubscribeClient.subscribePersistentByEventType(
-						eventMetadata.eventType,
-						ConsumerGroup(UUID.randomUUID().toString()),
-					) { _, resolvedEvent ->
-						val result = json.decodeFromStream<EmailSent>(resolvedEvent.event.eventData.inputStream())
-						if (result == event) {
-							processedEventsCount.incrementAndGet()
+				val subscription =
+					runBlocking {
+						eventStoreDbSubscribeClient.subscribePersistentByEventType(
+							eventMetadata.eventType,
+							ConsumerGroup(UUID.randomUUID().toString()),
+						) { _, resolvedEvent ->
+							val result = json.decodeFromStream<EmailSent>(resolvedEvent.event.eventData.inputStream())
+							if (result == event) {
+								processedEventsCount.incrementAndGet()
+							}
 						}
 					}
-				}
 
 				// assert
 				await untilAsserted {
 					processedEventsCount.get() shouldBe 1
 				}
+				subscription.stop()
 			}
 
 			it("should retry processing event when exception is thrown") {
@@ -118,27 +122,29 @@ class EventStoreDbSubscribeClientTest : DescribeSpec() {
 				eventStoreDbWriteClient.appendToStream(event)
 
 				// act
-				runBlocking {
-					eventStoreDbSubscribeClient.subscribePersistentByEventType(
-						eventMetadata.eventType,
-						ConsumerGroup(UUID.randomUUID().toString()),
-						PersistentSubscriptionOptions().maxRetries(3),
-					) { _, resolvedEvent ->
-						if (attemptsCount.getAndIncrement() < 3) {
-							throw RuntimeException("test")
-						}
-						val result = json.decodeFromStream<EmailSent>(resolvedEvent.event.eventData.inputStream())
-						if (result == event) {
-							processedEventsCount.incrementAndGet()
+				val subscription =
+					runBlocking {
+						eventStoreDbSubscribeClient.subscribePersistentByEventType(
+							eventMetadata.eventType,
+							ConsumerGroup(UUID.randomUUID().toString()),
+							PersistentSubscriptionOptions().maxRetries(3),
+						) { _, resolvedEvent ->
+							if (attemptsCount.getAndIncrement() < 3) {
+								throw RuntimeException("test")
+							}
+							val result = json.decodeFromStream<EmailSent>(resolvedEvent.event.eventData.inputStream())
+							if (result == event) {
+								processedEventsCount.incrementAndGet()
+							}
 						}
 					}
-				}
 
 				// assert
 				await untilAsserted {
 					processedEventsCount.get() shouldBe 1
 					attemptsCount.get() shouldBe 4
 				}
+				subscription.stop()
 			}
 
 			it("should process event in child span") {
@@ -151,17 +157,18 @@ class EventStoreDbSubscribeClientTest : DescribeSpec() {
 				val appenderSpan = openTelemetry.getFinishedSpans().single()
 
 				// act
-				runBlocking {
-					eventStoreDbSubscribeClient.subscribePersistentByEventType(
-						eventMetadata.eventType,
-						ConsumerGroup(UUID.randomUUID().toString()),
-					) { _, resolvedEvent ->
-						val result = json.decodeFromStream<EmailSent>(resolvedEvent.event.eventData.inputStream())
-						if (result == event) {
-							processedEventsCount.incrementAndGet()
+				val subscription =
+					runBlocking {
+						eventStoreDbSubscribeClient.subscribePersistentByEventType(
+							eventMetadata.eventType,
+							ConsumerGroup(UUID.randomUUID().toString()),
+						) { _, resolvedEvent ->
+							val result = json.decodeFromStream<EmailSent>(resolvedEvent.event.eventData.inputStream())
+							if (result == event) {
+								processedEventsCount.incrementAndGet()
+							}
 						}
 					}
-				}
 
 				await untilAsserted {
 					processedEventsCount.get() shouldBe 1
@@ -170,6 +177,7 @@ class EventStoreDbSubscribeClientTest : DescribeSpec() {
 				// assert
 				val subscriberSpan = openTelemetry.getFinishedSpans().last()
 				subscriberSpan.parentSpanId shouldBe appenderSpan.spanContext.spanId
+				subscription.stop()
 			}
 		}
 	}

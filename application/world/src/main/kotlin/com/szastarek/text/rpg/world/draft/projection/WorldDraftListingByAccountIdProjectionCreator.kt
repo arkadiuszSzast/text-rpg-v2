@@ -3,18 +3,9 @@ package com.szastarek.text.rpg.world.draft.projection
 import com.szastarek.text.rpg.event.store.EventStoreProjectionsClient
 import com.szastarek.text.rpg.event.store.ProjectionName
 import com.szastarek.text.rpg.event.store.ProjectionQuery
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
 
 class WorldDraftListingByAccountIdProjectionCreator(private val projectionsClient: EventStoreProjectionsClient) {
-	init {
-		createOrUpdateAndEnable()
-	}
-
-	private fun createOrUpdateAndEnable() =
-		runBlocking(Dispatchers.IO) {
-			projectionsClient.createOrUpdateContinuous(name, query)
-		}
+	suspend fun createOrUpdateAndEnable() = projectionsClient.createOrUpdateContinuous(name, query)
 
 	companion object {
 		val name = ProjectionName("drafts-list-by-account-id")

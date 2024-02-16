@@ -38,7 +38,7 @@ class WorldRoutingKtTest : IntegrationTest() {
 
 			// add some delay to make sure that the projection is updated.
 			// Another test shows that even if response is ACCEPTED the draft won't be created anyway
-			delay(300)
+			delay(800)
 			// act
 			val response = client.initializeWorldDraftCreation(anInitializeWorldDraftCreationRequest(), authToken)
 

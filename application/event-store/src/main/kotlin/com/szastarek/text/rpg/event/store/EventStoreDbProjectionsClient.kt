@@ -1,11 +1,12 @@
 package com.szastarek.text.rpg.event.store
 
-import arrow.core.Option
 import arrow.core.raise.option
 import com.eventstore.dbclient.EventStoreDBProjectionManagementClient
 import com.eventstore.dbclient.GetProjectionStateOptions
+import com.eventstore.dbclient.GetProjectionStatisticsOptions
 import com.fasterxml.jackson.databind.JsonNode
 import com.szastarek.text.rpg.monitoring.execute
+import com.szastarek.text.rpg.shared.retry
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.opentelemetry.api.OpenTelemetry
 import kotlinx.coroutines.future.await
@@ -27,8 +28,7 @@ class EventStoreDbProjectionsClient(
 	) {
 		val tracer = openTelemetry.getTracer("event-store-db")
 		return tracer.spanBuilder("event_store create or update projection ${name.value}")
-			.setAttribute("db.system", "eventstore-db")
-			.startSpan().execute {
+			.setAttribute("db.system", "eventstore-db").startSpan().execute {
 				val exists = client.list().await().any { it.name == name.value }
 				if (exists) {
 					logger.debug { "Projection ${name.value} already exists. Updating query." }
@@ -52,20 +52,49 @@ class EventStoreDbProjectionsClient(
 		name: ProjectionName,
 		clazz: KClass<T>,
 		partition: Partition,
-	): Option<T> {
+		config: GetProjectionResultConfig,
+	): ProjectionResult<out T> {
 		val tracer = openTelemetry.getTracer("event-store-db")
+		// TODO: Refactor
 		return tracer.spanBuilder("event_store projection ${name.value} result").startSpan().execute {
-			val result =
-				client.getState(
-					name.value,
-					JsonNode::class.java,
-					GetProjectionStateOptions.get().partition(partition.value),
-				).await()
+			try {
+				retry(maxAttempt = config.maxRetries, delayMs = config.retryDelayMs) {
+					val isUpToDate =
+						client.getStatistics(name.value, GetProjectionStatisticsOptions.get())
+							.await().progress
+					if (!(isUpToDate == 100.0f)) {
+						throw ProjectionResultOutDatedException(name)
+					}
+				}
+				val state =
+					client.getState(
+						name.value,
+						JsonNode::class.java,
+						GetProjectionStateOptions.get().partition(partition.value),
+					).await()
 
-			option {
-				ensure(!result.isEmpty)
-				json.decodeFromString(serializer(clazz.createType()), result.toString()) as T
+				option {
+					ensure(!state.isEmpty)
+					json.decodeFromString(serializer(clazz.createType()), state.toString()) as T
+				}.map { ProjectionUpToDateResult(it) }.getOrNull() ?: ProjectionResultNotFound
+			} catch (e: ProjectionResultOutDatedException) {
+				val state =
+					client.getState(
+						name.value,
+						JsonNode::class.java,
+						GetProjectionStateOptions.get().partition(partition.value),
+					).await()
+
+				val result =
+					option {
+						ensure(!state.isEmpty)
+						json.decodeFromString(serializer(clazz.createType()), state.toString()) as T
+					}
+				ProjectionOutdatedResult(result)
 			}
 		}
 	}
 }
+
+data class ProjectionResultOutDatedException(val projectionName: ProjectionName) :
+	RuntimeException("Projection $projectionName is not up to date.")

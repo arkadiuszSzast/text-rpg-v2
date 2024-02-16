@@ -7,7 +7,6 @@ import com.szastarek.text.rpg.world.adapter.event.store.WorldDraftListingEventSt
 import com.szastarek.text.rpg.world.config.DocumentationProperties
 import com.szastarek.text.rpg.world.draft.WorldDraftListingRepository
 import com.szastarek.text.rpg.world.draft.command.handler.WorldDraftCreationRequestCommandHandler
-import com.szastarek.text.rpg.world.draft.projection.WorldDraftListingByAccountIdProjectionCreator
 import com.szastarek.text.rpg.world.draft.subscriber.WorldDraftCreationApprovingSubscriber
 import io.ktor.server.application.Application
 import org.koin.core.context.loadKoinModules
@@ -30,7 +29,6 @@ internal val worldModule =
 	module {
 		singleOf(::WorldDraftCreationRequestCommandHandler)
 		singleOf(::WorldDraftListingEventStoreRepository) bind WorldDraftListingRepository::class
-		singleOf(::WorldDraftListingByAccountIdProjectionCreator) { createdAtStart() }
 		singleOf(::WorldDraftCreationApprovingSubscriber) { createdAtStart() }
 	}
 

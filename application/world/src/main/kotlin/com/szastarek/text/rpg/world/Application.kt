@@ -9,6 +9,7 @@ import com.szastarek.text.rpg.world.adapter.rest.configureWorldRouting
 import com.szastarek.text.rpg.world.plugin.configureDocumentation
 import com.szastarek.text.rpg.world.plugin.configureHealthz
 import com.szastarek.text.rpg.world.plugin.configureKoin
+import com.szastarek.text.rpg.world.plugin.createProjections
 import io.ktor.server.application.Application
 import org.koin.ktor.ext.get
 import org.koin.ktor.ext.getKoin
@@ -30,6 +31,7 @@ fun Application.worldModule() {
 	securityModule()
 	eventStoreModule()
 	mediatorModule()
+	createProjections(get())
 	configureWorldRouting()
 	configureHealthz()
 }

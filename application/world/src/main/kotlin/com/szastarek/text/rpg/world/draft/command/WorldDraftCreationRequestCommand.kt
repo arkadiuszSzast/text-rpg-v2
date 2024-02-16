@@ -31,4 +31,5 @@ data class WorldDraftCreationRequestCommandSuccessResult(val draftId: Id<WorldDr
 enum class WorldDraftCreationRequestError {
 	AccountNotAllowedToCreateDraft,
 	MaximumNumberOfDraftsReached,
+	AccountDraftsListIsNotUpToDate,
 }

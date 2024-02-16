@@ -1,5 +1,6 @@
 package com.szastarek.text.rpg.world.draft.command.handler
 
+import arrow.core.nel
 import arrow.core.raise.either
 import com.szastarek.text.rpg.acl.authority.AuthorizedAccountAbilityProvider
 import com.szastarek.text.rpg.event.store.EventStoreWriteClient
@@ -10,6 +11,7 @@ import com.szastarek.text.rpg.world.draft.WorldDraftListingRepository
 import com.szastarek.text.rpg.world.draft.command.WorldDraftCreationRequestCommand
 import com.szastarek.text.rpg.world.draft.command.WorldDraftCreationRequestCommandResult
 import com.szastarek.text.rpg.world.draft.command.WorldDraftCreationRequestCommandSuccessResult
+import com.szastarek.text.rpg.world.draft.command.WorldDraftCreationRequestError
 import com.szastarek.text.rpg.world.draft.event.WorldDraftEvent
 import com.trendyol.kediatr.CommandWithResultHandler
 
@@ -24,7 +26,10 @@ class WorldDraftCreationRequestCommandHandler(
 
 			val (name, accountContext) = command
 
-			val existingDrafts = worldDraftListingRepository.findAllByAccountId(accountContext.accountId)
+			val existingDrafts =
+				worldDraftListingRepository.findAllByAccountId(accountContext.accountId)
+					.mapLeft { WorldDraftCreationRequestError.AccountDraftsListIsNotUpToDate.nel() }.bind()
+
 			val event = WorldDraftAggregate.initializeCreation(accountContext, name, existingDrafts.drafts).bind()
 
 			eventStoreWriteClient.appendToStream<WorldDraftEvent>(event, event.revision())
