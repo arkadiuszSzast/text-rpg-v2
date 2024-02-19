@@ -3,7 +3,6 @@ package com.szastarek.text.rpg.event.store
 import arrow.core.raise.option
 import com.eventstore.dbclient.EventStoreDBProjectionManagementClient
 import com.eventstore.dbclient.GetProjectionStateOptions
-import com.eventstore.dbclient.GetProjectionStatisticsOptions
 import com.fasterxml.jackson.databind.JsonNode
 import com.szastarek.text.rpg.monitoring.execute
 import com.szastarek.text.rpg.shared.retry
@@ -59,10 +58,13 @@ class EventStoreDbProjectionsClient(
 		return tracer.spanBuilder("event_store projection ${name.value} result").startSpan().execute {
 			try {
 				retry(maxAttempt = config.maxRetries, delayMs = config.retryDelayMs) {
-					val isUpToDate =
-						client.getStatistics(name.value, GetProjectionStatisticsOptions.get())
-							.await().progress
-					if (!(isUpToDate == 100.0f)) {
+					val statistics =
+						client.getStatistics(name.value)
+							.await()
+					println("STATISTICS: $statistics")
+					val isUpToDate = statistics.writesInProgress == 0 && statistics.readsInProgress == 0
+
+					if (!isUpToDate) {
 						throw ProjectionResultOutDatedException(name)
 					}
 				}
@@ -72,6 +74,7 @@ class EventStoreDbProjectionsClient(
 						JsonNode::class.java,
 						GetProjectionStateOptions.get().partition(partition.value),
 					).await()
+				println("STATE: $state")
 
 				option {
 					ensure(!state.isEmpty)

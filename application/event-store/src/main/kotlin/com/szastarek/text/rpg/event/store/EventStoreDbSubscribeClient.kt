@@ -16,7 +16,6 @@ import kotlinx.coroutines.CompletableJob
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
@@ -62,80 +61,79 @@ class EventStoreDbSubscribeClient(
 		customerGroup: ConsumerGroup,
 		options: PersistentSubscriptionOptions,
 		listener: PersistentEventListener,
-	): PersistentSubscription =
-		coroutineScope {
-			val consumerGroupExists =
-				client.getInfoToStream(
-					streamName.value,
-					customerGroup.value,
-				).await().isPresent
-			if (!consumerGroupExists && options.autoCreateStreamGroup) {
-				logger.debug {
-					"Stream group $customerGroup not found. AutoCreateStreamGroup is ON. Trying to create the group."
-				}
-				client.createToStream(
-					streamName.value,
-					customerGroup.value,
-					options.createPersistentSubscriptionToStreamOptions,
-				).await()
-				logger.debug { "Stream group $customerGroup created." }
-			}
-
-			client.subscribeToStream(
+	): PersistentSubscription {
+		val consumerGroupExists =
+			client.getInfoToStream(
 				streamName.value,
 				customerGroup.value,
-				options.subscriptionOptions,
-				object : PersistentSubscriptionListener() {
-					override fun onEvent(
-						subscription: PersistentSubscription,
-						retryCount: Int,
-						event: ResolvedEvent,
-					) {
-						launch(coroutineContext + SupervisorJob()) {
-							runCatching {
-								listener(subscription, event)
-								if (options.autoAcknowledge) {
-									subscription.ack(event)
-								}
-							}.onFailure { error ->
-								val eventId = event.originalEvent.eventId
-								if (retryCount < options.maxRetries) {
-									logger.error(error) {
-										"Error when processing event[$eventId]. Retry attempt [${retryCount + 1}/${options.maxRetries}]"
-									}
-									subscription.nack(
-										NackAction.Retry,
-										"exception_${error::class.simpleName}",
-										event,
-									)
-								} else {
-									logger.error(error) {
-										"Error when processing event[$eventId]. Going to ${options.nackAction.name} event"
-									}
-									subscription.nack(
-										options.nackAction,
-										"exception_${error::class.simpleName}",
-										event,
-									)
-								}
-							}
-						}
-					}
-
-					override fun onCancelled(
-						subscription: PersistentSubscription?,
-						throwable: Throwable,
-					) {
-						logger.error(throwable) { "Error on persisted subscription [${subscription?.subscriptionId}]" }
-						launch(coroutineContext + SupervisorJob()) {
-							retry(100) {
-								subscribeToPersistentStream(streamName, customerGroup, options, listener)
-							}
-						}
-					}
-				},
+			).await().isPresent
+		if (!consumerGroupExists && options.autoCreateStreamGroup) {
+			logger.debug {
+				"Stream group $customerGroup not found. AutoCreateStreamGroup is ON. Trying to create the group."
+			}
+			client.createToStream(
+				streamName.value,
+				customerGroup.value,
+				options.createPersistentSubscriptionToStreamOptions,
 			).await()
+			logger.debug { "Stream group $customerGroup created." }
 		}
+
+		return client.subscribeToStream(
+			streamName.value,
+			customerGroup.value,
+			options.subscriptionOptions,
+			object : PersistentSubscriptionListener() {
+				override fun onEvent(
+					subscription: PersistentSubscription,
+					retryCount: Int,
+					event: ResolvedEvent,
+				) {
+					launch(coroutineContext + SupervisorJob()) {
+						runCatching {
+							listener(subscription, event)
+							if (options.autoAcknowledge) {
+								subscription.ack(event)
+							}
+						}.onFailure { error ->
+							val eventId = event.originalEvent.eventId
+							if (retryCount < options.maxRetries) {
+								logger.error(error) {
+									"Error when processing event[$eventId]. Retry attempt [${retryCount + 1}/${options.maxRetries}]"
+								}
+								subscription.nack(
+									NackAction.Retry,
+									"exception_${error::class.simpleName}",
+									event,
+								)
+							} else {
+								logger.error(error) {
+									"Error when processing event[$eventId]. Going to ${options.nackAction.name} event"
+								}
+								subscription.nack(
+									options.nackAction,
+									"exception_${error::class.simpleName}",
+									event,
+								)
+							}
+						}
+					}
+				}
+
+				override fun onCancelled(
+					subscription: PersistentSubscription?,
+					throwable: Throwable,
+				) {
+					logger.error(throwable) { "Error on persisted subscription [${subscription?.subscriptionId}]" }
+					launch(coroutineContext + SupervisorJob()) {
+						retry(100) {
+							subscribeToPersistentStream(streamName, customerGroup, options, listener)
+						}
+					}
+				}
+			},
+		).await()
+	}
 
 	private suspend fun tracingPersistentListener(
 		listener: PersistentEventListener,

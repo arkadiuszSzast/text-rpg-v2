@@ -23,14 +23,14 @@ import com.szastarek.text.rpg.security.JwtSecret
 import com.szastarek.text.rpg.shared.anEmail
 import com.szastarek.text.rpg.utils.FixedClock
 import com.szastarek.text.rpg.utils.InMemoryOpenTelemetry
+import io.kotest.assertions.nondeterministic.eventually
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.booleans.shouldBeTrue
 import io.ktor.http.Url
 import kotlinx.serialization.json.Json
-import org.awaitility.kotlin.await
-import org.awaitility.kotlin.untilAsserted
 import org.litote.kmongo.id.serialization.IdKotlinXSerializationModule
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 class ActivationMailSenderSubscriberTest : DescribeSpec() {
 	private val eventStoreContainer: EventStoreContainer = EventStoreContainerFactory.spawn()
@@ -100,7 +100,7 @@ class ActivationMailSenderSubscriberTest : DescribeSpec() {
 				eventStoreWriteClient.appendToStream<AccountEvent>(event)
 
 				// assert
-				await untilAsserted {
+				eventually(10.seconds) {
 					mailSender.hasBeenSent {
 						it.to == event.emailAddress && it.subject == mailProperties.subject
 					}.shouldBeTrue()

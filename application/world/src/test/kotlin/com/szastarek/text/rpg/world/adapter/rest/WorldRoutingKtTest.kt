@@ -14,7 +14,7 @@ import kotlinx.coroutines.delay
 class WorldRoutingKtTest : IntegrationTest() {
 	init {
 
-		"should return 202 when world draft creation initialized" {
+		"should return 202 when world draft creation initialized".config(blockingTest = true) {
 			// arrange
 			val accountContext = worldCreatorAuthenticatedAccountContext
 			val authToken = getAuthToken(accountContext)
@@ -36,10 +36,8 @@ class WorldRoutingKtTest : IntegrationTest() {
 			client.initializeWorldDraftCreation(anInitializeWorldDraftCreationRequest(), authToken)
 				.status.shouldBe(HttpStatusCode.Accepted)
 
-			// add some delay to make sure that the projection is updated.
-			// Another test shows that even if response is ACCEPTED the draft won't be created anyway
-			delay(800)
 			// act
+			delay(1500)
 			val response = client.initializeWorldDraftCreation(anInitializeWorldDraftCreationRequest(), authToken)
 
 			// assert

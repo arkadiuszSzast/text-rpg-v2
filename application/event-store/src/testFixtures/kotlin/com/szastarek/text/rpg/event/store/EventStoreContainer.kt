@@ -20,12 +20,12 @@ class EventStoreContainer {
 		instance.portBindings = listOf("${instance.getMappedPort(EVENT_STORE_DB_PORT)}:$EVENT_STORE_DB_PORT")
 		instance.stop()
 		instance.start()
-		delay(50)
+		delay(150)
 	}
 
 	suspend fun stop() {
 		instance.stop()
-		delay(50)
+		delay(150)
 	}
 
 	private fun startEventStoreContainer() =

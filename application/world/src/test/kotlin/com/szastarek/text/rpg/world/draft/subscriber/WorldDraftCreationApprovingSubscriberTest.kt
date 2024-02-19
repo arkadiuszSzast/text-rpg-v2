@@ -22,13 +22,13 @@ import com.szastarek.text.rpg.world.draft.event.WorldDraftEvent
 import com.szastarek.text.rpg.world.support.InMemoryWorldDraftListingRepository
 import com.szastarek.text.rpg.world.support.aWorldDraftCreationRequestedEvent
 import com.szastarek.text.rpg.world.support.aWorldDraftListItem
-import io.kotest.common.runBlocking
+import io.kotest.assertions.nondeterministic.eventually
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
+import kotlinx.coroutines.cancel
 import kotlinx.serialization.json.Json
-import org.awaitility.kotlin.await
-import org.awaitility.kotlin.untilAsserted
 import org.litote.kmongo.id.serialization.IdKotlinXSerializationModule
+import kotlin.time.Duration.Companion.seconds
 
 class WorldDraftCreationApprovingSubscriberTest : StringSpec({
 
@@ -55,7 +55,7 @@ class WorldDraftCreationApprovingSubscriberTest : StringSpec({
 	}
 
 	"should append WorldDraftCreationApprovedEvent" {
-		WorldDraftCreationApprovingSubscriber(eventStoreSubscribeClient, eventStoreWriteClient, listingRepository, json)
+		val subscriber = WorldDraftCreationApprovingSubscriber(eventStoreSubscribeClient, eventStoreWriteClient, listingRepository, json)
 		val accountContext = worldCreatorAuthenticatedAccountContext.serializable()
 		val event = aWorldDraftCreationRequestedEvent(accountContext = accountContext)
 
@@ -63,22 +63,22 @@ class WorldDraftCreationApprovingSubscriberTest : StringSpec({
 		eventStoreWriteClient.appendToStream<WorldDraftEvent>(event)
 
 		// assert
-		await untilAsserted {
-			runBlocking {
-				val expectedEvent = WorldDraftCreationApprovedEvent(event.draftId, event.ownerId, event.version.next())
-				val result =
-					eventStoreReadClient.readStreamByEventType<WorldDraftCreationApprovedEvent>(
-						WorldDraftCreationApprovedEvent.eventType,
-					).singleOrNull()
+		eventually(10.seconds) {
+			val expectedEvent = WorldDraftCreationApprovedEvent(event.draftId, event.ownerId, event.version.next())
+			val result =
+				eventStoreReadClient.readStreamByEventType<WorldDraftCreationApprovedEvent>(
+					WorldDraftCreationApprovedEvent.eventType,
+				).singleOrNull()
 
-				result shouldBe expectedEvent
-			}
+			result shouldBe expectedEvent
 		}
+
+		subscriber.coroutineContext.cancel()
 	}
 
 	"should append WorldDraftCreationRejectedEvent" {
 		// arrange
-		WorldDraftCreationApprovingSubscriber(eventStoreSubscribeClient, eventStoreWriteClient, listingRepository, json)
+		val subscriber = WorldDraftCreationApprovingSubscriber(eventStoreSubscribeClient, eventStoreWriteClient, listingRepository, json)
 		val accountContext = worldCreatorAuthenticatedAccountContext.serializable()
 		repeat(3) { listingRepository.add(aWorldDraftListItem(owner = accountContext.accountId)) }
 		val event = aWorldDraftCreationRequestedEvent(accountContext = accountContext)
@@ -87,22 +87,21 @@ class WorldDraftCreationApprovingSubscriberTest : StringSpec({
 		eventStoreWriteClient.appendToStream<WorldDraftEvent>(event)
 
 		// assert
-		await untilAsserted {
-			runBlocking {
-				val expectedEvent =
-					WorldDraftCreationRejectedEvent(
-						event.draftId,
-						WorldDraftCreationRequestError.MaximumNumberOfDraftsReached.nel(),
-						event.ownerId,
-						event.version.next(),
-					)
-				val result =
-					eventStoreReadClient.readStreamByEventType<WorldDraftCreationRejectedEvent>(
-						WorldDraftCreationRejectedEvent.eventType,
-					).singleOrNull()
+		eventually(10.seconds) {
+			val expectedEvent =
+				WorldDraftCreationRejectedEvent(
+					event.draftId,
+					WorldDraftCreationRequestError.MaximumNumberOfDraftsReached.nel(),
+					event.ownerId,
+					event.version.next(),
+				)
+			val result =
+				eventStoreReadClient.readStreamByEventType<WorldDraftCreationRejectedEvent>(
+					WorldDraftCreationRejectedEvent.eventType,
+				).singleOrNull()
 
-				result shouldBe expectedEvent
-			}
+			result shouldBe expectedEvent
 		}
+		subscriber.coroutineContext.cancel()
 	}
 })
