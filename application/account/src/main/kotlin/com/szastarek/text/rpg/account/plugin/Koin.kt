@@ -40,7 +40,6 @@ import com.szastarek.text.rpg.shared.plugin.installIfNotRegistered
 import com.szastarek.text.rpg.shared.validate.getOrThrow
 import io.ktor.http.Url
 import io.ktor.server.application.Application
-import org.koin.core.context.GlobalContext
 import org.koin.core.context.loadKoinModules
 import org.koin.core.module.dsl.createdAtStart
 import org.koin.core.module.dsl.singleOf
@@ -128,8 +127,6 @@ internal val accountModule =
 	}
 
 internal fun Application.configureKoin() {
-	if (GlobalContext.getOrNull() == null) {
-		installIfNotRegistered(Koin)
-	}
+	installIfNotRegistered(Koin)
 	loadKoinModules(listOf(accountModule, accountConfigModule))
 }

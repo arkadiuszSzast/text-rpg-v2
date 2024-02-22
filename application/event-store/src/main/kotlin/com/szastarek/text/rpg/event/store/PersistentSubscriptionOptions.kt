@@ -11,7 +11,6 @@ data class PersistentSubscriptionOptions(
 	val autoAcknowledge: Boolean = true,
 	val autoCreateStreamGroup: Boolean = true,
 	val maxRetries: Long = 5,
-	val maxResubscribeAttempts: Long = 100,
 	val createPersistentSubscriptionToStreamOptions: CreatePersistentSubscriptionToStreamOptions =
 		CreatePersistentSubscriptionToStreamOptions.get().fromStart().resolveLinkTos(),
 ) {

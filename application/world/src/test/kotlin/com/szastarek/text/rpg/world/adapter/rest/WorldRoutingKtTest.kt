@@ -14,7 +14,7 @@ import kotlinx.coroutines.delay
 class WorldRoutingKtTest : IntegrationTest() {
 	init {
 
-		"should return 202 when world draft creation initialized".config(blockingTest = true) {
+		"should return 202 when world draft creation initialized" { client ->
 			// arrange
 			val accountContext = worldCreatorAuthenticatedAccountContext
 			val authToken = getAuthToken(accountContext)
@@ -25,7 +25,7 @@ class WorldRoutingKtTest : IntegrationTest() {
 				.status.shouldBe(HttpStatusCode.Accepted)
 		}
 
-		"world creator cannot create more than 3 drafts" {
+		"world creator cannot create more than 3 drafts" { client ->
 			// arrange
 			val accountContext = worldCreatorAuthenticatedAccountContext
 			val authToken = getAuthToken(accountContext)
@@ -35,9 +35,9 @@ class WorldRoutingKtTest : IntegrationTest() {
 				.status.shouldBe(HttpStatusCode.Accepted)
 			client.initializeWorldDraftCreation(anInitializeWorldDraftCreationRequest(), authToken)
 				.status.shouldBe(HttpStatusCode.Accepted)
+			delay(1000)
 
 			// act
-			delay(1500)
 			val response = client.initializeWorldDraftCreation(anInitializeWorldDraftCreationRequest(), authToken)
 
 			// assert

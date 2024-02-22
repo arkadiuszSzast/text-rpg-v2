@@ -21,6 +21,7 @@ class EventStorePropertiesTest : KoinTest, DescribeSpec() {
 				val expected =
 					EventStoreProperties(
 						connectionString = "esdb://test-host:2113?tls=false",
+						reSubscribeOnDrop = false,
 					)
 
 				// act & assert

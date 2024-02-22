@@ -6,6 +6,7 @@ import com.szastarek.text.rpg.monitoring.monitoringModule
 import com.szastarek.text.rpg.security.securityModule
 import com.szastarek.text.rpg.shared.sharedModule
 import com.szastarek.text.rpg.world.adapter.rest.configureWorldRouting
+import com.szastarek.text.rpg.world.draft.subscriber.startWorldDraftCreationApprovingSubscriber
 import com.szastarek.text.rpg.world.plugin.configureDocumentation
 import com.szastarek.text.rpg.world.plugin.configureHealthz
 import com.szastarek.text.rpg.world.plugin.configureKoin
@@ -32,6 +33,7 @@ fun Application.worldModule() {
 	eventStoreModule()
 	mediatorModule()
 	createProjections(get())
+	startWorldDraftCreationApprovingSubscriber(get())
 	configureWorldRouting()
 	configureHealthz()
 }

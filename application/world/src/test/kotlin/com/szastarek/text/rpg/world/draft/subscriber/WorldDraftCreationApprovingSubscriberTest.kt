@@ -3,7 +3,6 @@ package com.szastarek.text.rpg.world.draft.subscriber
 import arrow.core.nel
 import com.eventstore.dbclient.EventStoreDBClient
 import com.eventstore.dbclient.EventStoreDBConnectionString.parseOrThrow
-import com.eventstore.dbclient.EventStoreDBPersistentSubscriptionsClient
 import com.szastarek.text.rpg.acl.serializable
 import com.szastarek.text.rpg.acl.worldCreatorAuthenticatedAccountContext
 import com.szastarek.text.rpg.event.store.EventStoreContainer
@@ -13,6 +12,7 @@ import com.szastarek.text.rpg.event.store.EventStoreDbSubscribeClient
 import com.szastarek.text.rpg.event.store.EventStoreDbWriteClient
 import com.szastarek.text.rpg.event.store.EventStoreLifecycleListener
 import com.szastarek.text.rpg.event.store.appendToStream
+import com.szastarek.text.rpg.event.store.config.EventStoreProperties
 import com.szastarek.text.rpg.event.store.readStreamByEventType
 import com.szastarek.text.rpg.utils.InMemoryOpenTelemetry
 import com.szastarek.text.rpg.world.draft.command.WorldDraftCreationRequestError
@@ -25,7 +25,6 @@ import com.szastarek.text.rpg.world.support.aWorldDraftListItem
 import io.kotest.assertions.nondeterministic.eventually
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
-import kotlinx.coroutines.cancel
 import kotlinx.serialization.json.Json
 import org.litote.kmongo.id.serialization.IdKotlinXSerializationModule
 import kotlin.time.Duration.Companion.seconds
@@ -33,8 +32,7 @@ import kotlin.time.Duration.Companion.seconds
 class WorldDraftCreationApprovingSubscriberTest : StringSpec({
 
 	val eventStoreContainer: EventStoreContainer = EventStoreContainerFactory.spawn()
-	val subscriptionClient =
-		EventStoreDBPersistentSubscriptionsClient.create(parseOrThrow(eventStoreContainer.connectionString))
+	val eventStoreProperties: EventStoreProperties = EventStoreProperties(eventStoreContainer.connectionString, false)
 	val eventStoreDbClient = EventStoreDBClient.create(parseOrThrow(eventStoreContainer.connectionString))
 	val openTelemetry = InMemoryOpenTelemetry()
 	val json =
@@ -42,7 +40,7 @@ class WorldDraftCreationApprovingSubscriberTest : StringSpec({
 			serializersModule = IdKotlinXSerializationModule
 			ignoreUnknownKeys = true
 		}
-	val eventStoreSubscribeClient = EventStoreDbSubscribeClient(subscriptionClient, json, openTelemetry.get())
+	val eventStoreSubscribeClient = EventStoreDbSubscribeClient(eventStoreProperties, json, openTelemetry.get())
 	val eventStoreWriteClient = EventStoreDbWriteClient(eventStoreDbClient, json, openTelemetry.get())
 	val eventStoreReadClient = EventStoreDbReadClient(eventStoreDbClient, json, openTelemetry.get())
 	val listingRepository = InMemoryWorldDraftListingRepository()
@@ -55,7 +53,13 @@ class WorldDraftCreationApprovingSubscriberTest : StringSpec({
 	}
 
 	"should append WorldDraftCreationApprovedEvent" {
-		val subscriber = WorldDraftCreationApprovingSubscriber(eventStoreSubscribeClient, eventStoreWriteClient, listingRepository, json)
+		val subscriber =
+			WorldDraftCreationApprovingSubscriber(
+				eventStoreSubscribeClient,
+				eventStoreWriteClient,
+				listingRepository,
+				json,
+			).subscribe()
 		val accountContext = worldCreatorAuthenticatedAccountContext.serializable()
 		val event = aWorldDraftCreationRequestedEvent(accountContext = accountContext)
 
@@ -73,12 +77,18 @@ class WorldDraftCreationApprovingSubscriberTest : StringSpec({
 			result shouldBe expectedEvent
 		}
 
-		subscriber.coroutineContext.cancel()
+		subscriber.stop()
 	}
 
 	"should append WorldDraftCreationRejectedEvent" {
 		// arrange
-		val subscriber = WorldDraftCreationApprovingSubscriber(eventStoreSubscribeClient, eventStoreWriteClient, listingRepository, json)
+		val subscriber =
+			WorldDraftCreationApprovingSubscriber(
+				eventStoreSubscribeClient,
+				eventStoreWriteClient,
+				listingRepository,
+				json,
+			).subscribe()
 		val accountContext = worldCreatorAuthenticatedAccountContext.serializable()
 		repeat(3) { listingRepository.add(aWorldDraftListItem(owner = accountContext.accountId)) }
 		val event = aWorldDraftCreationRequestedEvent(accountContext = accountContext)
@@ -102,6 +112,7 @@ class WorldDraftCreationApprovingSubscriberTest : StringSpec({
 
 			result shouldBe expectedEvent
 		}
-		subscriber.coroutineContext.cancel()
+
+		subscriber.stop()
 	}
 })

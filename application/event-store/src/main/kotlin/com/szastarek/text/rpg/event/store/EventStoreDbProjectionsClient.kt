@@ -61,7 +61,6 @@ class EventStoreDbProjectionsClient(
 					val statistics =
 						client.getStatistics(name.value)
 							.await()
-					println("STATISTICS: $statistics")
 					val isUpToDate = statistics.writesInProgress == 0 && statistics.readsInProgress == 0
 
 					if (!isUpToDate) {
@@ -74,7 +73,6 @@ class EventStoreDbProjectionsClient(
 						JsonNode::class.java,
 						GetProjectionStateOptions.get().partition(partition.value),
 					).await()
-				println("STATE: $state")
 
 				option {
 					ensure(!state.isEmpty)

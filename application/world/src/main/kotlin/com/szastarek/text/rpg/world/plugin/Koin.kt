@@ -1,5 +1,6 @@
 package com.szastarek.text.rpg.world.plugin
 
+import com.szastarek.text.rpg.event.store.EventStoreSubscriber
 import com.szastarek.text.rpg.shared.config.ConfigKey
 import com.szastarek.text.rpg.shared.config.getBooleanProperty
 import com.szastarek.text.rpg.shared.plugin.installIfNotRegistered
@@ -10,7 +11,6 @@ import com.szastarek.text.rpg.world.draft.command.handler.WorldDraftCreationRequ
 import com.szastarek.text.rpg.world.draft.subscriber.WorldDraftCreationApprovingSubscriber
 import io.ktor.server.application.Application
 import org.koin.core.context.loadKoinModules
-import org.koin.core.module.dsl.createdAtStart
 import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.bind
 import org.koin.dsl.module
@@ -29,7 +29,7 @@ internal val worldModule =
 	module {
 		singleOf(::WorldDraftCreationRequestCommandHandler)
 		singleOf(::WorldDraftListingEventStoreRepository) bind WorldDraftListingRepository::class
-		singleOf(::WorldDraftCreationApprovingSubscriber) { createdAtStart() }
+		singleOf(::WorldDraftCreationApprovingSubscriber) bind EventStoreSubscriber::class
 	}
 
 internal fun Application.configureKoin() {

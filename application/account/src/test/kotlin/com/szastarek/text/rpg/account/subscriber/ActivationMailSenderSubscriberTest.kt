@@ -14,6 +14,7 @@ import com.szastarek.text.rpg.event.store.EventStoreDbSubscribeClient
 import com.szastarek.text.rpg.event.store.EventStoreDbWriteClient
 import com.szastarek.text.rpg.event.store.EventStoreLifecycleListener
 import com.szastarek.text.rpg.event.store.appendToStream
+import com.szastarek.text.rpg.event.store.config.EventStoreProperties
 import com.szastarek.text.rpg.mail.MailSubject
 import com.szastarek.text.rpg.mail.MailTemplateId
 import com.szastarek.text.rpg.mail.RecordingMailSender
@@ -48,7 +49,8 @@ class ActivationMailSenderSubscriberTest : DescribeSpec() {
 				eventStoreContainer.connectionString,
 			),
 		)
-	private val eventStoreSubscribeClient = EventStoreDbSubscribeClient(subscriptionClient, json, openTelemetry.get())
+	private val eventStoreProperties = EventStoreProperties(eventStoreContainer.connectionString, false)
+	private val eventStoreSubscribeClient = EventStoreDbSubscribeClient(eventStoreProperties, json, openTelemetry.get())
 	private val mailSender = RecordingMailSender()
 	private val mailProperties =
 		ActivateAccountMailProperties(

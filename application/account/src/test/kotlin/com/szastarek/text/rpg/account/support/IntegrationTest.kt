@@ -15,81 +15,92 @@ import com.szastarek.text.rpg.mail.RecordingMailSender
 import com.szastarek.text.rpg.redis.RedisContainer
 import com.szastarek.text.rpg.shared.email.EmailAddress
 import io.kotest.core.extensions.Extension
-import io.kotest.core.spec.Spec
-import io.kotest.core.spec.style.DescribeSpec
-import io.kotest.core.test.TestCase
+import io.kotest.core.names.TestName
+import io.kotest.core.spec.style.StringSpec
+import io.kotest.core.spec.style.scopes.StringSpecScope
+import io.kotest.core.spec.style.scopes.addTest
 import io.kotest.extensions.system.OverrideMode
 import io.kotest.extensions.system.withEnvironment
+import io.ktor.client.HttpClient
 import io.ktor.http.Url
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.testing.TestApplication
 import org.awaitility.kotlin.await
 import org.awaitility.kotlin.untilNotNull
 import org.koin.core.context.loadKoinModules
+import org.koin.core.context.stopKoin
 import org.koin.dsl.bind
 import org.koin.dsl.module
 import org.koin.test.KoinTest
 import org.koin.test.get
-import org.koin.test.inject
 import org.redisson.api.RedissonClient
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation.Plugin as ClientContentNegotiation
 
-abstract class IntegrationTest : DescribeSpec(), KoinTest {
+abstract class IntegrationTest : StringSpec(), KoinTest {
 	private val eventStoreContainer: EventStoreContainer = EventStoreContainerFactory.spawn()
 
 	private val recordingMailSender = RecordingMailSender()
-	private val redisClient by inject<RedissonClient>()
-	private val activateAccountMailProperties by inject<ActivateAccountMailProperties>()
-	private val resetPasswordMailProperties by inject<ResetPasswordMailProperties>()
-	private val inviteWorldCreatorMailProperties by inject<InviteWorldCreatorMailProperties>()
+	private val redisClient: RedissonClient by lazy { get() }
+	private val activateAccountMailProperties: ActivateAccountMailProperties by lazy { get() }
+	private val resetPasswordMailProperties: ResetPasswordMailProperties by lazy { get() }
+	private val inviteWorldCreatorMailProperties: InviteWorldCreatorMailProperties by lazy { get() }
 
-	private val testApplication =
-		withEnvironment(
-			mapOf(
-				"DOCUMENTATION_ENABLED" to "false",
-				"EVENT_STORE_CONNECTION_STRING" to eventStoreContainer.connectionString,
-				"REDIS_CONNECTION_STRING" to RedisContainer.connectionString,
-			),
-			OverrideMode.SetOrOverride,
-		) {
-			TestApplication {
-				application {
-					accountModule()
-					loadKoinModules(
-						module {
-							single { recordingMailSender } bind MailSender::class
-						},
-					)
-					getKoin().createEagerInstances()
+	operator fun String.invoke(test: suspend StringSpecScope.(client: HttpClient) -> Unit) {
+		addTest(TestName(null, this, false), false, null) {
+			StringSpecScope(this.coroutineContext, testCase).withClient(test)
+		}
+	}
+
+	private suspend fun StringSpecScope.withClient(test: suspend StringSpecScope.(client: HttpClient) -> Unit) {
+		val testApplication =
+			withEnvironment(
+				mapOf(
+					"DOCUMENTATION_ENABLED" to "false",
+					"EVENT_STORE_CONNECTION_STRING" to eventStoreContainer.connectionString,
+					"REDIS_CONNECTION_STRING" to RedisContainer.connectionString,
+				),
+				OverrideMode.SetOrOverride,
+			) {
+				TestApplication {
+					application {
+						accountModule()
+						loadKoinModules(
+							module {
+								single { recordingMailSender } bind MailSender::class
+							},
+						)
+						getKoin().createEagerInstances()
+					}
+				}.also {
+					it.start()
 				}
-			}.also {
-				it.start()
 			}
-		}
 
-	val client =
-		testApplication.createClient {
-			expectSuccess = false
-			install(ClientContentNegotiation) {
-				json(get())
+		val client =
+			testApplication.createClient {
+				expectSuccess = false
+				install(ClientContentNegotiation) {
+					json(get())
+				}
 			}
-		}
+		recordingMailSender.clear()
+		val redisKeys = redisClient.keys.keys
+		redisClient.keys.delete(*redisKeys.toList().toTypedArray())
+		test(client)
+		stopKoin()
+		testApplication.stop()
+	}
 
 	override fun extensions(): List<Extension> {
 		return super.extensions() + EventStoreLifecycleListener(eventStoreContainer)
 	}
 
-	override suspend fun beforeEach(testCase: TestCase) {
-		recordingMailSender.clear()
-		val redisKeys = redisClient.keys.keys
-		redisClient.keys.delete(*redisKeys.toList().toTypedArray())
-		super.beforeTest(testCase)
-	}
-
-	override fun afterSpec(f: suspend (Spec) -> Unit) {
-		testApplication.stop()
-		super.afterSpec(f)
-	}
+// 	override suspend fun beforeEach(testCase: TestCase) {
+// 		recordingMailSender.clear()
+// 		val redisKeys = redisClient.keys.keys
+// 		redisClient.keys.delete(*redisKeys.toList().toTypedArray())
+// 		super.beforeTest(testCase)
+// 	}
 
 	fun getActivationToken(emailAddress: EmailAddress): String {
 		return await.untilNotNull {
