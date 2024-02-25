@@ -2,7 +2,6 @@ package com.szastarek.text.rpg.event.store
 
 import com.eventstore.dbclient.EventStoreDBClient
 import com.eventstore.dbclient.EventStoreDBConnectionString
-import com.eventstore.dbclient.EventStoreDBPersistentSubscriptionsClient
 import com.szastarek.text.rpg.event.store.config.EventStoreProperties
 import com.szastarek.text.rpg.event.store.utils.EmailSent
 import com.szastarek.text.rpg.utils.InMemoryOpenTelemetry
@@ -21,10 +20,11 @@ import kotlin.time.Duration.Companion.seconds
 @OptIn(ExperimentalSerializationApi::class)
 class EventStoreDbSubscribeClientTest : DescribeSpec() {
 	private val eventStoreContainer: EventStoreContainer = EventStoreContainerFactory.spawn()
-	private val eventStoreProperties = EventStoreProperties(
-		eventStoreContainer.connectionString,
-		false
-	)
+	private val eventStoreProperties =
+		EventStoreProperties(
+			eventStoreContainer.connectionString,
+			false,
+		)
 
 	private val openTelemetry = InMemoryOpenTelemetry()
 

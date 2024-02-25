@@ -8,7 +8,10 @@ import kotlinx.coroutines.future.await
 import org.redisson.api.RedissonClient
 import org.redisson.api.redisnode.RedisNodes
 
-internal fun Application.configureHealthz(eventStoreDBClient: EventStoreDBClient, redisClient: RedissonClient) {
+internal fun Application.configureHealthz(
+	eventStoreDBClient: EventStoreDBClient,
+	redisClient: RedissonClient,
+) {
 	install(HealthzPlugin) {
 		healthChecks {
 			check("main") { true }
