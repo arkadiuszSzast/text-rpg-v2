@@ -35,5 +35,5 @@ fun Application.worldModule() {
 	createProjections(get())
 	startWorldDraftCreationApprovingSubscriber(get())
 	configureWorldRouting()
-	configureHealthz()
+	configureHealthz(get())
 }

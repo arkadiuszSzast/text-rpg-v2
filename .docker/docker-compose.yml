@@ -162,6 +162,15 @@ services:
           - otel-collector-metrics
     <<: *clickhouse-depend
 
+  text-rpg-redis:
+    image: redis/redis-stack:7.2.0-v3
+    ports:
+      - "6379:6379"
+    networks:
+      text-rpg-net:
+        aliases:
+          - text-rpg-redis
+
   text-rpg-eventstore-db:
     image: eventstore/eventstore:23.6.0-buster-slim
     environment:
@@ -200,6 +209,7 @@ services:
       - OTEL_RESOURCE_ATTRIBUTES=service.name=text-rpg,service.version=0.0.1
       - OTEL_METRICS_URL=http://otel-collector:4318/v1/metrics
       - EVENT_STORE_CONNECTION_STRING=esdb://text-rpg-eventstore-db:2113?tls=false
+      - REDIS_CONNECTION_STRING=redis://text-rpg-redis:6379
       - MONITORING_ENABLED=true
       - DEPLOY_ENV=dev
       - VCS_VERSION=0.0.1

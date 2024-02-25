@@ -1,6 +1,6 @@
 appName: text-rpg-account-service
-image: text-rpg-ktor-account-service:0.0.4
-replicas: 3
+image: text-rpg-ktor-account-service:0.0.5
+replicas: 1
 
 env:
   - name: EVENT_STORE_CONNECTION_STRING

@@ -35,5 +35,5 @@ fun Application.accountModule() {
 	mailModule()
 	redisModule()
 	configureAccountRouting()
-	configureHealthz()
+	configureHealthz(get(), get())
 }
