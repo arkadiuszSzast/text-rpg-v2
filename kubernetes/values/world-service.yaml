@@ -1,5 +1,6 @@
 appName: text-rpg-world-service
-image: text-rpg-ktor-world-service:0.0.2
+image: text-rpg-ktor-world-service:0.0.3
+replicas: 3
 
 env:
   - name: EVENT_STORE_CONNECTION_STRING
@@ -17,8 +18,8 @@ env:
 
 resources:
   limit:
-    cpu: 1000m
-    memory: 1Bi
+    cpu: 200m
+    memory: 512Mi
   requested:
     cpu: 100m
     memory: 512Mi
