@@ -24,7 +24,7 @@ sonarqube = "4.4.1.3373"
 kover = "0.7.6"
 opentelemetry = "1.35.0"
 opentelemetry-ktor = "2.1.0-alpha"
-micrometer-otlp-registry = "1.12.3"
+micrometer-otlp-registry = "1.12.4"
 spotless = "6.25.0"
 jackson = "2.16.1"
 
