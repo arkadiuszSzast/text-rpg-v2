@@ -26,7 +26,7 @@ opentelemetry = "1.35.0"
 opentelemetry-ktor = "2.1.0-alpha"
 micrometer-otlp-registry = "1.12.3"
 spotless = "6.25.0"
-jackson = "2.16.1"
+jackson = "2.17.0"
 
 [libraries]
 ktor-server-core-jvm = { module = "io.ktor:ktor-server-core-jvm", version.ref = "ktor" }
